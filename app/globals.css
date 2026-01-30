@@ -74,4 +74,8 @@
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
   }
+
+  button {
+    cursor: pointer;
+  }
 }

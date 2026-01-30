@@ -1,57 +1,24 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { GoogleGenerativeAIStream, StreamingTextResponse, StreamData } from "ai";
-import { DataAPIClient } from "@datastax/astra-db-ts";
-import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
+import { OpenAIStream, StreamingTextResponse, StreamData } from "ai";
+import { getContext } from "@/lib/astra";
+import OpenAI from "openai";
 
-const {
-  ASTRA_DB_API_ENDPOINT,
-  ASTRA_DB_APPLICATION_TOKEN,
-  ASTRA_DB_COLLECTION,
-  GOOGLE_API_KEY,
-} = process.env;
+const { GROQ_API_KEY } = process.env;
 
-const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY || "");
-
-const client = new DataAPIClient(ASTRA_DB_APPLICATION_TOKEN as string);
-const db = client.db(ASTRA_DB_API_ENDPOINT as string, {
-  keyspace: process.env.ASTRA_DB_NAMESPACE,
+const groq = new OpenAI({
+  apiKey: GROQ_API_KEY || "",
+  baseURL: "https://api.groq.com/openai/v1",
 });
 
 export async function POST(req: Request) {
+  const data = new StreamData();
   try {
     const { messages } = await req.json();
     const latestMessage = messages[messages?.length - 1]?.content;
 
-    let docContext = "";
+    // Fetch context using our new helper
+    const { text: docContext, sources } = await getContext(latestMessage);
 
-    // Create a StreamData object to send metadata (citations)
-    const data = new StreamData();
-
-    if (latestMessage) {
-      const embeddings = new GoogleGenerativeAIEmbeddings({
-        apiKey: GOOGLE_API_KEY,
-        modelName: "text-embedding-004",
-      });
-
-      const vector = await embeddings.embedQuery(latestMessage);
-
-      const collection = await db.collection(
-        ASTRA_DB_COLLECTION || "career_vectors",
-      );
-      const cursor = await collection.find(
-        {},
-        {
-          sort: { $vector: vector },
-          limit: 5,
-          includeSimilarity: true,
-        },
-      );
-
-      const documents = await cursor.toArray();
-      docContext = documents.map((doc: any) => doc.text).join("\n\n");
-
-      // Extract unique sources and send as metadata
-      const sources = Array.from(new Set(documents.map((doc: any) => doc.source))).filter(Boolean);
+    if (sources.length > 0) {
       data.append({ sources });
     }
 
@@ -68,49 +35,38 @@ export async function POST(req: Request) {
         ${docContext}
         `;
 
-    const geminiModel = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
-    });
-
-    const history = [
-      {
-        role: "user",
-        parts: [{ text: `INSTRUCTION: ${systemPrompt}` }],
-      },
-      {
-        role: "model",
-        parts: [
-          {
-            text: "Understood. I will act as your Personal Intelligence and use the provided context to answer questions.",
-          },
-        ],
-      },
-      ...messages.slice(0, -1).map((m: any) => ({
-        role: m.role === "user" ? "user" : "model",
-        parts: [{ text: m.content }],
-      })),
-    ];
-
-    const result = await geminiModel.generateContentStream({
-      contents: [
-        ...history,
-        { role: "user", parts: [{ text: latestMessage }] },
+    const response = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      stream: true,
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...messages
       ],
     });
 
-    const stream = GoogleGenerativeAIStream(result, {
-      onFinal() {
+    const stream = OpenAIStream(response as any, {
+      onFinal(completion) {
         data.close();
-      }
+      },
     });
 
     return new StreamingTextResponse(stream, {}, data);
   } catch (error: any) {
     console.error("Error in chat route:", error);
+
+    try {
+      data.close();
+    } catch (e) { }
+
+    const status = error.status || (error.message?.includes("429") ? 429 : 500);
+    const errorMessage = status === 429
+      ? "AI Rate limit reached. Please wait a minute before trying again."
+      : (error.message || "Internal Server Error");
+
     return new Response(
-      JSON.stringify({ error: error.message || "Internal Server Error" }),
+      JSON.stringify({ error: errorMessage }),
       {
-        status: 500,
+        status: status,
         headers: { "Content-Type": "application/json" },
       },
     );
