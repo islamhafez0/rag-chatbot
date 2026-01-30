@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { GoogleGenerativeAIStream, StreamingTextResponse } from "ai";
+import { GoogleGenerativeAIStream, StreamingTextResponse, StreamData } from "ai";
 import { DataAPIClient } from "@datastax/astra-db-ts";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 
@@ -24,6 +24,9 @@ export async function POST(req: Request) {
 
     let docContext = "";
 
+    // Create a StreamData object to send metadata (citations)
+    const data = new StreamData();
+
     if (latestMessage) {
       const embeddings = new GoogleGenerativeAIEmbeddings({
         apiKey: GOOGLE_API_KEY,
@@ -45,7 +48,11 @@ export async function POST(req: Request) {
       );
 
       const documents = await cursor.toArray();
-      docContext = documents.map((doc) => doc.text).join("\n\n");
+      docContext = documents.map((doc: any) => doc.text).join("\n\n");
+
+      // Extract unique sources and send as metadata
+      const sources = Array.from(new Set(documents.map((doc: any) => doc.source))).filter(Boolean);
+      data.append({ sources });
     }
 
     const systemPrompt = `
@@ -91,8 +98,13 @@ export async function POST(req: Request) {
       ],
     });
 
-    const stream = GoogleGenerativeAIStream(result);
-    return new StreamingTextResponse(stream);
+    const stream = GoogleGenerativeAIStream(result, {
+      onFinal() {
+        data.close();
+      }
+    });
+
+    return new StreamingTextResponse(stream, {}, data);
   } catch (error: any) {
     console.error("Error in chat route:", error);
     return new Response(
