@@ -5,19 +5,11 @@ import { Send, Bot, User, Sparkles, ExternalLink } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
-import ReactMarkdown from "react-markdown";
-
 import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Home() {
-  const {
-    messages,
-    input,
-    handleInputChange,
-    handleSubmit,
-    isLoading,
-    data,
-  } = useChat();
+  const { messages, input, handleInputChange, handleSubmit, isLoading, data } =
+    useChat();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -88,7 +80,7 @@ export default function Home() {
                   )}
                 >
                   {m.role !== "user" && (
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                       <Bot className="w-5 h-5 text-primary" />
                     </div>
                   )}
@@ -102,18 +94,16 @@ export default function Home() {
                           : "bg-muted text-foreground rounded-bl-none",
                       )}
                     >
-                      <div
+                      <p
                         className={cn(
-                          "prose prose-sm sm:prose-base dark:prose-invert max-w-none leading-relaxed break-words",
-                          "prose-p:leading-relaxed prose-pre:bg-muted/50 prose-pre:border prose-pre:border-border",
-                          "prose-a:text-primary prose-a:no-underline hover:prose-a:underline",
+                          "text-sm leading-relaxed whitespace-pre-wrap wrap-break-word",
                           m.role === "user"
-                            ? "text-primary-foreground prose-headings:text-primary-foreground prose-strong:text-primary-foreground opacity-90"
+                            ? "text-primary-foreground opacity-90"
                             : "",
                         )}
                       >
-                        <ReactMarkdown>{m.content}</ReactMarkdown>
-                      </div>
+                        {m.content}
+                      </p>
                     </div>
 
                     {sources.length > 0 && (
@@ -135,7 +125,7 @@ export default function Home() {
                   </div>
 
                   {m.role === "user" && (
-                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
                       <User className="w-5 h-5 text-secondary-foreground" />
                     </div>
                   )}
@@ -146,7 +136,7 @@ export default function Home() {
 
           {isLoading && (
             <div className="flex w-full max-w-3xl mx-auto gap-4 justify-start">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <Bot className="w-5 h-5 text-primary" />
               </div>
               <div className="bg-muted p-4 rounded-xl rounded-bl-none">
@@ -167,6 +157,7 @@ export default function Home() {
             className="max-w-3xl mx-auto relative flex items-center gap-2"
           >
             <input
+              autoFocus
               className="flex-1 p-3 pl-4 pr-12 rounded-xl border border-input bg-muted/50 focus:bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all placeholder:text-muted-foreground/70"
               value={input}
               onChange={handleInputChange}
