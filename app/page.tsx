@@ -5,6 +5,8 @@ import { Send, Bot, User, Sparkles, ExternalLink } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
+import ReactMarkdown from "react-markdown";
+
 export default function Home() {
   const { messages, input, handleInputChange, handleSubmit, isLoading, data } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -81,12 +83,13 @@ export default function Home() {
                         : "bg-muted text-foreground rounded-bl-none",
                     )}
                   >
-                    <div className="prose dark:prose-invert text-sm sm:text-base leading-relaxed break-words">
-                      {m.content.split("\n").map((line, i) => (
-                        <p key={i} className="min-h-[1rem]">
-                          {line}
-                        </p>
-                      ))}
+                    <div className={cn(
+                      "prose prose-sm sm:prose-base dark:prose-invert max-w-none leading-relaxed break-words",
+                      "prose-p:leading-relaxed prose-pre:bg-muted/50 prose-pre:border prose-pre:border-border",
+                      "prose-a:text-primary prose-a:no-underline hover:prose-a:underline",
+                      m.role === "user" ? "text-primary-foreground prose-headings:text-primary-foreground prose-strong:text-primary-foreground opacity-90" : ""
+                    )}>
+                      <ReactMarkdown>{m.content}</ReactMarkdown>
                     </div>
                   </div>
 
