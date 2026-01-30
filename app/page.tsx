@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 
 import ReactMarkdown from "react-markdown";
 
+import { ThemeToggle } from "@/components/theme-toggle";
+
 export default function Home() {
   const { messages, input, handleInputChange, handleSubmit, isLoading, data } = useChat();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -40,8 +42,11 @@ export default function Home() {
             Personal Intelligence App
           </h1>
         </div>
-        <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
-          Beta v0.2
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
+            Beta v0.2
+          </div>
         </div>
       </header>
 
