@@ -15,6 +15,12 @@ export const db = client.db(endpoint, { keyspace });
 
 export async function getContext(latestMessage: string) {
   try {
+    const collections = await db.listCollections();
+    const exists = collections.some((c: any) => c.name === collectionName);
+    if (!exists) {
+      return { text: "", sources: [] };
+    }
+
     const embeddings = new GoogleGenerativeAIEmbeddings({
       apiKey: process.env.GOOGLE_API_KEY,
       modelName: "text-embedding-004",
