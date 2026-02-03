@@ -139,13 +139,17 @@ export default function Home() {
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <Bot className="w-5 h-5 text-primary" />
               </div>
-              <div className="bg-muted p-4 rounded-xl rounded-bl-none">
-                <div className="flex space-x-2">
-                  <div className="w-2 h-2 bg-primary/40 rounded-full animate-pulse" />
-                  <div className="w-2 h-2 bg-primary/40 rounded-full animate-pulse delay-75" />
-                  <div className="w-2 h-2 bg-primary/40 rounded-full animate-pulse delay-150" />
-                </div>
-              </div>
+              <span className="inline-flex text-xl text-muted-foreground tracking-widest">
+                <span className="animate-[pulse_1s_ease-in-out_infinite] w-2 h-2">
+                  .
+                </span>
+                <span className="animate-[pulse_1s_ease-in-out_0.2s_infinite]">
+                  .
+                </span>
+                <span className="animate-[pulse_1s_ease-in-out_0.4s_infinite]">
+                  .
+                </span>
+              </span>
             </div>
           )}
           <div ref={messagesEndRef} />
