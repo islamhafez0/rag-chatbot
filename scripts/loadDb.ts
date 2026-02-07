@@ -37,7 +37,7 @@ export async function ingestUrl(url: string) {
   console.log("Connecting to Astra DB...");
   const embeddings = new GoogleGenerativeAIEmbeddings({
     apiKey: process.env.GOOGLE_API_KEY,
-    modelName: "text-embedding-004",
+    modelName: "gemini-embedding-001",
   });
 
   const vectorStore = await AstraDBVectorStore.fromExistingIndex(embeddings, {
