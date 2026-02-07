@@ -1,0 +1,46 @@
+roles:
+  - company: TaqaTechno
+    title: Frontend Angular Developer
+    start_date: June 2024
+    end_date: September 2024
+    description: >
+      Worked on two enterprise-grade fintech applications as a contract side project, contributing to system upgrades and building multiple features from scratch. 
+      Developed core functionality including sponsored user management, device tracking, wallets and top-ups, and an SMS-based payment system with OTP verification and settlement management. 
+      Built and maintained modular Angular 17 applications using NgRx for state management, integrating 60+ RESTful APIs with robust error handling and data flow control.
+    tech_stack:
+      - Angular 17
+      - NgRx
+      - TypeScript
+      - RESTful APIs
+      - Fintech
+
+  - company: Self-Employed
+    title: Frontend Developer Freelancer
+    start_date: August 2024
+    end_date: Present
+    description: >
+      As a freelance Frontend Developer, I've had the chance to work on a variety of exciting projects—from building custom WordPress themes completely from scratch to developing advanced full-stack React applications. 
+      One project I'm particularly proud of is a secure quiz app with OTP-protected access and session validation. 
+      I've also worked on e-commerce frontends, personal portfolios, and UI-heavy applications using React.js, Next.js, and Firebase.
+    tech_stack:
+      - React.js
+      - Next.js
+      - Firebase
+      - WordPress
+      - TypeScript
+
+  - company: Code Alpha
+    title: Frontend React Developer Intern
+    start_date: April 2024
+    end_date: August 2024
+    description: >
+      Contributed to the development of responsive, user-friendly web applications using React.js, HTML, and CSS. 
+      Worked closely with UI/UX designers to turn wireframes into clean, interactive components. 
+      Focused on performance optimization, code reusability, and accessibility best practices. 
+      Integrated RESTful APIs and GraphQL endpoints to ensure seamless data flow.
+    tech_stack:
+      - React.js
+      - HTML5
+      - CSS3
+      - GraphQL
+      - RESTful APIs

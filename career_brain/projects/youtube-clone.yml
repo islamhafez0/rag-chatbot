@@ -1,0 +1,16 @@
+name: YouTube Clone
+description: A feature-rich video streaming platform built to demonstrate high-performance video rendering and search functionality.
+role: Solo Developer
+tech_stack:
+  - React
+  - YouTube Data API
+  - Tailwind CSS
+  - Modern UI/UX Libraries
+features:
+  - Video search and real-time playback.
+  - Channel detail pages and related video suggestions.
+  - Fully responsive layout for mobile and desktop.
+highlights:
+  - Efficient API data handling and state management.
+  - Professional-grade UI/UX inspired by the original platform.
+link: https://github.com/islamhafez0/youtube-clone

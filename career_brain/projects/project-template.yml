@@ -1,0 +1,34 @@
+projects:
+  - name: Portfolio Website
+    description: Personal portfolio built with Next.js showcasing skills and projects
+    role: Solo developer
+    tech_stack:
+      - Next.js
+      - React
+      - TypeScript
+      - Vercel
+    duration:
+    link: https://islamhafez.vercel.app
+    highlights:
+      - SEO optimized with structured data
+      - Deployed on Vercel
+    challenges_solved:
+      -
+
+  - name: RAG Career Chatbot
+    description: AI-powered chatbot that answers questions about my career using RAG
+    role: Solo developer
+    tech_stack:
+      - Next.js
+      - LangChain
+      - Astra DB
+      - Google Generative AI
+      - Groq LLM
+    duration:
+    link:
+    highlights:
+      - Vector search with Astra DB
+      - Streaming chat responses
+      - Web scraping pipeline for data ingestion
+    challenges_solved:
+      -

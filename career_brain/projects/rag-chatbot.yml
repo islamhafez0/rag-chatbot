@@ -1,0 +1,17 @@
+name: RAG Career Chatbot
+description: An AI-powered personal assistant that answers questions about Islam Hafez's career using Retrieval-Augmented Generation (RAG).
+role: Solo Developer
+tech_stack:
+  - Next.js
+  - LangChain
+  - Astra DB (Vector Database)
+  - Google Generative AI (Embeddings)
+  - Groq (LLM)
+  - Tailwind CSS
+  - TypeScript
+key_features:
+  - Vector search for highly relevant context retrieval.
+  - Streaming chat responses for a dynamic user experience.
+  - Aggressively structured data (YAML) for maximum answer accuracy.
+  - Self-attack verification pass to kill weak or hallucinated claims.
+status: Current / Active Development

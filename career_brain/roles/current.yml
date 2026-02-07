@@ -1,0 +1,22 @@
+company: TaqaTechno
+title: Odoo Frontend Developer
+start_date: October 2024
+end_date: Present
+description: >
+  As an Odoo Frontend Developer at TaqaTechno, I work on building full-stack web solutions tailored to our business needs using the Odoo ERP system. 
+  I develop custom modules and APIs with Python, and integrate them seamlessly into the frontend using OWL (Odoo Web Library), focusing on dynamic, server-rendered data and performance. 
+  I turn Figma designs into pixel-perfect Odoo themes, build fully custom websites, and continuously find creative solutions to improve our development flow. 
+  My role bridges the gap between frontend design and backend logic—ensuring everything fits naturally into the Odoo ecosystem while delivering a smooth user experience.
+responsibilities:
+  - Building full-stack web solutions using Odoo ERP.
+  - Developing custom modules and APIs with Python.
+  - Integrating frontend with OWL (Odoo Web Library).
+  - Translating Figma designs into pixel-perfect Odoo themes.
+  - Building fully custom websites within the Odoo ecosystem.
+tech_stack:
+  - Odoo
+  - Python
+  - OWL (Odoo Web Library)
+  - JavaScript
+  - Figma
+  - PostgreSQL

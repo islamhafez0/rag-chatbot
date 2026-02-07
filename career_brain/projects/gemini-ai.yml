@@ -1,0 +1,19 @@
+name: Gemini AI Chat Clone
+description: A sophisticated AI chatbot interface that mirrors the Gemini experience, featuring real-time interactions and advanced UI components.
+role: Solo Developer
+tech_stack:
+  - React
+  - TypeScript
+  - Google Generative AI API
+  - Firebase (Authentication)
+  - Tailwind CSS
+  - Markdown Rendering
+features:
+  - Secure Firebase authentication for user data.
+  - Markdown and code syntax highlighting for technical queries.
+  - Support for Right-to-Left (RTL) languages.
+  - Responsive design across all device types.
+highlights:
+  - Seamless integration with Google's LLM via API.
+  - High-end aesthetics with custom animations.
+link: https://github.com/islamhafez0/gemini-clone
