@@ -6,23 +6,33 @@ A personal intelligence engine that turns your portfolio and experience into an 
 
 - **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
 - **Language**: TypeScript
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) with dark/light theme support
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
 - **AI Models**:
   - **LLM**: [Groq](https://groq.com/) (Llama-3.3-70b-versatile)
-  - **Embeddings**: [Google Text-Embedding-004](https://ai.google.dev/)
-- **Vector Database**: [DataStax Astra DB](https://astra.datastax.com/) (Serverless)
-- **Scraper**: [Puppeteer](https://pptr.dev/)
-- **Orchestration**: [LangChain.js](https://js.langchain.com/)
-- **Streaming**: [Vercel AI SDK](https://sdk.vercel.ai/)
+  - **Embeddings**: [Google Generative AI](https://ai.google.dev/) (`gemini-embedding-001`)
+- **Vector Database**: [DataStax Astra DB](https://astra.datastax.com/)
+- **State Management**: [Vercel AI SDK](https://sdk.vercel.ai/)
 
 ## System Architecture
 
-![RAG System Architecture](./public/images/rag_architecture.png)
+The application follows a RAG (Retrieval-Augmented Generation) pipeline:
+
+![RAG System Architecture](./public/images/rag_architecture.svg)
 
 ## How It Works
 
-1. **Scraping** -- `scripts/scrape.ts` uses Puppeteer to crawl a target URL and extract clean text content.
-2. **Ingestion** -- `scripts/loadDb.ts` splits text into chunks (1000 chars, 200 overlap), generates embeddings via Google, and stores them in Astra DB.
-3. **Retrieval** -- When a user sends a message, the query is embedded and a vector similarity search retrieves the top 5 most relevant chunks from Astra DB.
-4. **Generation** -- The retrieved context is injected into a system prompt and sent to the Groq LLM, which streams a persona-driven response back to the client.
-5. **Citation** -- Source URLs from the matched documents are returned alongside the response for transparency.
+1. **Ingestion** (`scripts/loadYaml.ts`):
+   - Recursively walks `career_brain/` directory.
+   - Parses YAML files (facts, projects, roles).
+   - Generates embeddings using Google's `gemini-embedding-001`.
+   - Stores text chunks + vectors in Astra DB.
+
+2. **Retrieval** (`lib/astra.ts`):
+   - On user query, generates a query embedding.
+   - Performs a cosine similarity search in Astra DB.
+   - Retrieves the top 5 most relevant context chunks.
+
+3. **Generation** (`app/api/chat/route.ts`):
+   - Constructs a strict system prompt defining the "Islam Hafez" persona.
+   - Injects the retrieved context.
+   - Streams the response from Groq's `llama-3.3-70b-versatile` model.
