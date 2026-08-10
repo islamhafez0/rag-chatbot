@@ -46,7 +46,7 @@ export async function ingestUrl(url: string) {
     collection: ASTRA_DB_COLLECTION || "career_vectors",
     collectionOptions: {
       vector: {
-        dimension: 768,
+        dimension: 3072,
         metric: "cosine",
       },
     },

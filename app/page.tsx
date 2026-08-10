@@ -1,16 +1,16 @@
 "use client";
 
 import { useChat } from "ai/react";
-import { Send, Bot, User, Sparkles, ExternalLink } from "lucide-react";
+import { Send, Bot, User } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 import { ThemeToggle } from "@/components/theme-toggle";
+import Image from "next/image";
 
 export default function Home() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, data } =
+  const { messages, input, handleInputChange, handleSubmit, isLoading } =
     useChat();
-
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -21,27 +21,13 @@ export default function Home() {
     scrollToBottom();
   }, [messages]);
 
-  // Helper to find sources for a specific message index
-  const getSourcesForMessage = (msgId: string) => {
-    if (!data) return [];
-    // The 'ai' SDK data stream returns an array of data pieces
-    // We append sources once per bot response.
-    // For simplicity in this v1, we'll find the sources entry.
-    const sourcesEntry = data.find((d: any) => d.sources);
-    return sourcesEntry ? (sourcesEntry as any).sources : [];
-  };
-
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
       <main className="flex-1 flex flex-col h-full relative overflow-hidden">
         <header className="p-4 border-b border-border flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-md z-10 w-full">
-          <div className="flex items-center gap-2">
-            <div className="bg-primary/10 p-2 rounded-lg">
-              <Sparkles className="w-5 h-5 text-primary" />
-            </div>
-            <h1 className="font-bold text-lg tracking-tight">
-              Personal Intelligence App
-            </h1>
+          <div className="w-25 h-15 flex items-center justify-center shrink-0">
+            <Image src="/images/logo-light.png" alt="Logo" width={100} height={100} className="w-full h-full object-contain dark:hidden" />
+            <Image src="/images/logo-dark.png" alt="Logo" width={100} height={100} className="hidden w-full h-full object-contain dark:block" />
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
@@ -62,76 +48,49 @@ export default function Home() {
               </p>
             </div>
           ) : (
-            messages.map((m, index) => {
-              const isLastBotMessage =
-                !isLoading &&
-                m.role === "assistant" &&
-                index === messages.length - 1;
-              const sources = isLastBotMessage
-                ? getSourcesForMessage(m.id)
-                : [];
+            messages.map((m) => (
+              <div
+                key={m.id}
+                className={cn(
+                  "flex w-full max-w-3xl mx-auto gap-4",
+                  m.role === "user" ? "justify-end" : "justify-start",
+                )}
+              >
+                {m.role !== "user" && (
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <Bot className="w-5 h-5 text-primary" />
+                  </div>
+                )}
 
-              return (
-                <div
-                  key={m.id}
-                  className={cn(
-                    "flex w-full max-w-3xl mx-auto gap-4",
-                    m.role === "user" ? "justify-end" : "justify-start",
-                  )}
-                >
-                  {m.role !== "user" && (
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <Bot className="w-5 h-5 text-primary" />
-                    </div>
-                  )}
-
-                  <div className="flex flex-col gap-2 max-w-[80%]">
-                    <div
+                <div className="flex flex-col gap-2 max-w-[80%]">
+                  <div
+                    className={cn(
+                      "p-4 rounded-xl shadow-sm",
+                      m.role === "user"
+                        ? "bg-primary text-primary-foreground rounded-br-none"
+                        : "bg-muted text-foreground rounded-bl-none",
+                    )}
+                  >
+                    <p
                       className={cn(
-                        "p-4 rounded-xl shadow-sm",
+                        "text-sm leading-relaxed whitespace-pre-wrap wrap-break-word",
                         m.role === "user"
-                          ? "bg-primary text-primary-foreground rounded-br-none"
-                          : "bg-muted text-foreground rounded-bl-none",
+                          ? "text-primary-foreground opacity-90"
+                          : "",
                       )}
                     >
-                      <p
-                        className={cn(
-                          "text-sm leading-relaxed whitespace-pre-wrap wrap-break-word",
-                          m.role === "user"
-                            ? "text-primary-foreground opacity-90"
-                            : "",
-                        )}
-                      >
-                        {m.content}
-                      </p>
-                    </div>
-
-                    {sources.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        {sources.map((src: string, i: number) => (
-                          <a
-                            key={i}
-                            href={src}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-[10px] bg-muted/50 hover:bg-muted border border-border px-2 py-1 rounded-md transition-colors text-muted-foreground hover:text-foreground"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            Source {i + 1}
-                          </a>
-                        ))}
-                      </div>
-                    )}
+                      {m.content}
+                    </p>
                   </div>
-
-                  {m.role === "user" && (
-                    <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                      <User className="w-5 h-5 text-secondary-foreground" />
-                    </div>
-                  )}
                 </div>
-              );
-            })
+
+                {m.role === "user" && (
+                  <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
+                    <User className="w-5 h-5 text-secondary-foreground" />
+                  </div>
+                )}
+              </div>
+            ))
           )}
 
           {isLoading && (

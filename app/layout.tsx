@@ -8,6 +8,9 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 export const metadata: Metadata = {
   title: "Personal Intelligence App",
   description: "A RAG-based context-aware narrative engine.",
+  icons: {
+    icon: "/favicon.png",
+  },
 };
 
 import { ThemeProvider } from "@/components/theme-provider";
@@ -19,6 +22,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <link rel="preload" as="image" href="/images/logo-dark.png" />
+        <link rel="preload" as="image" href="/images/logo-light.png" />
+      </head>
       <body className={cn(
         "min-h-screen bg-background font-sans antialiased",
         inter.variable

@@ -24,6 +24,13 @@ async function main() {
         },
         lexical: {
             enabled: true
+        },
+        rerank: {
+            enabled: true,
+            service: {
+                provider: "nvidia",
+                modelName: "nvidia/llama-3.2-nv-rerankqa-1b-v2"
+            }
         }
     });
     console.log("Created successfully.");

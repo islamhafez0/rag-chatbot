@@ -1,4 +1,4 @@
-import { OpenAIStream, StreamingTextResponse, StreamData } from "ai";
+import { OpenAIStream, StreamingTextResponse } from "ai";
 import { getContext } from "@/lib/astra";
 import OpenAI from "openai";
 
@@ -10,16 +10,15 @@ const groq = new OpenAI({
 });
 
 export async function POST(req: Request) {
-  const data = new StreamData();
   try {
-    const { messages } = await req.json();
-    const latestMessage = messages[messages?.length - 1]?.content;
+    const { messages, category } = await req.json();
+    const conversation = Array.isArray(messages) ? messages : [];
+    const retrievalQuery = conversation
+      .slice(-6)
+      .map((m: { role?: string; content?: unknown }) => `${m.role}: ${String(m.content).slice(0, 2000)}`)
+      .join("\n");
 
-    const { text: docContext, sources } = await getContext(latestMessage);
-
-    if (sources.length > 0) {
-      data.append({ sources });
-    }
+    const { text: docContext } = await getContext(retrievalQuery, { category });
 
     const systemPrompt = `
       You are the "Career Brain" for Islam Hafez, an Advanced Career Assistant.
@@ -57,24 +56,19 @@ export async function POST(req: Request) {
       ],
     });
 
-    const stream = OpenAIStream(response as any, {
-      onFinal(completion) {
-        data.close();
-      },
-    });
+    const stream = OpenAIStream(
+      response as unknown as Parameters<typeof OpenAIStream>[0]
+    );
 
-    return new StreamingTextResponse(stream, {}, data);
-  } catch (error: any) {
+    return new StreamingTextResponse(stream);
+  } catch (error) {
     console.error("Error in chat route:", error);
 
-    try {
-      data.close();
-    } catch (e) { }
-
-    const status = error.status || (error.message?.includes("429") ? 429 : 500);
+    const err = error as { status?: number; message?: string };
+    const status = err.status || (err.message?.includes("429") ? 429 : 500);
     const errorMessage = status === 429
       ? "AI Rate limit reached. Please wait a minute before trying again."
-      : (error.message || "Internal Server Error");
+      : (err.message || "Internal Server Error");
 
     return new Response(
       JSON.stringify({ error: errorMessage }),
