@@ -12,7 +12,7 @@ async function main() {
     try {
         await db.dropCollection(collectionName);
         console.log("Deleted.");
-    } catch (e) {
+    } catch {
         console.log("Collection did not exist or could not be deleted.");
     }
 

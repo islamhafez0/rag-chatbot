@@ -1,5 +1,6 @@
 import { OpenAIStream, StreamingTextResponse } from "ai";
 import { getContext } from "@/lib/astra";
+import { rewriteRetrievalQuery } from "@/lib/query-rewrite";
 import OpenAI from "openai";
 
 const { GROQ_API_KEY } = process.env;
@@ -13,10 +14,8 @@ export async function POST(req: Request) {
   try {
     const { messages, category } = await req.json();
     const conversation = Array.isArray(messages) ? messages : [];
-    const retrievalQuery = conversation
-      .slice(-6)
-      .map((m: { role?: string; content?: unknown }) => `${m.role}: ${String(m.content).slice(0, 2000)}`)
-      .join("\n");
+
+    const retrievalQuery = await rewriteRetrievalQuery(conversation, groq);
 
     const { text: docContext } = await getContext(retrievalQuery, { category });
 
