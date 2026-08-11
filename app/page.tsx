@@ -2,24 +2,44 @@
 
 import { useChat } from "ai/react";
 import { Send, Bot, User } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import Image from "next/image";
 
 export default function Home() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading } =
-    useChat();
+  const emptyRetriesRef = useRef(0);
+  const { messages, input, handleInputChange, handleSubmit, isLoading, reload } =
+    useChat({
+      onFinish: (message) => {
+        if (message.role === "assistant" && !message.content.trim()) {
+          if (emptyRetriesRef.current < 2) {
+            emptyRetriesRef.current += 1;
+            reload();
+          } else {
+            emptyRetriesRef.current = 0;
+          }
+        } else {
+          emptyRetriesRef.current = 0;
+        }
+      },
+    });
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const scrollToBottom = useCallback(() => {
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({
+        behavior: isLoading ? "auto" : "smooth",
+      });
+    });
+  }, [isLoading]);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading, scrollToBottom]);
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden">
@@ -37,7 +57,7 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth no-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 no-scrollbar">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-4 opacity-50">
               <Bot className="w-12 h-12 mb-4" />
@@ -71,16 +91,30 @@ export default function Home() {
                         : "bg-muted text-foreground rounded-bl-none",
                     )}
                   >
-                    <p
-                      className={cn(
-                        "text-sm leading-relaxed whitespace-pre-wrap wrap-break-word",
-                        m.role === "user"
-                          ? "text-primary-foreground opacity-90"
-                          : "",
-                      )}
-                    >
-                      {m.content}
-                    </p>
+                    {m.role === "user" ? (
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap wrap-break-word text-primary-foreground opacity-90">
+                        {m.content}
+                      </p>
+                    ) : (
+                      <div className="markdown text-sm leading-relaxed">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            a: ({ href, children }) => (
+                              <a
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {children}
+                              </a>
+                            ),
+                          }}
+                        >
+                          {m.content}
+                        </ReactMarkdown>
+                      </div>
+                    )}
                   </div>
                 </div>
 

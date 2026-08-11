@@ -72,6 +72,7 @@ export async function generateAnswer(options: {
     temperature: TEMPERATURE,
     max_tokens: MAX_TOKENS,
     messages: toChatMessages(systemPrompt, turns),
+    ...({ thinking: { type: "disabled" } } as object),
   });
   return response.choices[0]?.message?.content?.trim() ?? "";
 }
@@ -80,8 +81,9 @@ export async function createAnswerStream(options: {
   systemPrompt: string;
   turns: ChatTurn[];
   onFirstToken?: (ttftMs: number) => void;
+  onFinal?: (completion: string) => void;
 }): Promise<ReadableStream> {
-  const { systemPrompt, turns, onFirstToken } = options;
+  const { systemPrompt, turns, onFirstToken, onFinal } = options;
 
   const start = performance.now();
   const response = await getClient().chat.completions.create({
@@ -90,6 +92,7 @@ export async function createAnswerStream(options: {
     temperature: TEMPERATURE,
     max_tokens: MAX_TOKENS,
     messages: toChatMessages(systemPrompt, turns),
+    ...({ thinking: { type: "disabled" } } as object),
   });
   let reported = false;
   return OpenAIStream(response as unknown as Parameters<typeof OpenAIStream>[0], {
@@ -99,5 +102,6 @@ export async function createAnswerStream(options: {
         onFirstToken(performance.now() - start);
       }
     },
+    onFinal,
   });
 }
