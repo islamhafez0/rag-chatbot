@@ -1,0 +1,16 @@
+process.env.ASTRA_DB_API_ENDPOINT = "https://example.apps.astra.datastax.com";
+process.env.ASTRA_DB_APPLICATION_TOKEN = "token";
+process.env.ASTRA_DB_NAMESPACE = "default_keyspace";
+process.env.ASTRA_DB_COLLECTION = "career_vectors";
+process.env.GOOGLE_API_KEY = "google-key";
+process.env.EMBEDDING_MODEL = "gemini-embedding-001";
+process.env.RETRIEVAL_LIMIT = "8";
+process.env.ROUTE_THRESHOLD = "0.35";
+process.env.ROUTE_MARGIN = "0.02";
+process.env.ROUTER = "none";
+process.env.LLM_BASE_URL = "https://api.groq.com/openai/v1";
+process.env.LLM_API_KEY = "test-key";
+process.env.LLM_MODEL = "test-model";
+process.env.LLM_MAX_TOKENS = "512";
+process.env.LLM_MAX_HISTORY_TURNS = "6";
+process.env.LLM_TEMPERATURE = "0.3";

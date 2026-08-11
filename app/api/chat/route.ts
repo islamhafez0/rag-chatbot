@@ -1,63 +1,49 @@
-import { OpenAIStream, StreamingTextResponse } from "ai";
-import { getContext } from "@/lib/astra";
-import { rewriteRetrievalQuery } from "@/lib/query-rewrite";
-import OpenAI from "openai";
+import { StreamingTextResponse } from "ai";
+import { runPipeline } from "@/lib/pipeline";
+import { buildSystemPrompt, createAnswerStream } from "@/lib/generate";
+import { envRouter } from "@/lib/env";
 
-const { GROQ_API_KEY } = process.env;
-
-const groq = new OpenAI({
-  apiKey: GROQ_API_KEY || "",
-  baseURL: "https://api.groq.com/openai/v1",
-});
+const ROUTER: "vector" | "none" = envRouter();
 
 export async function POST(req: Request) {
   try {
-    const { messages, category } = await req.json();
+    const raw = await req.text();
+    let body: { messages?: unknown; category?: unknown } = {};
+    try {
+      body = raw ? JSON.parse(raw) : {};
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    const { messages, category: requestedCategory } = body;
     const conversation = Array.isArray(messages) ? messages : [];
-
-    const retrievalQuery = await rewriteRetrievalQuery(conversation, groq);
-
-    const { text: docContext } = await getContext(retrievalQuery, { category });
-
-    const systemPrompt = `
-      You are the "Career Brain" for Islam Hafez, an Advanced Career Assistant.
-      Your goal is to provide highly accurate, detailed, and professional information about Islam's career, projects, and skills based ONLY on the provided CONTEXT.
-
-      CONTEXT SOURCE:
-      The context provided comes from structured YAML files (labeled as Career Brain). Treat these as ground truth.
-
-      RESPONSE GUIDELINES:
-      - BE SPECIFIC: Use technical names, project details, and exact achievements from the context.
-      - TONE: Professional, confident, and direct.
-      - LENGTH: Be concise but thorough. Provide enough detail to fully answer the query without fluff. If the answer requires detail (e.g., project features), provide it.
-      - NO META-TALK: Never mention you are an AI or that you are searching context. Just answer.
-      - NO HEDGING: Avoid phrases like "Based on the context..." or "It seems that...". State facts.
-
-      DATA UTILIZATION:
-      - When asked about projects, list key features and tech stacks mentioned.
-      - When asked about experience, describe the impact and specific responsibilities.
-      - If asked for a short answer, provide a 1-2 sentence punchy response followed by a natural follow-up question if applicable.
-
-      MISSING INFORMATION:
-      If the context does not contain the answer, respond exactly with:
-      "I don’t have that specific information in my knowledge base yet."
-
-      CONTEXT:
-      ${docContext}
-    `;
-
-    const response = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      stream: true,
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...messages
-      ],
+    if (conversation.length === 0) {
+      return new Response(JSON.stringify({ error: "No messages provided" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    console.log("#".repeat(20), "Conversation", "#".repeat(20));
+    console.log("Conversation:", conversation);
+    console.log("#".repeat(20), "Requested Category", "#".repeat(20));
+    console.log("Requested Category:", requestedCategory);
+    console.log("#".repeat(20), "Messages", "#".repeat(20));
+    console.log("Messages:", messages);
+    const pipeline = await runPipeline(conversation, {
+      requestedCategory:
+        typeof requestedCategory === "string" && requestedCategory ? requestedCategory : undefined,
+      router: ROUTER,
     });
 
-    const stream = OpenAIStream(
-      response as unknown as Parameters<typeof OpenAIStream>[0]
-    );
+    const stream = await createAnswerStream({
+      systemPrompt: buildSystemPrompt(pipeline.context.text),
+      turns: conversation.map((message) => ({
+        role: message.role === "assistant" ? "assistant" : "user",
+        content: String(message.content ?? ""),
+      })),
+    });
 
     return new StreamingTextResponse(stream);
   } catch (error) {
@@ -65,16 +51,14 @@ export async function POST(req: Request) {
 
     const err = error as { status?: number; message?: string };
     const status = err.status || (err.message?.includes("429") ? 429 : 500);
-    const errorMessage = status === 429
-      ? "AI Rate limit reached. Please wait a minute before trying again."
-      : (err.message || "Internal Server Error");
+    const errorMessage =
+      status === 429
+        ? "AI Rate limit reached. Please wait a minute before trying again."
+        : err.message || "Internal Server Error";
 
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        status: status,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return new Response(JSON.stringify({ error: errorMessage }), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }

@@ -5,26 +5,20 @@ import yaml from "js-yaml";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { DataAPIClient } from "@datastax/astra-db-ts";
-
-const {
-  ASTRA_DB_API_ENDPOINT,
-  ASTRA_DB_APPLICATION_TOKEN,
-  ASTRA_DB_COLLECTION,
-  GOOGLE_API_KEY,
-} = process.env;
+import { envNumber, envString } from "../lib/env";
 
 async function main() {
   const embeddings = new GoogleGenerativeAIEmbeddings({
-    apiKey: GOOGLE_API_KEY,
-    modelName: "gemini-embedding-001",
+    apiKey: envString("GOOGLE_API_KEY"),
+    modelName: envString("EMBEDDING_MODEL"),
   });
 
-  const client = new DataAPIClient(ASTRA_DB_APPLICATION_TOKEN as string);
-  const db = client.db(ASTRA_DB_API_ENDPOINT as string);
-  const collection = db.collection(ASTRA_DB_COLLECTION || "career_vectors");
+  const client = new DataAPIClient(envString("ASTRA_DB_APPLICATION_TOKEN"));
+  const db = client.db(envString("ASTRA_DB_API_ENDPOINT"));
+  const collection = db.collection(envString("ASTRA_DB_COLLECTION"));
 
   const careerBrainDir = path.join(process.cwd(), "career_brain");
-  const documents: { text: string; source: string; category: string }[] = [];
+  const documents: { text: string; source: string; category: string; type: string; title: string }[] = [];
 
   function walk(dir: string) {
     const files = fs.readdirSync(dir);
@@ -38,7 +32,9 @@ async function main() {
         documents.push({
           text: JSON.stringify(content, null, 2),
           source,
-          category: source.split(path.sep)[0]
+          category: source.split(path.sep)[0],
+          type: path.extname(file) === ".yaml" ? "yaml" : "text",
+          title: path.basename(file, path.extname(file))
         });
       }
     }
@@ -48,13 +44,18 @@ async function main() {
   console.log(`Found ${documents.length} YAML files.`);
 
   const splitter = new RecursiveCharacterTextSplitter({
-    chunkSize: 1000,
-    chunkOverlap: 200,
+    chunkSize: envNumber("CHUNK_SIZE"),
+    chunkOverlap: envNumber("CHUNK_OVERLAP"),
   });
 
   const chunks = await splitter.createDocuments(
     documents.map((d) => d.text),
-    documents.map((d) => ({ source: d.source, category: d.category }))
+    documents.map((d) => ({
+      source: d.source,
+      category: d.category,
+      type: d.type,
+      title: d.title
+    }))
   );
   console.log(`Split into ${chunks.length} chunks.`);
 
@@ -80,6 +81,8 @@ async function main() {
         text: chunk.pageContent,
         source,
         category: chunk.metadata.category,
+        type: chunk.metadata.type,
+        title: chunk.metadata.title,
         $lexical: chunk.pageContent,
         $vector: vector
       });

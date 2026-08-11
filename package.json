@@ -8,10 +8,13 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:latency": "npx tsx scripts/benchmark_latency.ts"
+    "test:latency": "npx tsx scripts/benchmark_latency.ts",
+    "eval:retrieve": "npx tsx scripts/eval/harness.ts retrieve",
+    "eval:answer": "npx tsx scripts/eval/harness.ts answer"
   },
   "dependencies": {
     "@datastax/astra-db-ts": "^2.1.2",
+    "@google/generative-ai": "^0.24.1",
     "@langchain/community": "^1.1.9",
     "@langchain/core": "^1.1.17",
     "@langchain/google-genai": "^2.1.13",

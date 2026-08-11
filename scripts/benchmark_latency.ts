@@ -1,22 +1,16 @@
 import "dotenv/config";
-import OpenAI from "openai";
-import { getContext } from "../lib/astra";
-import { rewriteRetrievalQuery } from "../lib/query-rewrite";
-
-const groq = new OpenAI({
-  apiKey: process.env.GROQ_API_KEY,
-  baseURL: "https://api.groq.com/openai/v1",
-});
+import { embedText, getContext } from "../lib/astra";
+import { buildRetrievalQuery } from "../lib/query";
+import { buildSystemPrompt, createAnswerStream, type ChatTurn } from "../lib/generate";
 
 const QUERIES = [
   "What projects has Islam built?",
   "Tell me about the RAG Career Chatbot",
   "What skills does Islam have?",
-  "TaqaTechno",
   "Which companies has Islam worked at?",
 ];
 
-const REWRITE_CONVERSATION = [
+const FOLLOW_UP_CONVERSATION: ChatTurn[] = [
   { role: "user", content: "Tell me about the RAG Career Chatbot project" },
   {
     role: "assistant",
@@ -25,60 +19,136 @@ const REWRITE_CONVERSATION = [
   { role: "user", content: "tell me more about the tech stack" },
 ];
 
-async function time(fn: () => Promise<unknown>): Promise<number> {
-  const start = performance.now();
-  await fn();
-  return performance.now() - start;
-}
-
 function median(nums: number[]): number {
   const sorted = [...nums].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
   return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
+async function time(fn: () => Promise<unknown>): Promise<number> {
+  const start = performance.now();
+  await fn();
+  return performance.now() - start;
+}
+
+interface Row {
+  label: string;
+  prepMs: number;
+  embedMs: number;
+  searchMs: number;
+  ttftMs: number;
+  llmMs: number;
+}
+
+async function drainStream(stream: ReadableStream<Uint8Array>): Promise<void> {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    decoder.decode(value, { stream: true });
+  }
+}
+
+async function measure(label: string, turns: ChatTurn[]): Promise<Row> {
+  const t0 = performance.now();
+  const prepared = buildRetrievalQuery(turns);
+  const prepMs = performance.now() - t0;
+  const query = prepared.query;
+
+  const t1 = performance.now();
+  const vector = await embedText(query);
+  const embedMs = performance.now() - t1;
+
+  const t2 = performance.now();
+  const context = await getContext(query, { vector });
+  const searchMs = performance.now() - t2;
+
+  let ttftMs = 0;
+  const t3 = performance.now();
+  const stream = await createAnswerStream({
+    systemPrompt: buildSystemPrompt(context.text),
+    turns,
+    onFirstToken: (ms) => {
+      ttftMs = ms;
+    },
+  });
+  await drainStream(stream);
+  const llmMs = performance.now() - t3;
+
+  return { label, prepMs, embedMs, searchMs, ttftMs, llmMs };
+}
+
 async function main() {
-  console.log("Warming up retrieval pipeline...");
-  await getContext(QUERIES[0]);
+  console.log("Warming up pipeline (embed + retrieval)...");
+  const warm = await embedText(QUERIES[0]);
+  await getContext(QUERIES[0], { vector: warm });
+  console.log("Warmup complete.\n");
 
-  console.log("\n=== getContext latency (embed + hybrid + rerank + fallback) ===\n");
-  const rows: { query: string; runs: number[]; medianMs: number }[] = [];
-
+  const rows: Row[] = [];
   for (const query of QUERIES) {
-    const runs: number[] = [];
+    rows.push(await measure(`"${query}"`, [{ role: "user", content: query }]));
+    console.log(`  measured: ${rows[rows.length - 1].label}`);
+  }
+  rows.push(await measure('follow-up: "tell me more about the tech stack"', FOLLOW_UP_CONVERSATION));
+  console.log(`  measured: ${rows[rows.length - 1].label}`);
+
+  console.log("\n=== Latency breakdown per turn ===\n");
+  for (const r of rows) {
+    const total = r.prepMs + r.embedMs + r.searchMs + r.llmMs;
+    console.log(r.label);
+    console.log(`  query:             ${r.prepMs.toFixed(0).padStart(5)}ms`);
+    console.log(`  embedding:         ${r.embedMs.toFixed(0).padStart(5)}ms`);
+    console.log(`  vector search:     ${r.searchMs.toFixed(0).padStart(5)}ms`);
+    console.log(`  LLM first token:   ${r.ttftMs.toFixed(0).padStart(5)}ms`);
+    console.log(`  LLM generation:    ${(r.llmMs - r.ttftMs).toFixed(0).padStart(5)}ms`);
+    console.log(`  LLM total:         ${r.llmMs.toFixed(0).padStart(5)}ms`);
+    console.log(`  ${"-".repeat(20)}`);
+    console.log(`  TOTAL:             ${total.toFixed(0).padStart(5)}ms`);
+    console.log("");
+  }
+
+  const stages: [string, (r: Row) => number][] = [
+    ["query", (r) => r.prepMs],
+    ["embedding", (r) => r.embedMs],
+    ["vector search", (r) => r.searchMs],
+    ["LLM first token", (r) => r.ttftMs],
+    ["LLM total", (r) => r.llmMs],
+  ];
+
+  console.log("=== Stage medians across all turns ===\n");
+  for (const [name, get] of stages) {
+    console.log(`  ${name.padEnd(14)} ${median(rows.map(get)).toFixed(0).padStart(5)}ms`);
+  }
+  const medTotal = median(rows.map((r) => r.prepMs + r.embedMs + r.searchMs + r.llmMs));
+  console.log(`  ${"-".repeat(20)}`);
+  console.log(`  ${"TOTAL".padEnd(14)} ${medTotal.toFixed(0).padStart(5)}ms`);
+  console.log("");
+
+  console.log("=== Search strategy latency (vector-only vs hybrid+rerank) ===\n");
+  const searchRows: { query: string; vectorMs: number[]; hybridMs: number[] }[] = [];
+  for (const query of QUERIES) {
+    const vectorMs: number[] = [];
+    const hybridMs: number[] = [];
+    const vector = await embedText(query);
     for (let i = 0; i < 3; i++) {
-      runs.push(await time(() => getContext(query)));
+      vectorMs.push(await time(() => getContext(query, { vector, search: "vector" })));
+      hybridMs.push(await time(() => getContext(query, { vector, search: "hybrid" })));
     }
-    rows.push({ query, runs, medianMs: median(runs) });
-  }
-
-  for (const row of rows) {
+    searchRows.push({ query, vectorMs, hybridMs });
+    console.log(`  "${query}"`);
     console.log(
-      `- "${row.query}"\n    runs: ${row.runs.map((r) => `${r.toFixed(0)}ms`).join(", ")}   median: ${row.medianMs.toFixed(0)}ms`
+      `    vector-only:  ${vectorMs.map((m) => `${m.toFixed(0)}ms`).join(", ")}   median: ${median(vectorMs).toFixed(0)}ms`
+    );
+    console.log(
+      `    hybrid+rerank: ${hybridMs.map((m) => `${m.toFixed(0)}ms`).join(", ")}   median: ${median(hybridMs).toFixed(0)}ms`
     );
   }
-
-  const allRuns = rows.flatMap((r) => r.runs).sort((a, b) => a - b);
-  const p50 = median(allRuns);
-  const p95 = allRuns[Math.ceil(0.95 * allRuns.length) - 1];
+  const allVector = searchRows.flatMap((r) => r.vectorMs);
+  const allHybrid = searchRows.flatMap((r) => r.hybridMs);
   console.log(
-    `\nOverall (${allRuns.length} samples) -> p50: ${p50.toFixed(0)}ms   p95: ${p95.toFixed(0)}ms`
+    `\n  vector-only p50: ${median(allVector).toFixed(0)}ms    hybrid+rerank p50: ${median(allHybrid).toFixed(0)}ms`
   );
-
-  console.log("\n=== Query rewrite LLM latency (follow-up scenario) ===\n");
-  const rewriteRuns: number[] = [];
-  for (let i = 0; i < 3; i++) {
-    rewriteRuns.push(
-      await time(() => rewriteRetrievalQuery(REWRITE_CONVERSATION, groq))
-    );
-  }
-  console.log(
-    `runs: ${rewriteRuns.map((r) => `${r.toFixed(0)}ms`).join(", ")}   median: ${median(rewriteRuns).toFixed(0)}ms`
-  );
-
-  console.log("\n=== Full turn estimate (rewrite + getContext) ===\n");
-  const turnMs = median(rewriteRuns) + p50;
-  console.log(`median rewrite (${median(rewriteRuns).toFixed(0)}ms) + retrieval p50 (${p50.toFixed(0)}ms) = ${turnMs.toFixed(0)}ms before the LLM streams a reply`);
 }
 
 main().catch((error) => {

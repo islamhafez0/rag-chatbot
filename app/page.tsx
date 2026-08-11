@@ -37,7 +37,7 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth no-scrollbar">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-4 opacity-50">
               <Bot className="w-12 h-12 mb-4" />
@@ -117,14 +117,21 @@ export default function Home() {
         <div className="p-4 bg-background border-t border-border sticky bottom-0 w-full">
           <form
             onSubmit={handleSubmit}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit(e);
+              }
+            }}
             className="max-w-3xl mx-auto relative flex items-center gap-2"
           >
-            <input
+            <textarea
               autoFocus
-              className="flex-1 p-3 pl-4 pr-12 rounded-xl border border-input bg-muted/50 focus:bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all placeholder:text-muted-foreground/70"
+              className="field-sizing-content resize-none no-scrollbar max-h-36 flex-1 p-3 pl-4 pr-12 rounded-xl border border-input bg-muted/50 focus:bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all placeholder:text-muted-foreground/70"
               value={input}
               onChange={handleInputChange}
               placeholder="Ask a question..."
+              name="chat-input-area"
             />
             <button
               type="submit"
