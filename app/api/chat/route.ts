@@ -36,12 +36,6 @@ export async function POST(req: Request) {
         headers: { "Content-Type": "application/json" },
       });
     }
-    console.log("#".repeat(20), "Conversation", "#".repeat(20));
-    console.log("Conversation:", conversation);
-    console.log("#".repeat(20), "Requested Category", "#".repeat(20));
-    console.log("Requested Category:", requestedCategory);
-    console.log("#".repeat(20), "Messages", "#".repeat(20));
-    console.log("Messages:", messages);
     const pipeline = await runPipeline(conversation, {
       requestedCategory:
         typeof requestedCategory === "string" && requestedCategory ? requestedCategory : undefined,

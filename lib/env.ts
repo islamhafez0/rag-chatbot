@@ -35,7 +35,7 @@ export function validateEnv(): void {
   if (parts.length) {
     throw new Error(
       `Required environment variables are not configured (${parts.join("; ")}).\n` +
-        `Fill them in your .env file — the application will not function without them.`
+      `Fill them in your .env file — the application will not function without them.`
     );
   }
 }

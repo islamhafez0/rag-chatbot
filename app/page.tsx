@@ -1,8 +1,8 @@
 "use client";
 
 import { useChat } from "ai/react";
-import { Send, Bot, User } from "lucide-react";
-import { useCallback, useEffect, useRef } from "react";
+import { Send, Bot, User, AlertTriangle, X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "@/lib/utils";
@@ -12,8 +12,9 @@ import Image from "next/image";
 
 export default function Home() {
   const emptyRetriesRef = useRef(0);
-  const { messages, input, handleInputChange, handleSubmit, isLoading, reload } =
+  const { messages, input, handleInputChange, handleSubmit, isLoading, reload, error } =
     useChat({
+      keepLastMessageOnError: true,
       onFinish: (message) => {
         if (message.role === "assistant" && !message.content.trim()) {
           if (emptyRetriesRef.current < 2) {
@@ -28,6 +29,20 @@ export default function Home() {
       },
     });
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [errorDismissed, setErrorDismissed] = useState(false);
+
+  const errorMessage =
+    error instanceof Error
+      ? (() => {
+        try {
+          const parsed = JSON.parse(error.message);
+          if (parsed && typeof parsed.error === "string") return parsed.error;
+        } catch {
+          // fall through to raw message
+        }
+        return error.message || "Something went wrong with that request.";
+      })()
+      : "Something went wrong with that request.";
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
@@ -63,8 +78,7 @@ export default function Home() {
               <Bot className="w-12 h-12 mb-4" />
               <h2 className="text-2xl font-semibold">Ready to assist.</h2>
               <p className="max-w-md text-sm text-muted-foreground">
-                Ask me about my professional experience, specific projects, or
-                decision-making philosophy - Islam Hafez.
+                Ask about Islam’s experience, projects, technical decisions, or the thinking behind what he builds.
               </p>
             </div>
           ) : (
@@ -145,15 +159,50 @@ export default function Home() {
               </span>
             </div>
           )}
+
+          {error && !errorDismissed && (
+            <div className="flex w-full max-w-3xl mx-auto gap-4 justify-start">
+              <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+                <Bot className="w-5 h-5 text-destructive" />
+              </div>
+              <div className="flex flex-col gap-2 max-w-[80%]">
+                <div className="flex items-start gap-2 p-4 rounded-xl shadow-sm bg-destructive/10 text-destructive rounded-bl-none border border-destructive/30">
+                  <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium">
+                      Something went wrong with that request.
+                    </p>
+                    {errorMessage && (
+                      <p className="text-xs text-destructive/80 wrap-break-word">
+                        {errorMessage}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setErrorDismissed(true)}
+                    className="shrink-0 rounded-md p-1 hover:bg-destructive/20 transition-colors"
+                    aria-label="Dismiss error"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
 
         <div className="p-4 bg-background border-t border-border sticky bottom-0 w-full">
           <form
-            onSubmit={handleSubmit}
+            onSubmit={(e) => {
+              setErrorDismissed(false);
+              handleSubmit(e);
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
+                setErrorDismissed(false);
                 handleSubmit(e);
               }
             }}
