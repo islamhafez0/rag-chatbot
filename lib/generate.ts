@@ -7,6 +7,11 @@ validateEnv();
 const MAX_TOKENS = envNumber("LLM_MAX_TOKENS");
 const MAX_HISTORY_TURNS = envNumber("LLM_MAX_HISTORY_TURNS");
 const TEMPERATURE = envNumber("LLM_TEMPERATURE");
+const IS_OPENCODE_ZEN = /opencode/i.test(envString("LLM_BASE_URL"));
+
+function thinkingParam(): object {
+  return IS_OPENCODE_ZEN ? { thinking: { type: "disabled" } } : {};
+}
 
 function getClient(): OpenAI {
   return new OpenAI({
@@ -45,6 +50,11 @@ DATA UTILIZATION:
 - When asked about experience, describe the impact and specific responsibilities.
 - If asked for a short answer, provide a 1-2 sentence punchy response.
 
+IMAGES:
+- ONLY include images (as markdown ![alt](src) using the exact src from the CONTEXT) when the user explicitly asks for a photo, picture, or image of Islam.
+- Otherwise, never include images in your answer — even if the CONTEXT contains image entries.
+- Never invent URLs. Only use src values present in the CONTEXT.
+
 MISSING INFORMATION:
 If the context does not contain the answer, respond exactly with:
 "I don't have that specific information in my knowledge base yet."
@@ -72,7 +82,7 @@ export async function generateAnswer(options: {
     temperature: TEMPERATURE,
     max_tokens: MAX_TOKENS,
     messages: toChatMessages(systemPrompt, turns),
-    ...({ thinking: { type: "disabled" } } as object),
+    ...thinkingParam(),
   });
   return response.choices[0]?.message?.content?.trim() ?? "";
 }
@@ -92,7 +102,7 @@ export async function createAnswerStream(options: {
     temperature: TEMPERATURE,
     max_tokens: MAX_TOKENS,
     messages: toChatMessages(systemPrompt, turns),
-    ...({ thinking: { type: "disabled" } } as object),
+    ...thinkingParam(),
   });
   let reported = false;
   return OpenAIStream(response as unknown as Parameters<typeof OpenAIStream>[0], {

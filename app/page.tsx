@@ -123,6 +123,20 @@ export default function Home() {
                                 {children}
                               </a>
                             ),
+                            img: ({ src, alt }) => (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={src}
+                                alt={alt}
+                                className="w-45 h-70 object-cover rounded-lg border border-border shadow-sm"
+                                loading="lazy"
+                              />
+                            ),
+                            p: ({ children }) => (
+                              <p className="has-[img]:flex has-[img]:flex-wrap has-[img]:gap-2">
+                                {children}
+                              </p>
+                            ),
                           }}
                         >
                           {m.content}

@@ -1,0 +1,132 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[margin=0.75in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{fontawesome5}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage[scaled=0.92]{helvet}
+\usepackage{ragged2e}
+
+\renewcommand{\familydefault}{\sfdefault}
+
+\definecolor{accent}{HTML}{1F4E79}
+\definecolor{lightrule}{HTML}{9FB6C9}
+
+\hypersetup{hidelinks, pdfauthor={Islam Hafez}}
+
+\urlstyle{same}
+
+\titleformat{\section}
+  {\color{accent}\large\bfseries}
+  {}{0em}{\MakeUppercase}
+  [{\color{lightrule}\titlerule[0.8pt]}]
+\titlespacing*{\section}{0pt}{14pt}{6pt}
+
+\setlist[itemize]{leftmargin=1.15em, itemsep=1.5pt, topsep=2pt, parsep=0pt}
+
+\pagestyle{empty}
+
+\newcommand{\job}[4]{%
+  \noindent\textbf{#1}\hfill\textbf{\color{accent}#2}\par
+  \vspace{1pt}
+  \textit{#3}\hfill\textit{#4}\par
+  \vspace{3pt}
+}
+
+\begin{document}
+
+% ============================= HEADER =============================
+\begin{center}
+  {\LARGE\bfseries\color{accent} Islam Hafez\par}
+  \vspace{2pt}
+  {\large Frontend Developer \textbar\ React, Next.js, TypeScript\par}
+  \vspace{6pt}
+  {\small
+  \faEnvelope\ islamhafez806@gmail.com \quad
+  \faGlobe\ \href{https://islamhafez.vercel.app/}{islamhafez.vercel.app} \quad
+  \faGithub\ \href{https://github.com/islamhafez0}{github.com/islamhafez0} \quad
+  \faMapMarker\ Cairo, Egypt
+  }
+\end{center}
+
+\vspace{2pt}
+{\color{lightrule}\hrule height 1pt}
+
+% ============================= SUMMARY =============================
+\section*{Professional Summary}
+Frontend Developer with \textbf{2+ years of experience} building high-performance,
+pixel-perfect web applications with \textbf{React.js}, \textbf{Next.js}, and
+\textbf{TypeScript}. Proven track record delivering responsive UI/UX from Figma
+designs, integrating 60+ RESTful and GraphQL APIs, and optimizing web performance.
+Open to new opportunities.
+
+% ============================= SKILLS =============================
+\section*{Core Skills}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}>{\bfseries}p{\dimexpr0.22\textwidth-6pt}p{\dimexpr0.78\textwidth-6pt}@{}}
+Frontend & React.js (Expert), Next.js (Expert), TypeScript (Advanced), JavaScript (Advanced), HTML5 \& CSS3, Tailwind CSS, Framer Motion, Shadcn UI \\
+Backend & Node.js, Firebase, GraphQL, RESTful APIs, PostgreSQL \\
+Tools & Git \& GitHub, Vercel, Docker, VS Code \\
+Soft & UI/UX Implementation, Web Performance Optimization, Responsive Web Design, Problem Solving, Technical Communication \\
+\end{tabular}
+
+% ============================= EXPERIENCE =============================
+\section*{Professional Experience}
+
+\job{Frontend Odoo Developer}{TaqaTechno}{Full-time}{Oct 2024 -- Present}
+\begin{itemize}
+  \item Building full-stack web solutions on the Odoo ERP, bridging frontend design with backend logic.
+  \item Translating Figma designs into pixel-perfect Odoo themes and fully custom websites.
+  \item Integrating dynamic, server-rendered data into the frontend with OWL (Odoo Web Library).
+\end{itemize}
+
+\job{Frontend Angular Developer}{TaqaTechno}{Contract -- Fintech}{Jun 2024 -- Sep 2024}
+\begin{itemize}
+  \item Developed core features for two enterprise fintech applications: sponsored user management, device tracking, wallets and top-ups, and SMS-based payments with OTP verification.
+  \item Built and maintained modular Angular 17 apps with NgRx, integrating 60+ RESTful APIs with robust error handling.
+\end{itemize}
+
+\job{Frontend Developer (Freelance)}{Self-Employed}{Freelance}{Aug 2024 -- Present}
+\begin{itemize}
+  \item Built advanced full-stack React applications and custom WordPress themes from scratch.
+  \item Delivered a secure quiz app with OTP-protected access and session validation.
+  \item Shipped e-commerce frontends, personal portfolios, and UI-heavy apps using React, Next.js, and Firebase.
+\end{itemize}
+
+\job{Frontend React Developer Intern}{Code Alpha}{Internship}{Apr 2024 -- Aug 2024}
+\begin{itemize}
+  \item Turned wireframes into clean, interactive components with React, HTML, and CSS.
+  \item Integrated RESTful and GraphQL APIs with a focus on performance, reusability, and accessibility.
+\end{itemize}
+
+% ============================= PROJECTS =============================
+\section*{Selected Projects}
+
+\job{RAG Career Chatbot}{Solo Project}{Next.js \textbar\ LangChain \textbar\ Astra DB \textbar\ Groq}{Present}
+\begin{itemize}
+  \item Personal AI assistant answering career questions via Retrieval-Augmented Generation with vector search and streaming responses.
+\end{itemize}
+
+\job{Gemini AI Chat Clone}{Solo Project}{React \textbar\ TypeScript \textbar\ Google GenAI \textbar\ Firebase}{}
+\begin{itemize}
+  \item AI chat interface with markdown + code highlighting, RTL support, and secure Firebase authentication.
+\end{itemize}
+
+\job{YouTube Clone}{Solo Project}{React \textbar\ YouTube Data API \textbar\ Tailwind CSS}{}
+\begin{itemize}
+  \item Video streaming platform with search, playback, channel pages, and responsive UI.
+\end{itemize}
+
+% ============================= EDUCATION =============================
+\section*{Education}
+\textbf{Damanhour University}\hfill\textit{Graduate}
+
+% ============================= LANGUAGES =============================
+\section*{Languages}
+English (Professional) \textbullet\ Arabic (Native)
+
+\end{document}

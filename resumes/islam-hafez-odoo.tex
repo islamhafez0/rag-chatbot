@@ -1,0 +1,132 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[margin=0.75in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{fontawesome5}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage[scaled=0.92]{helvet}
+
+\renewcommand{\familydefault}{\sfdefault}
+
+\definecolor{accent}{HTML}{0E7C4A}
+\definecolor{lightrule}{HTML}{8FC7AB}
+
+\hypersetup{hidelinks, pdfauthor={Islam Hafez}}
+
+\urlstyle{same}
+
+\titleformat{\section}
+  {\color{accent}\large\bfseries}
+  {}{0em}{\MakeUppercase}
+  [{\color{lightrule}\titlerule[0.8pt]}]
+\titlespacing*{\section}{0pt}{14pt}{6pt}
+
+\setlist[itemize]{leftmargin=1.15em, itemsep=1.5pt, topsep=2pt, parsep=0pt}
+
+\pagestyle{empty}
+
+\newcommand{\job}[4]{%
+  \noindent\textbf{#1}\hfill\textbf{\color{accent}#2}\par
+  \vspace{1pt}
+  \textit{#3}\hfill\textit{#4}\par
+  \vspace{3pt}
+}
+
+\begin{document}
+
+% ============================= HEADER =============================
+\begin{center}
+  {\LARGE\bfseries\color{accent} Islam Hafez\par}
+  \vspace{2pt}
+  {\large Odoo Developer \textbar\ ERP Customization \textbar\ Python \& OWL\par}
+  \vspace{6pt}
+  {\small
+  \faEnvelope\ islamhafez806@gmail.com \quad
+  \faGlobe\ \href{https://islamhafez.vercel.app/}{islamhafez.vercel.app} \quad
+  \faGithub\ \href{https://github.com/islamhafez0}{github.com/islamhafez0} \quad
+  \faMapMarker\ Cairo, Egypt
+  }
+\end{center}
+
+\vspace{2pt}
+{\color{lightrule}\hrule height 1pt}
+
+% ============================= SUMMARY =============================
+\section*{Professional Summary}
+Odoo Frontend Developer specializing in \textbf{Odoo ERP customization} and
+full-stack web solutions. Combines \textbf{Python} module and API development with
+frontend integration using \textbf{OWL (Odoo Web Library)}, turning Figma designs
+into production-ready Odoo themes and custom websites that fit naturally into the
+Odoo ecosystem. Backed by 2+ years of professional frontend experience with React
+and Next.js.
+
+% ============================= SKILLS =============================
+\section*{Core Skills}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}>{\bfseries}p{\dimexpr0.22\textwidth-6pt}p{\dimexpr0.78\textwidth-6pt}@{}}
+Odoo ERP & Customization, OWL (Odoo Web Library), Custom Themes, Websites, Module Development \\
+Backend & Python, RESTful APIs, PostgreSQL, Node.js \\
+Frontend & JavaScript, HTML5 \& CSS3, Tailwind CSS, Figma, React.js, Next.js \\
+Tools & Git \& GitHub, Docker, VS Code \\
+Soft & Client Communication, UI/UX Implementation, Problem Solving, Web Performance \\
+\end{tabular}
+
+% ============================= EXPERIENCE =============================
+\section*{Professional Experience}
+
+\job{Odoo Frontend Developer}{TaqaTechno}{Full-time}{Oct 2024 -- Present}
+\begin{itemize}
+  \item Building full-stack web solutions tailored to business needs using the Odoo ERP system.
+  \item Developing custom modules and APIs with Python and integrating them into the frontend with OWL, focusing on dynamic server-rendered data and performance.
+  \item Turning Figma designs into pixel-perfect Odoo themes and building fully custom websites within the Odoo ecosystem.
+  \item Bridging frontend design and backend logic to deliver a smooth user experience.
+\end{itemize}
+
+\job{Frontend Angular Developer}{TaqaTechno}{Contract -- Fintech}{Jun 2024 -- Sep 2024}
+\begin{itemize}
+  \item Built features for two enterprise fintech applications including sponsored user management, device tracking, wallets and top-ups, and SMS-based payments with OTP verification.
+  \item Integrated 60+ RESTful APIs into modular Angular 17 applications with NgRx state management.
+\end{itemize}
+
+\job{Frontend Developer (Freelance)}{Self-Employed}{Freelance}{Aug 2024 -- Present}
+\begin{itemize}
+  \item Delivered full-stack React applications, custom WordPress themes, and e-commerce frontends for diverse clients.
+  \item Built a secure quiz app with OTP-protected access and session validation.
+\end{itemize}
+
+\job{Frontend React Developer Intern}{Code Alpha}{Internship}{Apr 2024 -- Aug 2024}
+\begin{itemize}
+  \item Converted wireframes into clean, interactive, accessible components and integrated RESTful and GraphQL APIs.
+\end{itemize}
+
+% ============================= PROJECTS =============================
+\section*{Selected Projects}
+
+\job{RAG Career Chatbot}{Solo Project}{Next.js \textbar\ LangChain \textbar\ Astra DB \textbar\ Groq}{Present}
+\begin{itemize}
+  \item AI assistant answering career questions via Retrieval-Augmented Generation with vector search and streaming responses -- demonstrates full-stack and AI integration skills.
+\end{itemize}
+
+\job{Gemini AI Chat Clone}{Solo Project}{React \textbar\ TypeScript \textbar\ Google GenAI \textbar\ Firebase}{}
+\begin{itemize}
+  \item AI chat interface with markdown/code highlighting, RTL support, and secure Firebase authentication.
+\end{itemize}
+
+\job{YouTube Clone}{Solo Project}{React \textbar\ YouTube Data API \textbar\ Tailwind CSS}{}
+\begin{itemize}
+  \item Video streaming platform with search, playback, channel pages, and fully responsive UI.
+\end{itemize}
+
+% ============================= EDUCATION =============================
+\section*{Education}
+\textbf{Damanhour University}\hfill\textit{Graduate}
+
+% ============================= LANGUAGES =============================
+\section*{Languages}
+English (Professional) \textbullet\ Arabic (Native)
+
+\end{document}
