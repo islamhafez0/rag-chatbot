@@ -3,9 +3,7 @@ function isSet(value: string | undefined): boolean {
 }
 
 const REQUIRED_STRINGS = [
-  "ASTRA_DB_API_ENDPOINT",
-  "ASTRA_DB_APPLICATION_TOKEN",
-  "ASTRA_DB_NAMESPACE",
+  "DATABASE_URL",
   "ASTRA_DB_COLLECTION",
   "GOOGLE_API_KEY",
   "EMBEDDING_MODEL",

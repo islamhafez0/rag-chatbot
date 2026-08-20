@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:latency": "npx tsx scripts/benchmark_latency.ts",
+    "ingest:pg": "npx tsx scripts/ingest_pgvector.ts",
     "eval:retrieve": "npx tsx scripts/eval/harness.ts retrieve",
     "eval:answer": "npx tsx scripts/eval/harness.ts answer"
   },
@@ -44,6 +45,7 @@
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.19.30",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.2.10",
     "@types/react-dom": "^19.2.3",
     "eslint": "^9",

@@ -1,5 +1,5 @@
 import { buildRetrievalQuery, routeByVectors, type ChatMessage, type RouteResult } from "./query";
-import { embedText, getContext, getCategoryVectors } from "./astra";
+import { embedText, getContext, getCategoryVectors } from "../database/pgvector";
 import { envRouter } from "./env";
 
 export type RouterMode = "vector" | "none";
