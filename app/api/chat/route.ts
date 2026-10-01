@@ -3,6 +3,8 @@ import { runPipeline } from "@/lib/pipeline";
 import { buildSystemPrompt, createAnswerStream } from "@/lib/generate";
 import { envRouter } from "@/lib/env";
 
+export const dynamic = "force-dynamic";
+
 const ROUTER: "vector" | "none" = envRouter();
 
 const c = {

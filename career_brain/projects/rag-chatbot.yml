@@ -1,17 +1,36 @@
 name: RAG Career Chatbot
-description: An AI-powered personal assistant that answers questions about Islam Hafez's career using Retrieval-Augmented Generation (RAG).
+description: An AI-powered personal assistant that answers questions about Islam Hafez's career using Retrieval-Augmented Generation over a structured YAML knowledge base, answering in first person.
 role: Solo Developer
-tech_stack:
-  - Next.js
-  - LangChain
-  - Astra DB (Vector Database)
-  - Google Generative AI (Embeddings)
-  - Groq (LLM)
-  - Tailwind CSS
-  - TypeScript
-key_features:
-  - Vector search for highly relevant context retrieval.
-  - Streaming chat responses for a dynamic user experience.
-  - Aggressively structured data (YAML) for maximum answer accuracy.
-  - Self-attack verification pass to kill weak or hallucinated claims.
+built_by: Islam Hafez, entirely solo — he designed the architecture, curated the knowledge base, built the backend and frontend, and wrote the evaluation suite.
 status: Current / Active Development
+tech_stack:
+  - Next.js App Router with React 19 and TypeScript
+  - Tailwind CSS v4
+  - Vercel AI SDK for streaming chat
+  - PostgreSQL with pgvector for vector storage and cosine similarity search
+  - Google Generative AI gemini-embedding-001 embeddings, 3072 dimensions
+  - OpenAI-compatible LLM providers, currently deepseek-v4-flash hosted by OpenRouter, swappable via env vars with no code change
+  - LangChain used only for the embeddings client and text splitting
+pipeline:
+  ingestion: career_brain YAML files are chunked at 1000 characters with 200 overlap and upserted into pgvector; re-ingesting replaces the old chunks.
+  query_prep: deterministic follow-up question merging, sub-millisecond, deliberately no LLM query rewriting because it proved to hallucinate and add latency.
+  retrieval: top 8 chunks by cosine similarity using an ivfflat index, plus a lexical tsvector full-text path for exact-name precision.
+  generation: streams tokens to the UI while keeping the last 12 conversation turns as history.
+performance:
+  model_context_window_tokens: about 128K, depending on the active model
+  injected_context_tokens: about 2000 (top 8 chunks of 1000 characters each)
+  max_output_tokens_per_response: 4096 at temperature 0.3
+  measured_latency:
+    query_prep_ms: under 1
+    embedding_ms: about 310
+    vector_retrieval_p50_ms: about 240
+quality_and_reliability:
+  evaluation: 23-scenario golden eval suite covering retrieval routing and answer key facts, scoring 23/23 on answers.
+  hallucination_guardrails:
+    - system prompt treats the knowledge base as ground truth and forces an exact fallback sentence when the context lacks the answer
+    - empty model responses are automatically retried up to 2 times
+    - architecture decisions like unfiltered top-8 retrieval were made from eval measurements, not guesses
+ux_features:
+  - real-time token streaming
+  - full markdown rendering including tables with horizontal scroll
+  - dismissible error states with automatic recovery

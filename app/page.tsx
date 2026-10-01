@@ -1,14 +1,96 @@
 "use client";
 
 import { useChat } from "ai/react";
+import type { Message } from "ai";
 import { Send, Bot, User, AlertTriangle, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import { cn } from "@/lib/utils";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import Image from "next/image";
+
+const Markdown = memo(function Markdown({ content }: { content: string }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeRaw]}
+      components={{
+        a: ({ href, children }) => (
+          <a href={href} target="_blank" rel="noopener noreferrer">
+            {children}
+          </a>
+        ),
+        img: ({ src, alt }) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={src}
+            alt={alt}
+            className="w-45 h-70 object-cover rounded-lg border border-border shadow-sm"
+            loading="lazy"
+          />
+        ),
+        table: ({ children }) => (
+          <div className="table-shell my-2 flex w-full max-w-3xl overflow-x-auto rounded-lg border border-border">
+            <table className="w-max min-w-full shrink-0 text-sm">{children}</table>
+          </div>
+        ),
+        p: ({ children }) => (
+          <p className="has-[img]:flex has-[img]:flex-wrap has-[img]:gap-2">{children}</p>
+        ),
+      }}
+    >
+      {content}
+    </ReactMarkdown>
+  );
+});
+
+const ChatMessage = memo(function ChatMessage({ m }: { m: Message }) {
+  return (
+    <div
+      className={cn(
+        "flex w-full max-w-3xl mx-auto gap-4",
+        "has-[table]:max-w-none has-[table]:ml-[max(0px,calc((100%-48rem)/2))] has-[table]:w-[min(72rem,100%,calc((100%+40rem)/2))]",
+        m.role === "user" ? "justify-end" : "justify-start",
+      )}
+    >
+      {m.role !== "user" && (
+        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+          <Bot className="w-5 h-5 text-primary" />
+        </div>
+      )}
+
+      <div className="flex flex-col gap-2 min-w-0 max-w-[80%] has-[table]:max-w-full has-[table]:flex-1">
+        <div
+          className={cn(
+            "p-4 rounded-xl shadow-sm",
+            m.role === "user"
+              ? "bg-primary text-primary-foreground rounded-br-none"
+              : "bg-muted text-foreground rounded-bl-none",
+          )}
+        >
+          {m.role === "user" ? (
+            <p className="text-sm leading-relaxed whitespace-pre-wrap wrap-break-word text-primary-foreground opacity-90">
+              {m.content}
+            </p>
+          ) : (
+            <div className="markdown text-sm leading-relaxed min-w-0 has-[table]:[&>*:not(.table-shell)]:max-w-[40rem]">
+              <Markdown content={m.content} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {m.role === "user" && (
+        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
+          <User className="w-5 h-5 text-secondary-foreground" />
+        </div>
+      )}
+    </div>
+  );
+});
 
 export default function Home() {
   const emptyRetriesRef = useRef(0);
@@ -72,7 +154,7 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 no-scrollbar">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 space-y-6 no-scrollbar">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-4 opacity-50">
               <Bot className="w-12 h-12 mb-4" />
@@ -82,77 +164,7 @@ export default function Home() {
               </p>
             </div>
           ) : (
-            messages.map((m) => (
-              <div
-                key={m.id}
-                className={cn(
-                  "flex w-full max-w-3xl mx-auto gap-4",
-                  m.role === "user" ? "justify-end" : "justify-start",
-                )}
-              >
-                {m.role !== "user" && (
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <Bot className="w-5 h-5 text-primary" />
-                  </div>
-                )}
-
-                <div className="flex flex-col gap-2 max-w-[80%]">
-                  <div
-                    className={cn(
-                      "p-4 rounded-xl shadow-sm",
-                      m.role === "user"
-                        ? "bg-primary text-primary-foreground rounded-br-none"
-                        : "bg-muted text-foreground rounded-bl-none",
-                    )}
-                  >
-                    {m.role === "user" ? (
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap wrap-break-word text-primary-foreground opacity-90">
-                        {m.content}
-                      </p>
-                    ) : (
-                      <div className="markdown text-sm leading-relaxed">
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          components={{
-                            a: ({ href, children }) => (
-                              <a
-                                href={href}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                {children}
-                              </a>
-                            ),
-                            img: ({ src, alt }) => (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={src}
-                                alt={alt}
-                                className="w-45 h-70 object-cover rounded-lg border border-border shadow-sm"
-                                loading="lazy"
-                              />
-                            ),
-                            p: ({ children }) => (
-                              <p className="has-[img]:flex has-[img]:flex-wrap has-[img]:gap-2">
-                                {children}
-                              </p>
-                            ),
-                          }}
-                        >
-                          {m.content}
-                        </ReactMarkdown>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {m.role === "user" && (
-                  <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                    <User className="w-5 h-5 text-secondary-foreground" />
-                  </div>
-                )}
-              </div>
-            ))
+            messages.map((m) => <ChatMessage key={m.id} m={m} />)
           )}
 
           {isLoading && (
