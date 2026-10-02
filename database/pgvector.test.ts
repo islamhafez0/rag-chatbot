@@ -201,6 +201,57 @@ describe("ensureTable index handling (3072-dim)", () => {
     expect(dropCalls).toEqual([]);
   });
 });
+describe("per-source diversity cap", () => {
+  it("caps chunks per source and backfills from lower ranks", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (typeof sql === "string" && sql.includes("pg_indexes")) {
+        return { rows: [] };
+      }
+      if (typeof sql === "string" && sql.includes("CREATE")) {
+        return tableSetupRows();
+      }
+      return {
+        rows: [
+          { text: "p1", source: "photos.yml" },
+          { text: "p2", source: "photos.yml" },
+          { text: "p3", source: "photos.yml" },
+          { text: "p4", source: "photos.yml" },
+          { text: "role", source: "roles/previous.yml" },
+          { text: "skill", source: "facts/skills.yml" },
+        ],
+      };
+    });
+
+    const { getContext } = await loadPgvector();
+    const result = await getContext("query", { limit: 4, vector: [0.1, 0.2, 0.3] });
+
+    // 3 photo chunks max, 4th slot backfilled with the roles chunk.
+    expect(result.text).toBe("p1\n\np2\n\np3\n\nrole");
+    expect(result.sources).toEqual(["photos.yml", "roles/previous.yml"]);
+  });
+
+  it("fetches extra candidates to allow backfill", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (typeof sql === "string" && sql.includes("pg_indexes")) {
+        return { rows: [] };
+      }
+      if (typeof sql === "string" && sql.includes("CREATE")) {
+        return tableSetupRows();
+      }
+      return { rows: [] };
+    });
+
+    const { getContext } = await loadPgvector();
+    await getContext("query", { limit: 4, vector: [0.1, 0.2, 0.3] });
+
+    const dataCall = mockQuery.mock.calls.find(
+      ([sql]) => typeof sql === "string" && sql.includes("LIMIT $2")
+    );
+    // fetchLimit = limit * 3
+    expect(dataCall?.[1]).toContain(12);
+  });
+});
+
 describe("hybrid SQL shape (no dupes, deterministic)", () => {
   it("fuses with FULL OUTER JOIN, single score, id tiebreak", async () => {
     mockQuery.mockImplementation(async (sql: string) => {

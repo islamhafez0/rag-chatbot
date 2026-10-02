@@ -4,7 +4,7 @@ import path from "path";
 import { buildRetrievalQuery } from "../../lib/query";
 import { embedText, getContext } from "../../database/pgvector";
 import { buildSystemPrompt, generateAnswer, type ChatTurn } from "../../lib/generate";
-import { SCENARIOS, type Scenario } from "./scenarios";
+import { SCENARIOS, recallAtK, type Scenario } from "./scenarios";
 
 const CACHE_DIR = path.join(process.cwd(), "scripts", "eval", ".cache");
 const SCORES_CACHE = path.join(CACHE_DIR, "scores.json");
@@ -154,10 +154,48 @@ async function runRetrievePhase() {
     rows.push({ ...data, id: scenario.id });
   }
 
-  console.log("Top sources per scenario (unfiltered retrieval, limit 8):\n");
-  for (const row of rows) {
-    console.log(`- ${row.id} (merged=${row.merged}): ${row.topSources.join(", ")}`);
+  console.log("Retrieval metrics (unfiltered, limit 8, file-level sources):\n");
+  let sumR1 = 0;
+  let sumR3 = 0;
+  let sumR8 = 0;
+  let counted = 0;
+  let gateFailed = false;
+  for (const scenario of SCENARIOS) {
+    const row = rows.find((r) => r.id === scenario.id);
+    if (!row) continue;
+    if (scenario.expectedSources.length === 0) {
+      console.log(
+        `- ${scenario.id.padEnd(24)} expected=(absent KB) retrieved=${row.topSources.length} docs (decline checked in answer phase)`
+      );
+      continue;
+    }
+    const r1 = recallAtK(scenario.expectedSources, row.topSources, 1);
+    const r3 = recallAtK(scenario.expectedSources, row.topSources, 3);
+    const r8 = recallAtK(scenario.expectedSources, row.topSources, 8);
+    sumR1 += r1;
+    sumR3 += r3;
+    sumR8 += r8;
+    counted++;
+    const missing = scenario.expectedSources.filter((s) => !row.topSources.includes(s));
+    const hit = missing.length < scenario.expectedSources.length;
+    if (!hit) gateFailed = true;
+    console.log(
+      `- ${scenario.id.padEnd(24)} R@1=${r1.toFixed(2)} R@3=${r3.toFixed(2)} R@8=${r8.toFixed(2)}` +
+        (missing.length ? `  MISSING: ${missing.join(", ")}` : "  ok")
+    );
   }
+
+  if (counted > 0) {
+    console.log(
+      `\nMean over ${counted} KB-backed scenarios: R@1=${(sumR1 / counted).toFixed(3)}` +
+        ` R@3=${(sumR3 / counted).toFixed(3)} R@8=${(sumR8 / counted).toFixed(3)}`
+    );
+  }
+  if (gateFailed) {
+    console.error("\nGATE FAILED: at least one scenario retrieved zero relevant docs in top-8.");
+    process.exit(1);
+  }
+  console.log("\nGate passed: every KB-backed scenario retrieved at least one relevant doc.");
 }
 
 main().catch((error) => {

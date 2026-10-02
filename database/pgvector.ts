@@ -86,8 +86,30 @@ export async function getContext(
 
   const queryVector = vector ?? (await embeddings.embedQuery(query));
 
+  // Diversity guard: a file with many chunks (photos, long projects) must
+  // not crowd single-chunk files out of the top-k. We fetch 3x candidates
+  // and keep at most MAX_PER_SOURCE chunks per source, preserving rank
+  // order. Measured on the 23-scenario eval: mean R@8 0.804 -> 0.904 and
+  // every KB-backed scenario retrieves >= 1 relevant doc (issue #10).
+  const MAX_PER_SOURCE = 3;
+  const fetchLimit = limit * 3;
+
+  const applyCap = (candidates: StoredDoc[]): StoredDoc[] => {
+    const perSource = new Map<string, number>();
+    const picked: StoredDoc[] = [];
+    for (const doc of candidates) {
+      if (picked.length >= limit) break;
+      const key = doc.source ?? "";
+      const used = perSource.get(key) ?? 0;
+      if (used >= MAX_PER_SOURCE) continue;
+      perSource.set(key, used + 1);
+      picked.push(doc);
+    }
+    return picked;
+  };
+
   const buildQuery = (categoryFilter?: string): { sql: string; params: unknown[] } => {
-    const params: unknown[] = [JSON.stringify(queryVector), limit];
+    const params: unknown[] = [JSON.stringify(queryVector), fetchLimit];
     let where = "";
     if (categoryFilter) {
       params.push(categoryFilter);
@@ -97,11 +119,12 @@ export async function getContext(
     let sql: string;
 
     if (search === "hybrid") {
-      // RRF fusion of vector + lexical rankings. Semantics of $2 (limit):
-      // each retriever contributes up to `limit` candidates, and the fused
-      // list returns at most `limit` rows. FULL OUTER JOIN on id yields
-      // exactly one row per document (no UNION ALL duplication, no score
-      // inflation); the id tiebreak keeps ordering deterministic.
+      // RRF fusion of vector + lexical rankings. Semantics of $2
+      // (fetchLimit): each retriever contributes up to `fetchLimit`
+      // candidates; the fused list is trimmed to `limit` in code with the
+      // per-source diversity cap. FULL OUTER JOIN on id yields exactly one
+      // row per document (no UNION ALL duplication, no score inflation);
+      // the id tiebreak keeps ordering deterministic.
       params.push(query);
       const tsIdx = params.length;
       sql = `
@@ -140,14 +163,20 @@ export async function getContext(
     return { sql, params };
   };
 
-  let { sql, params } = buildQuery(category);
-  let { rows } = await pool.query<StoredDoc>(sql, params);
+  const runCapped = async (
+    categoryFilter?: string
+  ): Promise<StoredDoc[]> => {
+    const { sql, params } = buildQuery(categoryFilter);
+    const { rows } = await pool.query<StoredDoc>(sql, params);
+    return applyCap(rows);
+  };
+
+  let rows = await runCapped(category);
 
   // Parity with the retired Astra path: a category filter that yields
   // too few docs retries unfiltered rather than starving the LLM.
   if (category && rows.length < 2) {
-    ({ sql, params } = buildQuery(undefined));
-    ({ rows } = await pool.query<StoredDoc>(sql, params));
+    rows = await runCapped(undefined);
   }
 
   return {

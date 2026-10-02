@@ -51,11 +51,13 @@ async function main() {
       if (fs.statSync(full).isDirectory()) {
         walk(full);
       } else if (file.endsWith(".yml") || file.endsWith(".yaml")) {
-        const source = path.relative(careerBrainDir, full);
+        // POSIX separators: source paths must compare equal across OSes
+        // (eval expected-sets, category derivation, UI display).
+        const source = path.relative(careerBrainDir, full).split(path.sep).join("/");
         docs.push({
           raw: fs.readFileSync(full, "utf8"),
           source,
-          category: source.split(path.sep)[0],
+          category: source.split("/")[0],
           type: path.extname(file) === ".yaml" ? "yaml" : "text",
           title: path.basename(file, path.extname(file)),
         });
