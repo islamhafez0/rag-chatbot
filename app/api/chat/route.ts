@@ -74,24 +74,49 @@ export async function POST(req: Request) {
           (sum, m) => sum + m.content.length,
           0,
         );
-        // Structured, machine-readable log (no ANSI colors): safe for
-        // production collectors. No credentials or message content logged.
-        console.log(
-          JSON.stringify({
-            event: "chat_request",
-            totalMs: Math.round(totalMs),
-            prepMs: Math.round(pipeline.timings.prepMs),
-            retrieveMs: Math.round(pipeline.timings.retrieveMs),
-            llmTTFTMs: Math.round(ttftMs),
-            llmGenMs: Math.round(genMs),
-            turns: conversation.length,
-            historyChars,
-            contextChars: pipeline.context.text.length,
-            sources: pipeline.context.sources.length,
-            category: pipeline.category ?? "none",
-            model: process.env.LLM_MODEL ?? "unknown",
-          })
-        );
+        // No credentials or message content logged, either way.
+        const fields = {
+          totalMs: Math.round(totalMs),
+          prepMs: Math.round(pipeline.timings.prepMs),
+          retrieveMs: Math.round(pipeline.timings.retrieveMs),
+          llmTTFTMs: Math.round(ttftMs),
+          llmGenMs: Math.round(genMs),
+          turns: conversation.length,
+          historyChars,
+          contextChars: pipeline.context.text.length,
+          sources: pipeline.context.sources.length,
+          category: pipeline.category ?? "none",
+          model: process.env.LLM_MODEL ?? "unknown",
+        };
+        if (process.env.NODE_ENV === "production") {
+          // Structured, machine-readable: safe for log collectors.
+          console.log(JSON.stringify({ event: "chat_request", ...fields }));
+        } else {
+          const c = {
+            reset: "\x1b[0m",
+            bold: "\x1b[1m",
+            dim: "\x1b[2m",
+            cyan: "\x1b[36m",
+            yellow: "\x1b[33m",
+            green: "\x1b[32m",
+            magenta: "\x1b[35m",
+          };
+          console.log(`
+${c.cyan}${c.bold}[timing]${c.reset}
+
+${c.cyan}total:${c.reset}        ${c.yellow}${fields.totalMs}ms${c.reset} ${c.dim}(request start to generation end)${c.reset}
+${c.cyan}prep:${c.reset}         ${c.yellow}${fields.prepMs}ms${c.reset} ${c.dim}(query build/rewrite)${c.reset}
+${c.cyan}retrieve:${c.reset}     ${c.yellow}${fields.retrieveMs}ms${c.reset} ${c.dim}(embedding + vector search)${c.reset}
+${c.cyan}llmTTFT:${c.reset}      ${c.yellow}${fields.llmTTFTMs}ms${c.reset} ${c.dim}(time to first token)${c.reset}
+${c.cyan}llmGen:${c.reset}       ${c.yellow}${fields.llmGenMs}ms${c.reset} ${c.dim}(total generation)${c.reset}
+${c.cyan}turns:${c.reset}        ${c.green}${fields.turns}${c.reset} ${c.dim}(messages in conversation)${c.reset}
+${c.cyan}historyChars:${c.reset} ${c.green}${fields.historyChars}${c.reset} ${c.dim}(total history chars sent to LLM)${c.reset}
+${c.cyan}contextChars:${c.reset} ${c.green}${fields.contextChars}${c.reset} ${c.dim}(retrieved context chars)${c.reset}
+${c.cyan}sources:${c.reset}      ${c.green}${fields.sources}${c.reset} ${c.dim}(retrieved chunks)${c.reset}
+${c.cyan}category:${c.reset}     ${c.magenta}${fields.category}${c.reset} ${c.dim}(explicit category filter)${c.reset}
+${c.cyan}model:${c.reset}        ${c.magenta}${fields.model}${c.reset} ${c.dim}(LLM model)${c.reset}
+`);
+        }
       },
     });
 
