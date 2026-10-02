@@ -12,23 +12,22 @@ tech_stack:
   - OpenAI-compatible LLM providers, currently deepseek-v4-flash hosted by OpenRouter, swappable via env vars with no code change
   - LangChain used only for the embeddings client and text splitting
 pipeline:
-  ingestion: career_brain YAML files are chunked at 1000 characters with 200 overlap and upserted into pgvector; re-ingesting replaces the old chunks.
+  ingestion: career_brain YAML files are chunked by logical entry (one role, project, photo, or answer per chunk with field labels preserved) and inserted into pgvector; re-ingesting rebuilds the table.
   query_prep: deterministic follow-up question merging, sub-millisecond, deliberately no LLM query rewriting because it proved to hallucinate and add latency.
-  retrieval: top 8 chunks by cosine similarity using an ivfflat index, plus a lexical tsvector full-text path for exact-name precision.
-  generation: streams tokens to the UI while keeping the last 12 conversation turns as history.
+  retrieval: top 8 chunks by cosine similarity using exact sequential scan (pgvector ANN indexes cap at 2000 dimensions; embeddings are 3072), plus an opt-in lexical tsvector path fused with reciprocal rank fusion. At most 3 chunks per source file keep one file from crowding the top 8.
+  generation: streams tokens to the UI while keeping the last few conversation turns as history (LLM_MAX_HISTORY_TURNS).
 performance:
   model_context_window_tokens: about 128K, depending on the active model
-  injected_context_tokens: about 2000 (top 8 chunks of 1000 characters each)
+  injected_context_tokens: about 2000 (top 8 chunks)
   max_output_tokens_per_response: 4096 at temperature 0.3
   measured_latency:
     query_prep_ms: under 1
-    embedding_ms: about 310
-    vector_retrieval_p50_ms: about 240
+    embedding_ms: about 380
+    vector_retrieval_ms: about 2 (exact scan on this corpus size)
 quality_and_reliability:
-  evaluation: 23-scenario golden eval suite covering retrieval routing and answer key facts, scoring 23/23 on answers.
+  evaluation: 24-scenario golden eval suite covering retrieval recall (Recall@1/@3/@8 with a hit-rate gate) and answer key facts, plus decline checks for unknown topics.
   hallucination_guardrails:
     - system prompt treats the knowledge base as ground truth and forces an exact fallback sentence when the context lacks the answer
-    - empty model responses are automatically retried up to 2 times
     - architecture decisions like unfiltered top-8 retrieval were made from eval measurements, not guesses
 ux_features:
   - real-time token streaming
