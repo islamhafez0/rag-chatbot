@@ -104,37 +104,35 @@ export async function getContext(
     let sql: string;
 
     if (search === "hybrid") {
-      // combine cosine similarity with lexical rank (rrf — reciprocal rank fusion)
+      // RRF fusion of vector + lexical rankings. Semantics of $2 (limit):
+      // each retriever contributes up to `limit` candidates, and the fused
+      // list returns at most `limit` rows. FULL OUTER JOIN on id yields
+      // exactly one row per document (no UNION ALL duplication, no score
+      // inflation); the id tiebreak keeps ordering deterministic.
       params.push(query);
       const tsIdx = params.length;
       sql = `
       WITH vector_rank AS (
-        SELECT id, text, source,
-               row_number() OVER (ORDER BY embedding <=> $1::vector) AS rn
+        SELECT id, (1.0 / (60 + row_number() OVER (ORDER BY embedding <=> $1::vector))) AS rrf
         FROM ${collectionName}
         ${where}
         ORDER BY embedding <=> $1::vector
         LIMIT $2
       ),
       lexical_rank AS (
-        SELECT id, text, source,
-               row_number() OVER (ORDER BY ts_rank_cd(lexical, plainto_tsquery('english', $${tsIdx})) DESC) AS rn
+        SELECT id, (1.0 / (60 + row_number() OVER (ORDER BY ts_rank_cd(lexical, plainto_tsquery('english', $${tsIdx})) DESC))) AS rrf
         FROM ${collectionName}
         ${where}
         ORDER BY ts_rank_cd(lexical, plainto_tsquery('english', $${tsIdx})) DESC
         LIMIT $2
+      ),
+      combined AS (
+        SELECT id, COALESCE(v.rrf, 0) + COALESCE(l.rrf, 0) AS score
+        FROM vector_rank v FULL OUTER JOIN lexical_rank l USING (id)
       )
-      SELECT COALESCE(v.text, l.text) AS text,
-             COALESCE(v.source, l.source) AS source
-      FROM (
-        SELECT id, text, source, 1.0 / (60 + rn) AS rrf FROM vector_rank
-        UNION ALL
-        SELECT id, text, source, 1.0 / (60 + rn) AS rrf FROM lexical_rank
-      ) combined
-      LEFT JOIN vector_rank v ON combined.id = v.id
-      LEFT JOIN lexical_rank l ON combined.id = l.id
-      GROUP BY COALESCE(v.text, l.text), COALESCE(v.source, l.source)
-      ORDER BY sum(combined.rrf) DESC
+      SELECT t.text, t.source
+      FROM combined JOIN ${collectionName} t ON t.id = combined.id
+      ORDER BY combined.score DESC, combined.id ASC
       LIMIT $2
     `;
     } else {

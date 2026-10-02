@@ -201,6 +201,36 @@ describe("ensureTable index handling (3072-dim)", () => {
     expect(dropCalls).toEqual([]);
   });
 });
+describe("hybrid SQL shape (no dupes, deterministic)", () => {
+  it("fuses with FULL OUTER JOIN, single score, id tiebreak", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (typeof sql === "string" && sql.includes("pg_indexes")) {
+        return { rows: [] };
+      }
+      if (typeof sql === "string" && sql.includes("CREATE")) {
+        return tableSetupRows();
+      }
+      return { rows: [{ text: "a", source: "s.yml" }, { text: "b", source: "s.yml" }] };
+    });
+
+    const { getContext } = await loadPgvector();
+    await getContext("rag chatbot", {
+      search: "hybrid",
+      limit: 3,
+      vector: [0.1, 0.2, 0.3],
+    });
+
+    const hybridCall = mockQuery.mock.calls.find(
+      ([sql]) => typeof sql === "string" && sql.includes("combined")
+    );
+    const sql = String(hybridCall?.[0] ?? "");
+    expect(sql).toContain("FULL OUTER JOIN");
+    expect(sql).toContain("USING (id)");
+    expect(sql).not.toContain("UNION ALL");
+    expect(sql).toContain("combined.id ASC");
+  });
+});
+
 describe("getCategoryVectors", () => {
   it("groups documents by category", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
