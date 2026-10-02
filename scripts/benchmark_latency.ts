@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { embedText, getContext } from "../lib/astra";
+import { embedText, getContext } from "../database/pgvector";
 import { buildRetrievalQuery } from "../lib/query";
 import { buildSystemPrompt, createAnswerStream, type ChatTurn } from "../lib/generate";
 

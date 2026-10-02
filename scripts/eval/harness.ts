@@ -2,7 +2,7 @@ import "dotenv/config";
 import fs from "fs";
 import path from "path";
 import { buildRetrievalQuery } from "../../lib/query";
-import { embedText, getContext, getCategoryVectors } from "../../lib/astra";
+import { embedText, getContext, getCategoryVectors } from "../../database/pgvector";
 import { buildSystemPrompt, generateAnswer, type ChatTurn } from "../../lib/generate";
 import { SCENARIOS, type Scenario } from "./scenarios";
 
