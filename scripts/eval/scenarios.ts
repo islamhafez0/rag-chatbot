@@ -57,6 +57,8 @@ export const SCENARIOS: Scenario[] = [
     messages: [{ role: "user", content: "Who is Islam Hafez?" }] },
   { id: "facts-education", label: "facts", expectedSources: ["facts/profile.yml"], keyFacts: ["Damanhour"],
     messages: [{ role: "user", content: "What is his education background?" }] },
+  { id: "facts-hobbies", label: "unsupported", expectedSources: [], emptyKnowledge: true, note: "nothing in the KB covers hobbies",
+    messages: [{ role: "user", content: "What does Islam do for fun outside work?" }] },
 
   { id: "skills-tech", label: "skills->facts", expectedSources: ["facts/skills.yml"], keyFacts: ["React", "Next.js", "TypeScript"], note: "skills.yml lives under facts/",
     messages: [{ role: "user", content: "What technologies does he know?" }] },
