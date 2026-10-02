@@ -79,7 +79,7 @@ export const SCENARIOS: Scenario[] = [
   { id: "offtopic-capital", label: "off-topic", expectedSources: [], emptyKnowledge: true,
     messages: [{ role: "user", content: "what is the capital of France?" }] },
 
-  { id: "multiturn-and", label: "degenerate and", expectedSources: ["projects/rag-chatbot.yml"], keyFacts: ["Astra DB"],
+  { id: "multiturn-and", label: "degenerate and", expectedSources: ["projects/rag-chatbot.yml"], keyFacts: ["pgvector"],
     messages: [
       { role: "user", content: "Tell me about the RAG Career Chatbot" },
       { role: "assistant", content: "It is a RAG chatbot for his career built with Next.js and LangChain." },
