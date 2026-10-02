@@ -28,6 +28,7 @@ describe("buildSystemPrompt", () => {
 
   it("restricts images to explicit requests with exact src", () => {
     expect(prompt).toContain("Never invent URLs");
+    expect(prompt).toContain("NO blank lines between them");
   });
 
   it("injects the retrieved context", () => {
