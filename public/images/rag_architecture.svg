@@ -38,8 +38,8 @@
   <!-- Database (Shared) -->
   <path d="M 400 200 C 400 190 480 190 480 200 L 480 240 C 480 250 400 250 400 240 Z" fill="#1e293b" stroke="#8b5cf6" stroke-width="2" />
   <ellipse cx="440" cy="200" rx="40" ry="10" fill="none" stroke="#8b5cf6" stroke-width="2" />
-  <text x="440" y="225" class="text">Astra DB</text>
-  <text x="440" y="260" class="label">(Vector Store)</text>
+  <text x="440" y="225" class="text">pgvector</text>
+  <text x="440" y="260" class="label">(PostgreSQL vector store)</text>
 
   <!-- Runtime Section -->
   <text x="600" y="40" class="title">Runtime / Retrieval</text>
@@ -64,8 +64,8 @@
   <line x1="530" y1="325" x2="580" y2="325" class="arrow" />
 
   <rect x="580" y="280" width="120" height="90" class="box" stroke="#f43f5e" />
-  <text x="640" y="315" class="text">Groq LLM</text>
-  <text x="640" y="345" class="label">(Augmented Gen)</text>
+  <text x="640" y="315" class="text">LLM</text>
+  <text x="640" y="345" class="label">(OpenAI-compatible)</text>
 
   <line x1="700" y1="325" x2="750" y2="325" class="arrow" />
 

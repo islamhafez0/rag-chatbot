@@ -125,7 +125,7 @@ async function main() {
   console.log(`  ${"TOTAL".padEnd(14)} ${medTotal.toFixed(0).padStart(5)}ms`);
   console.log("");
 
-  console.log("=== Search strategy latency (vector-only vs hybrid+rerank) ===\n");
+  console.log("=== Search strategy latency (vector-only vs hybrid RRF) ===\n");
   const searchRows: { query: string; vectorMs: number[]; hybridMs: number[] }[] = [];
   for (const query of QUERIES) {
     const vectorMs: number[] = [];
@@ -141,13 +141,13 @@ async function main() {
       `    vector-only:  ${vectorMs.map((m) => `${m.toFixed(0)}ms`).join(", ")}   median: ${median(vectorMs).toFixed(0)}ms`
     );
     console.log(
-      `    hybrid+rerank: ${hybridMs.map((m) => `${m.toFixed(0)}ms`).join(", ")}   median: ${median(hybridMs).toFixed(0)}ms`
+      `    hybrid RRF: ${hybridMs.map((m) => `${m.toFixed(0)}ms`).join(", ")}   median: ${median(hybridMs).toFixed(0)}ms`
     );
   }
   const allVector = searchRows.flatMap((r) => r.vectorMs);
   const allHybrid = searchRows.flatMap((r) => r.hybridMs);
   console.log(
-    `\n  vector-only p50: ${median(allVector).toFixed(0)}ms    hybrid+rerank p50: ${median(allHybrid).toFixed(0)}ms`
+    `\n  vector-only p50: ${median(allVector).toFixed(0)}ms    hybrid RRF p50: ${median(allHybrid).toFixed(0)}ms`
   );
 }
 

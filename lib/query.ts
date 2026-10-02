@@ -98,5 +98,5 @@ export function buildRetrievalQuery(messages: ChatMessage[]): PreparedQuery {
 // NOTE: centroid-based category routing was removed (see issue #9).
 // Mean-cosine centroids scored ~65% routing accuracy on this corpus while
 // adding an embedding + full-table scan per turn, and unfiltered top-k
-// retrieval matched or beat it on answers (23/23). Retrieval runs
-// unfiltered; callers may still pass an explicit category.
+// retrieval matched or beat it on answers. Retrieval runs unfiltered;
+// callers may still pass an explicit category.
