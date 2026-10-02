@@ -1,6 +1,5 @@
 import { Pool } from "pg";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
-import type { CategoryVectors } from "../lib/query";
 import { envNumber, envString, validateEnv } from "../lib/env";
 
 validateEnv();
@@ -11,12 +10,6 @@ const defaultLimit = envNumber("RETRIEVAL_LIMIT");
 const pool = new Pool({ connectionString: envString("DATABASE_URL") });
 
 const VECTOR_DIM = 3072;
-
-function parseVector(raw: unknown): number[] {
-  if (Array.isArray(raw)) return raw as number[];
-  if (typeof raw === "string") return raw.slice(1, -1).split(",").map(Number);
-  return [];
-}
 
 const embeddings = new GoogleGenerativeAIEmbeddings({
   apiKey: envString("GOOGLE_API_KEY"),
@@ -161,38 +154,4 @@ export async function getContext(
     text: rows.map((r) => r.text).join("\n\n"),
     sources: Array.from(new Set(rows.map((r) => r.source).filter(Boolean))) as string[],
   };
-}
-
-let categoryVectorsPromise: Promise<CategoryVectors[]> | null = null;
-
-export function getCategoryVectors(): Promise<CategoryVectors[]> {
-  if (!categoryVectorsPromise) {
-    categoryVectorsPromise = ensureTable()
-      .then(() =>
-        pool.query<{ category: string; embedding: unknown }>(
-          `SELECT category, embedding::text AS embedding
-           FROM ${collectionName}
-           WHERE category IS NOT NULL`,
-        ),
-      )
-      .then(({ rows }) => {
-        const byCategory = new Map<string, number[][]>();
-        for (const row of rows) {
-          const vec = parseVector(row.embedding);
-          if (vec.length === 0) continue;
-          const vectors = byCategory.get(row.category) ?? [];
-          vectors.push(vec);
-          byCategory.set(row.category, vectors);
-        }
-        return Array.from(byCategory, ([category, vectors]) => ({
-          category,
-          vectors,
-        }));
-      })
-      .catch((error) => {
-        categoryVectorsPromise = null;
-        throw error;
-      });
-  }
-  return categoryVectorsPromise;
 }

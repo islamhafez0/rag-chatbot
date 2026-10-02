@@ -230,34 +230,3 @@ describe("hybrid SQL shape (no dupes, deterministic)", () => {
     expect(sql).toContain("combined.id ASC");
   });
 });
-
-describe("getCategoryVectors", () => {
-  it("groups documents by category", async () => {
-    mockQuery.mockImplementation(async (sql: string) => {
-      if (typeof sql === "string" && sql.includes("SELECT category")) {
-        return {
-          rows: [
-            { category: "roles", embedding: "[1,0]" },
-            { category: "roles", embedding: "[0.9,0]" },
-            { category: "projects", embedding: "[0,1]" },
-          ],
-        };
-      }
-      if (typeof sql === "string" && sql.includes("pg_indexes")) {
-        return { rows: [] };
-      }
-      if (typeof sql === "string" && (sql.includes("CREATE") || sql.includes("count(*)"))) {
-        return tableSetupRows();
-      }
-      return { rows: [] };
-    });
-
-    const { getCategoryVectors } = await loadPgvector();
-    const result = await getCategoryVectors();
-
-    expect(result).toEqual([
-      { category: "roles", vectors: [[1, 0], [0.9, 0]] },
-      { category: "projects", vectors: [[0, 1]] },
-    ]);
-  });
-});

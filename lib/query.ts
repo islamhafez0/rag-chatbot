@@ -65,63 +65,8 @@ export function buildRetrievalQuery(messages: ChatMessage[]): PreparedQuery {
 
   return { query: last, routeText: last, merged: false };
 }
-
-export function cosine(a: number[], b: number[]): number {
-  let dot = 0;
-  let na = 0;
-  let nb = 0;
-  for (let i = 0; i < a.length; i++) {
-    dot += a[i] * b[i];
-    na += a[i] * a[i];
-    nb += b[i] * b[i];
-  }
-  if (na === 0 || nb === 0) return 0;
-  return dot / (Math.sqrt(na) * Math.sqrt(nb));
-}
-
-export interface CategoryVectors {
-  category: string;
-  vectors: number[][];
-}
-
-export interface RouteResult {
-  category: string | null;
-  score: number;
-  runnerUp: number;
-}
-
-import { envNumber, validateEnv } from "./env";
-
-validateEnv();
-
-const DEFAULT_ROUTE_THRESHOLD = envNumber("ROUTE_THRESHOLD");
-const DEFAULT_ROUTE_MARGIN = envNumber("ROUTE_MARGIN");
-
-export function routeByVectors(
-  queryVector: number[],
-  categories: CategoryVectors[],
-  opts: { threshold?: number; margin?: number } = {}
-): RouteResult {
-  const { threshold = DEFAULT_ROUTE_THRESHOLD, margin = DEFAULT_ROUTE_MARGIN } = opts;
-
-  let best: { category: string; score: number } | null = null;
-  let runnerUp = 0;
-
-  for (const { category, vectors } of categories) {
-    if (vectors.length === 0) continue;
-    const score =
-      vectors.reduce((sum, v) => sum + cosine(queryVector, v), 0) / vectors.length;
-    if (best === null || score > best.score) {
-      runnerUp = best ? best.score : 0;
-      best = { category, score };
-    } else if (score > runnerUp) {
-      runnerUp = score;
-    }
-  }
-
-  if (!best) return { category: null, score: 0, runnerUp: 0 };
-  if (best.score >= threshold && best.score - runnerUp >= margin) {
-    return { category: best.category, score: best.score, runnerUp };
-  }
-  return { category: null, score: best.score, runnerUp };
-}
+// NOTE: centroid-based category routing was removed (see issue #9).
+// Mean-cosine centroids scored ~65% routing accuracy on this corpus while
+// adding an embedding + full-table scan per turn, and unfiltered top-k
+// retrieval matched or beat it on answers (23/23). Retrieval runs
+// unfiltered; callers may still pass an explicit category.
