@@ -39,6 +39,9 @@ beforeEach(() => {
 describe("getContext (pgvector runtime)", () => {
   it("returns text and sources from vector search results", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
+      if (typeof sql === "string" && sql.includes("pg_indexes")) {
+        return { rows: [] };
+      }
       if (typeof sql === "string" && (sql.includes("CREATE") || sql.includes("count(*)"))) {
         return tableSetupRows();
       }
@@ -59,6 +62,9 @@ describe("getContext (pgvector runtime)", () => {
 
   it("deduplicates sources", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
+      if (typeof sql === "string" && sql.includes("pg_indexes")) {
+        return { rows: [] };
+      }
       if (typeof sql === "string" && (sql.includes("CREATE") || sql.includes("count(*)"))) {
         return tableSetupRows();
       }
@@ -72,6 +78,9 @@ describe("getContext (pgvector runtime)", () => {
 
   it("applies the category filter", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
+      if (typeof sql === "string" && sql.includes("pg_indexes")) {
+        return { rows: [] };
+      }
       if (typeof sql === "string" && (sql.includes("CREATE") || sql.includes("count(*)"))) {
         return tableSetupRows();
       }
@@ -91,6 +100,9 @@ describe("getContext (pgvector runtime)", () => {
   it("retries without the category filter when it returns too few results", async () => {
     const dataCalls: unknown[][] = [];
     mockQuery.mockImplementation(async (sql: string, params?: unknown[]) => {
+      if (typeof sql === "string" && sql.includes("pg_indexes")) {
+        return { rows: [] };
+      }
       if (typeof sql === "string" && (sql.includes("CREATE") || sql.includes("count(*)"))) {
         return tableSetupRows();
       }
@@ -114,6 +126,81 @@ describe("getContext (pgvector runtime)", () => {
   });
 });
 
+describe("ensureTable index handling (3072-dim)", () => {
+  function baseMock(docRows: { text: string; source: string }[]) {
+    return async (sql: string) => {
+      if (typeof sql === "string" && sql.includes("pg_indexes")) {
+        return { rows: [] };
+      }
+      if (typeof sql === "string" && sql.includes("CREATE")) {
+        return tableSetupRows();
+      }
+      if (typeof sql === "string" && sql.includes("LIMIT $2")) {
+        return { rows: docRows };
+      }
+      return { rows: [] };
+    };
+  }
+
+  it("never creates an ANN index on the 3072-dim column", async () => {
+    mockQuery.mockImplementation(
+      baseMock([{ text: "a", source: "s.yml" }, { text: "b", source: "s.yml" }])
+    );
+
+    const { getContext } = await loadPgvector();
+    await getContext("query", { vector: [0.1, 0.2, 0.3] });
+
+    const indexCalls = mockQuery.mock.calls.filter(
+      ([sql]) => typeof sql === "string" && /ivfflat|hnsw/i.test(sql)
+    );
+    expect(indexCalls).toEqual([]);
+  });
+
+  it("drops a legacy ivfflat index left by earlier revisions", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (typeof sql === "string" && sql.includes("pg_indexes")) {
+        return {
+          rows: [{ indexdef: "CREATE INDEX idx_career_vectors_embedding ON career_vectors USING ivfflat (embedding vector_cosine_ops)" }],
+        };
+      }
+      if (typeof sql === "string" && sql.includes("CREATE")) {
+        return tableSetupRows();
+      }
+      if (typeof sql === "string" && sql.includes("LIMIT $2")) {
+        return { rows: [{ text: "a", source: "s.yml" }, { text: "b", source: "s.yml" }] };
+      }
+      return { rows: [] };
+    });
+
+    const { getContext } = await loadPgvector();
+    await getContext("query", { vector: [0.1, 0.2, 0.3] });
+
+    const dropCalls = mockQuery.mock.calls.filter(
+      ([sql]) => typeof sql === "string" && sql.includes("DROP INDEX")
+    );
+    expect(dropCalls.length).toBe(1);
+    expect(dropCalls[0][0]).toContain("idx_career_vectors_embedding");
+  });
+
+  it("keeps a non-ivfflat index untouched", async () => {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (typeof sql === "string" && sql.includes("pg_indexes")) {
+        return {
+          rows: [{ indexdef: "CREATE INDEX idx_career_vectors_embedding ON career_vectors USING hnsw (embedding vector_cosine_ops)" }],
+        };
+      }
+      return baseMock([{ text: "a", source: "s.yml" }, { text: "b", source: "s.yml" }])(sql);
+    });
+
+    const { getContext } = await loadPgvector();
+    await getContext("query", { vector: [0.1, 0.2, 0.3] });
+
+    const dropCalls = mockQuery.mock.calls.filter(
+      ([sql]) => typeof sql === "string" && sql.includes("DROP INDEX")
+    );
+    expect(dropCalls).toEqual([]);
+  });
+});
 describe("getCategoryVectors", () => {
   it("groups documents by category", async () => {
     mockQuery.mockImplementation(async (sql: string) => {
@@ -125,6 +212,9 @@ describe("getCategoryVectors", () => {
             { category: "projects", embedding: "[0,1]" },
           ],
         };
+      }
+      if (typeof sql === "string" && sql.includes("pg_indexes")) {
+        return { rows: [] };
       }
       if (typeof sql === "string" && (sql.includes("CREATE") || sql.includes("count(*)"))) {
         return tableSetupRows();

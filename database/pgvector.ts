@@ -44,16 +44,18 @@ async function ensureTable(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_${collectionName}_lexical
       ON ${collectionName} USING gin (lexical);
   `);
-  // ivfflat requires at least some rows to build; skip index creation on empty table
-  const { rows } = await pool.query<{ cnt: string }>(
-    `SELECT count(*)::text AS cnt FROM ${collectionName}`,
+  // NOTE: stock pgvector ANN indexes (ivfflat, hnsw) hard-cap at 2000
+  // dimensions (IVFFLAT_MAX_DIM / HNSW_MAX_DIM in pgvector source), but
+  // gemini-embedding-001 emits 3072. Creating either index on this column
+  // fails, so retrieval uses exact sequential scan — which is also faster
+  // and exact at this corpus size. Revisit with halfvec + HNSW if the
+  // corpus ever grows past a few thousand chunks.
+  // Migration: drop the legacy ivfflat index from earlier revisions.
+  const { rows: existing } = await pool.query<{ indexdef: string }>(
+    `SELECT indexdef FROM pg_indexes WHERE indexname = 'idx_${collectionName}_embedding'`,
   );
-  if (Number(rows[0].cnt) >= 100) {
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_${collectionName}_embedding
-        ON ${collectionName} USING ivfflat (embedding vector_cosine_ops)
-        WITH (lists = 100);
-    `);
+  if (existing.length > 0 && (existing[0].indexdef ?? "").includes("ivfflat")) {
+    await pool.query(`DROP INDEX idx_${collectionName}_embedding;`);
   }
   initialised = true;
 }

@@ -90,17 +90,10 @@ async function main() {
     process.stdout.write(`\rIngested ${inserted}/${chunks.length}`);
   }
 
-  // build index after data is loaded
-  console.log("\nBuilding ivfflat index...");
-  try {
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_${COLLECTION}_embedding
-        ON ${COLLECTION} USING ivfflat (embedding vector_cosine_ops)
-        WITH (lists = 100);
-    `);
-  } catch {
-    console.log("Index build skipped (need ≥100 rows for ivfflat). Using sequential scan.");
-  }
+  // NOTE: no ANN index on purpose — stock pgvector ivfflat/hnsw cap at
+  // 2000 dims, this column is vector(3072). DROP TABLE above already
+  // removed any legacy index; retrieval uses exact sequential scan.
+  // Revisit with halfvec + HNSW past a few thousand chunks.
 
   console.log("Done.");
   await pool.end();
