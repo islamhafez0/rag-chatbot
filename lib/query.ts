@@ -35,15 +35,33 @@ const BARE_FOLLOW_UPS = new Set([
   "um",
 ]);
 
+// Explicit continuation openers: the query continues the previous turn
+// ("and his skills?", "but what about Odoo?"). Matched case-insensitively
+// on the raw (unstripped) text so "And ..." still counts.
+const CONTINUATION_PREFIX_RE =
+  /^(and|but|also|then|so|plus|what about|how about|what of)\b/i;
+
+// Referential noun phrases ("the youtube one", "what about the X one?").
+const REFERENTIAL_RE =
+  /^(?:the|what about the) .+\b(one|app|project|site|thing|role|company|job|skill)s?\b[?.!]*$/i;
+
+export type FollowUpKind = "bare" | "continuation" | "referential" | null;
+
+/** Classify a user message. Standalone short questions return null. */
+export function followUpKind(content: string): FollowUpKind {
+  const trimmed = content.trim();
+  if (!trimmed) return null;
+  const lower = trimmed.toLowerCase();
+  if (BARE_FOLLOW_UPS.has(lower)) return "bare";
+  // Referential first: "what about the X one" also opens with a
+  // continuation word, but the specific pattern wins.
+  if (REFERENTIAL_RE.test(lower)) return "referential";
+  if (CONTINUATION_PREFIX_RE.test(trimmed)) return "continuation";
+  return null;
+}
+
 export function isDegenerateFollowUp(content: string): boolean {
-  const trimmed = content.trim().toLowerCase();
-  const tokens = trimmed.split(/\s+/).filter(Boolean);
-  if (tokens.length === 0) return false;
-  if (tokens.length <= 2) return true;
-  if (BARE_FOLLOW_UPS.has(trimmed)) return true;
-  if (/^(?:the|what about the) .+\b(one|app|project|site|thing)\b[?.!]*$/i.test(trimmed))
-    return true;
-  return false;
+  return followUpKind(content) !== null;
 }
 
 export interface PreparedQuery {
@@ -59,8 +77,20 @@ export function buildRetrievalQuery(messages: ChatMessage[]): PreparedQuery {
 
   if (!last) return { query: "", routeText: "", merged: false };
 
-  if (prev && isDegenerateFollowUp(last)) {
-    return { query: `${prev} ${last}`, routeText: last, merged: true };
+  const kind = prev ? followUpKind(last) : null;
+  if (prev && kind) {
+    // Bare particles carry no content: re-ask the previous question as-is
+    // instead of appending noise ("...chatbot and").
+    if (kind === "bare") {
+      return { query: prev, routeText: last, merged: true };
+    }
+    // Continuations drop the opener ("and his skills?" -> "prev his skills?")
+    // so the retrieval query stays about the topic, not the conjunction.
+    if (kind === "continuation") {
+      const rest = last.trim().replace(CONTINUATION_PREFIX_RE, "").trim();
+      return { query: rest ? `${prev} ${rest}` : prev, routeText: last, merged: true };
+    }
+    return { query: `${prev} ${last.trim()}`, routeText: last, merged: true };
   }
 
   return { query: last, routeText: last, merged: false };
