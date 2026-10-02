@@ -1,6 +1,8 @@
 import { StreamingTextResponse } from "ai";
 import { runPipeline } from "@/lib/pipeline";
 import { buildSystemPrompt, createAnswerStream } from "@/lib/generate";
+import { validateChatBody, createRateLimiter } from "@/lib/api-guard";
+import { envOptionalNumber } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -14,27 +16,51 @@ const c = {
   magenta: "\x1b[35m",
 };
 
+const LIMITS = {
+  maxMessageChars: envOptionalNumber("MAX_MESSAGE_CHARS", 2000),
+  maxMessages: envOptionalNumber("MAX_MESSAGES", 30),
+  maxHistoryChars: envOptionalNumber("MAX_HISTORY_CHARS", 12000),
+};
+const limiter = createRateLimiter(
+  60_000,
+  envOptionalNumber("RATE_LIMIT_PER_MIN", 20)
+);
+
+function jsonError(error: string, status: number): Response {
+  return new Response(JSON.stringify({ error }), {
+    status,
+    headers: { "Content-Type": "application/json" },
+  });
+}
+
 export async function POST(req: Request) {
   const requestStart = performance.now();
   try {
+    // Cheap abuse protection first: reject before any embedding/LLM spend.
+    const clientIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (!limiter.check(clientIp)) {
+      return jsonError(
+        "Rate limit reached. Please wait a minute before trying again.",
+        429
+      );
+    }
+
     const raw = await req.text();
-    let body: { messages?: unknown; category?: unknown } = {};
+    let body: unknown = {};
     try {
       body = raw ? JSON.parse(raw) : {};
     } catch {
-      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return jsonError("Invalid JSON body.", 400);
     }
-    const { messages, category: requestedCategory } = body;
-    const conversation = Array.isArray(messages) ? messages : [];
-    if (conversation.length === 0) {
-      return new Response(JSON.stringify({ error: "No messages provided" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+    const guarded = validateChatBody(body, LIMITS);
+    if ("reject" in guarded) {
+      return jsonError(guarded.reject.error, guarded.reject.status);
     }
+    const { messages: conversation } = guarded;
+    const requestedCategory =
+      (body as { category?: unknown }).category as string | undefined;
+
     const pipeline = await runPipeline(conversation, {
       requestedCategory:
         typeof requestedCategory === "string" && requestedCategory ? requestedCategory : undefined,
@@ -45,8 +71,8 @@ export async function POST(req: Request) {
     const stream = await createAnswerStream({
       systemPrompt: buildSystemPrompt(pipeline.context.text),
       turns: conversation.map((message) => ({
-        role: message.role === "assistant" ? "assistant" : "user",
-        content: String(message.content ?? ""),
+        role: message.role,
+        content: message.content,
       })),
       onFirstToken: (ms) => {
         ttftMs = ms;
@@ -55,7 +81,7 @@ export async function POST(req: Request) {
         const genMs = performance.now() - llmStart;
         const totalMs = performance.now() - requestStart;
         const historyChars = conversation.reduce(
-          (sum, m) => sum + String(m.content ?? "").length,
+          (sum, m) => sum + m.content.length,
           0,
         );
         console.log(`
@@ -78,18 +104,16 @@ ${c.cyan}model:${c.reset}        ${c.magenta}${process.env.LLM_MODEL ?? "unknown
 
     return new StreamingTextResponse(stream);
   } catch (error) {
+    // Never leak internals: log server-side, return a safe message.
     console.error("Error in chat route:", error);
 
-    const err = error as { status?: number; message?: string };
-    const status = err.status || (err.message?.includes("429") ? 429 : 500);
-    const errorMessage =
-      status === 429
-        ? "AI Rate limit reached. Please wait a minute before trying again."
-        : err.message || "Internal Server Error";
-
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      status,
-      headers: { "Content-Type": "application/json" },
-    });
+    const message = error instanceof Error ? error.message : "";
+    if (message.includes("429")) {
+      return jsonError(
+        "AI rate limit reached. Please wait a minute before trying again.",
+        429
+      );
+    }
+    return jsonError("Something went wrong. Please try again.", 500);
   }
 }
