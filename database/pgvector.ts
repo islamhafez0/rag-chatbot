@@ -1,10 +1,11 @@
 import { Pool } from "pg";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
-import { envNumber, envString, validateEnv } from "../lib/env";
+import { envNumber, envString, assertValidIdentifier, validateEnv } from "../lib/env";
 
 validateEnv();
 
 const collectionName = envString("ASTRA_DB_COLLECTION");
+assertValidIdentifier("table name (ASTRA_DB_COLLECTION)", collectionName);
 const defaultLimit = envNumber("RETRIEVAL_LIMIT");
 
 const pool = new Pool({ connectionString: envString("DATABASE_URL") });

@@ -1,16 +1,20 @@
 import OpenAI from "openai";
 import { OpenAIStream } from "ai";
-import { envNumber, envString, validateEnv } from "./env";
+import { envNumber, envOptionalBoolean, envString, validateEnv } from "./env";
 
 validateEnv();
 
 const MAX_TOKENS = envNumber("LLM_MAX_TOKENS");
 const MAX_HISTORY_TURNS = envNumber("LLM_MAX_HISTORY_TURNS");
 const TEMPERATURE = envNumber("LLM_TEMPERATURE");
-const IS_OPENCODE_ZEN = /opencode/i.test(envString("LLM_BASE_URL"));
+// Explicit provider behavior: some reasoning models (e.g. deepseek via
+// OpenCode Zen) need `thinking: { type: "disabled" }` or reasoning tokens
+// starve the 512-token answer budget. Set LLM_DISABLE_THINKING=true for
+// those providers; never inferred from URLs.
+const DISABLE_THINKING = envOptionalBoolean("LLM_DISABLE_THINKING", false);
 
 function thinkingParam(): object {
-  return IS_OPENCODE_ZEN ? { thinking: { type: "disabled" } } : {};
+  return DISABLE_THINKING ? { thinking: { type: "disabled" } } : {};
 }
 
 function getClient(): OpenAI {
