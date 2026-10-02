@@ -1,4 +1,4 @@
-process.env.ASTRA_DB_API_ENDPOINT = "https://example.apps.astra.datastax.com";
+process.env.DATABASE_URL = "postgres://test:test@localhost:5432/test";
 process.env.ASTRA_DB_APPLICATION_TOKEN = "token";
 process.env.ASTRA_DB_NAMESPACE = "default_keyspace";
 process.env.ASTRA_DB_COLLECTION = "career_vectors";

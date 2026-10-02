@@ -88,20 +88,21 @@ export async function getContext(
 
   const queryVector = vector ?? (await embeddings.embedQuery(query));
 
-  const params: unknown[] = [JSON.stringify(queryVector), limit];
-  let where = "";
-  if (category) {
-    params.push(category);
-    where = `WHERE category = $${params.length}`;
-  }
+  const buildQuery = (categoryFilter?: string): { sql: string; params: unknown[] } => {
+    const params: unknown[] = [JSON.stringify(queryVector), limit];
+    let where = "";
+    if (categoryFilter) {
+      params.push(categoryFilter);
+      where = `WHERE category = $${params.length}`;
+    }
 
-  let sql: string;
+    let sql: string;
 
-  if (search === "hybrid") {
-    // combine cosine similarity with lexical rank (rrf — reciprocal rank fusion)
-    params.push(query);
-    const tsIdx = params.length;
-    sql = `
+    if (search === "hybrid") {
+      // combine cosine similarity with lexical rank (rrf — reciprocal rank fusion)
+      params.push(query);
+      const tsIdx = params.length;
+      sql = `
       WITH vector_rank AS (
         SELECT id, text, source,
                row_number() OVER (ORDER BY embedding <=> $1::vector) AS rn
@@ -131,17 +132,27 @@ export async function getContext(
       ORDER BY sum(combined.rrf) DESC
       LIMIT $2
     `;
-  } else {
-    sql = `
+    } else {
+      sql = `
       SELECT text, source
       FROM ${collectionName}
       ${where}
       ORDER BY embedding <=> $1::vector
       LIMIT $2
     `;
-  }
+    }
+    return { sql, params };
+  };
 
-  const { rows } = await pool.query<StoredDoc>(sql, params);
+  let { sql, params } = buildQuery(category);
+  let { rows } = await pool.query<StoredDoc>(sql, params);
+
+  // Parity with the retired Astra path: a category filter that yields
+  // too few docs retries unfiltered rather than starving the LLM.
+  if (category && rows.length < 2) {
+    ({ sql, params } = buildQuery(undefined));
+    ({ rows } = await pool.query<StoredDoc>(sql, params));
+  }
 
   return {
     text: rows.map((r) => r.text).join("\n\n"),
