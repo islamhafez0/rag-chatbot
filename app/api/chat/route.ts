@@ -1,11 +1,8 @@
 import { StreamingTextResponse } from "ai";
 import { runPipeline } from "@/lib/pipeline";
 import { buildSystemPrompt, createAnswerStream } from "@/lib/generate";
-import { envRouter } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
-
-const ROUTER: "vector" | "none" = envRouter();
 
 const c = {
   reset: "\x1b[0m",
@@ -41,7 +38,6 @@ export async function POST(req: Request) {
     const pipeline = await runPipeline(conversation, {
       requestedCategory:
         typeof requestedCategory === "string" && requestedCategory ? requestedCategory : undefined,
-      router: ROUTER,
     });
 
     let ttftMs = 0;
@@ -67,7 +63,6 @@ ${c.cyan}${c.bold}[timing]${c.reset}
 
 ${c.cyan}total:${c.reset}        ${c.yellow}${totalMs.toFixed(0)}ms${c.reset} ${c.dim}(request start to generation end)${c.reset}
 ${c.cyan}prep:${c.reset}         ${c.yellow}${pipeline.timings.prepMs.toFixed(0)}ms${c.reset} ${c.dim}(query build/rewrite)${c.reset}
-${c.cyan}route:${c.reset}        ${c.yellow}${pipeline.timings.routeMs.toFixed(0)}ms${c.reset} ${c.dim}(category routing)${c.reset}
 ${c.cyan}retrieve:${c.reset}     ${c.yellow}${pipeline.timings.retrieveMs.toFixed(0)}ms${c.reset} ${c.dim}(embedding + vector search)${c.reset}
 ${c.cyan}llmTTFT:${c.reset}      ${c.yellow}${ttftMs.toFixed(0)}ms${c.reset} ${c.dim}(time to first token)${c.reset}
 ${c.cyan}llmGen:${c.reset}       ${c.yellow}${genMs.toFixed(0)}ms${c.reset} ${c.dim}(total generation)${c.reset}
@@ -75,8 +70,7 @@ ${c.cyan}turns:${c.reset}        ${c.green}${conversation.length}${c.reset} ${c.
 ${c.cyan}historyChars:${c.reset} ${c.green}${historyChars}${c.reset} ${c.dim}(total history chars sent to LLM)${c.reset}
 ${c.cyan}contextChars:${c.reset} ${c.green}${pipeline.context.text.length}${c.reset} ${c.dim}(retrieved context chars)${c.reset}
 ${c.cyan}sources:${c.reset}      ${c.green}${pipeline.context.sources.length}${c.reset} ${c.dim}(retrieved chunks)${c.reset}
-${c.cyan}category:${c.reset}     ${c.magenta}${pipeline.category ?? "none"}${c.reset} ${c.dim}(routed category)${c.reset}
-${c.cyan}router:${c.reset}       ${c.magenta}${ROUTER}${c.reset} ${c.dim}(routing policy)${c.reset}
+${c.cyan}category:${c.reset}     ${c.magenta}${pipeline.category ?? "none"}${c.reset} ${c.dim}(explicit category filter)${c.reset}
 ${c.cyan}model:${c.reset}        ${c.magenta}${process.env.LLM_MODEL ?? "unknown"}${c.reset} ${c.dim}(LLM model)${c.reset}
 `);
       },

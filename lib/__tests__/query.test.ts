@@ -1,11 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   buildRetrievalQuery,
-  cosine,
   isDegenerateFollowUp,
   lastUserContent,
-  routeByVectors,
-  type CategoryVectors,
 } from "../query";
 
 describe("lastUserContent", () => {
@@ -74,58 +71,5 @@ describe("buildRetrievalQuery", () => {
 
   it("returns empty when there is no user message", () => {
     expect(buildRetrievalQuery([{ role: "assistant", content: "hi" }]).query).toBe("");
-  });
-});
-
-describe("cosine", () => {
-  it("returns 1 for identical vectors", () => {
-    expect(cosine([1, 2, 3], [1, 2, 3])).toBeCloseTo(1);
-  });
-
-  it("returns 0 for orthogonal vectors", () => {
-    expect(cosine([1, 0], [0, 1])).toBeCloseTo(0);
-  });
-
-  it("returns 0 for zero vectors", () => {
-    expect(cosine([0, 0], [1, 1])).toBe(0);
-  });
-});
-
-describe("routeByVectors", () => {
-  const categories: CategoryVectors[] = [
-    {
-      category: "roles",
-      vectors: [
-        [1, 0, 0],
-        [1, 0, 0],
-      ],
-    },
-    {
-      category: "projects",
-      vectors: [
-        [0, 1, 0],
-        [0, 1, 0],
-      ],
-    },
-  ];
-
-  it("routes to the category with the highest mean similarity", () => {
-    const result = routeByVectors([1, 0.1, 0], categories);
-    expect(result.category).toBe("roles");
-    expect(result.score).toBeCloseTo(1);
-  });
-
-  it("returns null when below threshold", () => {
-    const result = routeByVectors([0.2, 0.2, 1], categories);
-    expect(result.category).toBeNull();
-  });
-
-  it("returns null when the top two categories are too close", () => {
-    const result = routeByVectors([0.5, 0.48, 0], categories, { margin: 0.1 });
-    expect(result.category).toBeNull();
-  });
-
-  it("returns null when no categories are provided", () => {
-    expect(routeByVectors([1, 0, 0], []).category).toBeNull();
   });
 });

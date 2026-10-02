@@ -7,7 +7,6 @@ const REQUIRED_STRINGS = [
   "ASTRA_DB_COLLECTION",
   "GOOGLE_API_KEY",
   "EMBEDDING_MODEL",
-  "ROUTER",
   "LLM_BASE_URL",
   "LLM_API_KEY",
   "LLM_MODEL",
@@ -15,8 +14,6 @@ const REQUIRED_STRINGS = [
 
 const REQUIRED_NUMBERS = [
   "RETRIEVAL_LIMIT",
-  "ROUTE_THRESHOLD",
-  "ROUTE_MARGIN",
   "LLM_MAX_TOKENS",
   "LLM_MAX_HISTORY_TURNS",
   "LLM_TEMPERATURE",
@@ -53,12 +50,4 @@ export function envNumber(name: string): number {
     throw new Error(`Environment variable "${name}" must be a number, got "${value}".`);
   }
   return num;
-}
-
-export function envRouter(): "vector" | "none" {
-  const value = envString("ROUTER");
-  if (value !== "vector" && value !== "none") {
-    throw new Error(`Environment variable "ROUTER" must be "vector" or "none", got "${value}".`);
-  }
-  return value;
 }
