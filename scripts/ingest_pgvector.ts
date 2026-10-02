@@ -6,9 +6,11 @@ import { Pool } from "pg";
 import { GoogleGenerativeAIEmbeddings } from "@langchain/google-genai";
 import { chunkYamlDoc } from "./yaml-chunks";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { assertValidIdentifier } from "../lib/env";
 
 const VECTOR_DIM = 3072;
 const COLLECTION = process.env.ASTRA_DB_COLLECTION || "documents";
+assertValidIdentifier("table name (ASTRA_DB_COLLECTION)", COLLECTION);
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 

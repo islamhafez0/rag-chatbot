@@ -62,3 +62,27 @@ export function envOptionalNumber(name: string, fallback: number): number {
   }
   return num;
 }
+
+/** Optional boolean with a validated default. Accepts true/false/1/0. */
+export function envOptionalBoolean(name: string, fallback: boolean): boolean {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === "") return fallback;
+  const normalized = raw.trim().toLowerCase();
+  if (["true", "1", "yes"].includes(normalized)) return true;
+  if (["false", "0", "no"].includes(normalized)) return false;
+  throw new Error(
+    `Environment variable "${name}" must be a boolean (true/false), got "${raw}".`
+  );
+}
+
+/**
+ * Guard for SQL identifiers interpolated from configuration (table names).
+ * Throws a clear startup error instead of emitting invalid or hostile SQL.
+ */
+export function assertValidIdentifier(what: string, value: string): void {
+  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(value)) {
+    throw new Error(
+      `Invalid ${what} "${value}": use only letters, digits and underscores, starting with a letter or underscore.`
+    );
+  }
+}
