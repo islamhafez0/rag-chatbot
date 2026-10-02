@@ -51,3 +51,14 @@ export function envNumber(name: string): number {
   }
   return num;
 }
+
+/** Optional number with a validated default (never throws when unset). */
+export function envOptionalNumber(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === "") return fallback;
+  const num = Number(raw);
+  if (!Number.isFinite(num)) {
+    throw new Error(`Environment variable "${name}" must be a number, got "${raw}".`);
+  }
+  return num;
+}
