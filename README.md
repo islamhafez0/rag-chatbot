@@ -19,39 +19,52 @@ The application follows a RAG (Retrieval-Augmented Generation) pipeline:
 
 ![RAG System Architecture](./public/images/rag_architecture.svg)
 
+Top lane: destructive ingestion (YAML → entry chunks → Gemini 3072-d → Postgres/pgvector with lexical column).
+Bottom lane: request path (UI → guard → deterministic query prep → query embedding → vector-only/RRF-hybrid retrieval → grounded LLM stream back to UI).
+
 ## How It Works
 
 1. **Ingestion** (`npm run ingest:pg` → `scripts/ingest_pgvector.ts`):
    - Recursively walks `career_brain/` directory.
    - Parses YAML files into logical entries (one role / project / photo / answer per chunk, field labels preserved — see `scripts/yaml-chunks.ts`).
-   - Source paths are stored POSIX-style so they compare equal on any OS.
-   - Generates embeddings using Google's `gemini-embedding-001`.
-   - Rebuilds the pgvector table (12 files → ~22 entry chunks).
+   - Source paths are stored POSIX-style so they compare equal on any OS; `category` is the first path segment.
+   - Oversized entries fall back to a character splitter (`CHUNK_SIZE` / `CHUNK_OVERLAP`); empty entries (e.g. `feedback/testimonials.yml`) yield zero chunks so decline paths stay intact.
+   - Generates embeddings using Google's `gemini-embedding-001` (3072 dimensions).
+   - Drops and rebuilds the pgvector table, plus a GIN index on the `tsvector` lexical column. Current size: 29 files → 40 entry chunks:
+     - `facts/` — 8 files / 18 chunks (profile, skills, photos (6, one per photo), cv, contact, certifications, writing, socials)
+     - `projects/` — 15 files / 15 chunks (one per project)
+     - `roles/` — 3 files / 5 chunks (current, previous (3 entries), earlier)
+     - `interviews/` — 1 file / 1 chunk
+     - `rules/` — 1 file / 1 chunk (personality, context only)
+     - `feedback/` — 1 file / 0 chunks (testimonials empty → decline case)
 
-2. **Retrieval** (`database/pgvector.ts` → `getContext`):
+2. **Retrieval** (`lib/query.ts` → `lib/pipeline.ts` → `database/pgvector.ts` → `getContext`):
+   - Query prep is deterministic with zero LLM calls (`buildRetrievalQuery`): bare follow-ups (`and`, `tell me more`) re-ask the previous question, continuations (`and his skills?`) merge previous + remainder, referential phrases (`the youtube one`) merge previous + full follow-up; standalone questions pass through untouched.
    - On user query, generates a query embedding.
    - Vector-only cosine search by default (`RETRIEVAL_LIMIT=8`); hybrid vector + lexical search fused with reciprocal rank fusion is available via `{ search: "hybrid" }`.
    - No ANN index on purpose: stock pgvector ivfflat/HNSW cap at 2000 dimensions and embeddings are 3072 (verified on PostgreSQL 17.4 / pgvector 0.8.6). Exact sequential scan is exact and ~2ms at this corpus size.
    - At most 3 chunks per source file (3x candidate oversample) so one file can't crowd the top 8; an explicit category filter that yields <2 docs retries unfiltered.
 
-3. **Generation** (`app/api/chat/route.ts` → `lib/generate.ts`):
+3. **Generation** (`app/api/chat/route.ts` → `lib/pipeline.ts` → `lib/generate.ts`):
+   - `runPipeline` returns `{ query, merged, category, context, timings }`; `category` is only ever an explicit caller-supplied filter (no automatic routing).
    - Builds the canonical system prompt (first-person voice, grounding, salary/secret refusal, injection resistance, one canonical uncertainty reply).
    - Validates the request first (`lib/api-guard.ts`): roles, lengths, conversation caps, per-IP rate limit. Failures return safe JSON errors, never internals.
    - Streams the response from the configured LLM.
 
 ## Configuration (`.env`)
 
-Copy `.env.example` to `.env`. Required variables are validated at startup and the app refuses to boot without them:
+Required variables are validated at startup (`lib/env.ts`) and the app refuses to boot without them.
+Copy `.env.example` to `.env` — the names match the code 1:1.
 
 ```
 DATABASE_URL               # Postgres connection string
-ASTRA_DB_COLLECTION        # legacy name: the pgvector table name (must be a plain SQL identifier)
+ASTRA_DB_COLLECTION        # pgvector table name (must be a plain SQL identifier)
 GOOGLE_API_KEY             # Gemini embeddings key
 EMBEDDING_MODEL            # e.g. gemini-embedding-001
 RETRIEVAL_LIMIT            # chunks per answer (8)
-LLM_BASE_URL               # any OpenAI-compatible API
-LLM_API_KEY                # provider key
-LLM_MODEL                  # model id
+LLM_BASE_URL               # Ollama Cloud: https://ollama.com/v1
+LLM_API_KEY                # key from https://ollama.com/settings/keys
+LLM_MODEL                  # e.g. gpt-oss:120b
 LLM_MAX_TOKENS             # output cap
 LLM_MAX_HISTORY_TURNS      # conversation turns sent to the LLM
 LLM_TEMPERATURE            # sampling temperature
@@ -75,7 +88,7 @@ CHUNK_OVERLAP=200
 npm run dev            # local UI
 npm run ingest:pg      # rebuild the knowledge base (destructive: drops the table)
 npm test               # unit tests (vitest)
-npm run eval:retrieve  # retrieval metrics: Recall@1/@3/@8 + hit-rate gate over 24 scenarios
+npm run eval:retrieve  # retrieval metrics (vector-only): Recall@1/@3/@8 + hit-rate gate over 43 scenarios (39 KB-backed, 4 decline)
 npm run eval:answer     # answer checks: key facts + decline behavior via the LLM
                        # (EVAL_SEARCH=vector|hybrid selects the retrieval mode; default hybrid)
 npm run test:latency   # stage-by-stage latency benchmark
@@ -84,6 +97,7 @@ npm run build / start  # production build / serve
 
 ## Evaluation
 
-- `eval:retrieve` (no LLM needed): every scenario carries a file-level relevant set (`expectedSources` in `scripts/eval/scenarios.ts`). Reports Recall@1/@3/@8 and fails if any KB-backed scenario retrieves zero relevant docs in the top 8.
-- `eval:answer`: regenerates answers with the configured LLM and checks key facts plus graceful declines for unknown/off-topic questions.- Latest measured (local): retrieval mean R@8 ≈ 0.96 with gate passing; answers ≈ 20/24 — the 4 misses are retrieval-coverage gaps on broad list queries, tracked by the retrieval metrics.
+- `eval:retrieve` (no LLM needed, vector-only): 43 scenarios in `scripts/eval/scenarios.ts` — 39 KB-backed scenarios carry a file-level relevant set (`expectedSources`), 4 empty-KB scenarios (hobbies, testimonials, 2x off-topic) carry an empty set and are skipped here. Reports Recall@1/@3/@8 and fails if any KB-backed scenario retrieves zero relevant docs in the top 8.
+- `eval:answer`: regenerates answers with the configured LLM and checks key facts plus graceful declines for unknown/off-topic/empty-KB questions (`EVAL_SEARCH=vector|hybrid`, default hybrid).
+- Historical numbers (old 12-file / ~24-scenario suite, local): retrieval mean R@8 ≈ 0.96 with gate passing; answers ≈ 20/24, misses were retrieval-coverage gaps on broad list queries. Re-run `npm run eval:retrieve` / `npm run eval:answer` for current numbers on the 29-file / 43-scenario suite.
 - Typical latency: query prep <1ms, embedding ~380ms, vector search ~2ms, LLM first token ~1–3s (provider-dependent).
