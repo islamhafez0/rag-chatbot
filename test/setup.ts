@@ -1,6 +1,4 @@
 process.env.DATABASE_URL = "postgres://test:test@localhost:5432/test";
-process.env.ASTRA_DB_APPLICATION_TOKEN = "token";
-process.env.ASTRA_DB_NAMESPACE = "default_keyspace";
 process.env.ASTRA_DB_COLLECTION = "career_vectors";
 process.env.GOOGLE_API_KEY = "google-key";
 process.env.EMBEDDING_MODEL = "gemini-embedding-001";
