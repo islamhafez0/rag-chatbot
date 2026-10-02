@@ -46,10 +46,13 @@ async function ensureTable(): Promise<void> {
   `);
   // NOTE: stock pgvector ANN indexes (ivfflat, hnsw) hard-cap at 2000
   // dimensions (IVFFLAT_MAX_DIM / HNSW_MAX_DIM in pgvector source), but
-  // gemini-embedding-001 emits 3072. Creating either index on this column
-  // fails, so retrieval uses exact sequential scan — which is also faster
-  // and exact at this corpus size. Revisit with halfvec + HNSW if the
-  // corpus ever grows past a few thousand chunks.
+  // gemini-embedding-001 emits 3072. Verified on the installed stack
+  // (PostgreSQL 17.4, pgvector 0.8.6): vector(3072) stores fine, but both
+  // `USING ivfflat` and `USING hnsw` fail with "column cannot have more
+  // than 2000 dimensions". So retrieval uses exact sequential scan — which
+  // is also faster and exact at this corpus size (EXPLAIN shows Seq Scan).
+  // Revisit with halfvec + HNSW (up to 4000 dims) if the corpus ever grows
+  // past a few thousand chunks; that needs a quality comparison first.
   // Migration: drop the legacy ivfflat index from earlier revisions.
   const { rows: existing } = await pool.query<{ indexdef: string }>(
     `SELECT indexdef FROM pg_indexes WHERE indexname = 'idx_${collectionName}_embedding'`,
