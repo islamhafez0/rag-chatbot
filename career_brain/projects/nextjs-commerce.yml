@@ -1,0 +1,14 @@
+name: Next.js Commerce
+description: Full-stack e-commerce website with headless CMS and card payments.
+role: Solo Developer
+tech_stack:
+  - Next.js
+  - React
+  - TypeScript
+  - Tailwind CSS
+  - Sanity CMS
+  - Stripe
+link: https://github.com/islamhafez0/nextjs-commerce
+demo: https://ecommerce-website-five-flax.vercel.app
+highlights:
+  - End-to-end store: catalog via Sanity, checkout via Stripe

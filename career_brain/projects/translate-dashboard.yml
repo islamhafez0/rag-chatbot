@@ -1,0 +1,17 @@
+name: Translate Dashboard
+description: "Paid Odoo module that replaces manual .po editing: scan any module or theme, translate inline with keyboard shortcuts, and apply everything to the database, website, and .po file in one click."
+role: Solo Developer and Vendor
+tech_stack:
+  - Odoo 19
+  - OWL 2
+  - Python
+  - PostgreSQL JSONB
+price_usd: 72
+lines_of_code: 3110
+license: OPL-1
+link: https://apps.odoo.com/apps/modules/19.0/translate_dashboard
+highlights:
+  - Tested with 6,219 terms from Odoo base: scans in 11 seconds, server-side pagination
+  - Conflict detection between database and .po values with one-click resolution
+  - Translator and Translation Manager groups with language validation
+  - Real customer inquiry about version 16 support

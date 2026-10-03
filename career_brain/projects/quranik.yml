@@ -1,0 +1,10 @@
+name: Quranik
+description: Quran streaming web application.
+role: Solo Developer
+tech_stack:
+  - TypeScript
+  - Next.js
+link: https://github.com/islamhafez0/quranik
+demo: https://quranik.vercel.app
+highlights:
+  - Streaming audio experience, forked by another developer

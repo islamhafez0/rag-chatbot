@@ -1,0 +1,9 @@
+name: FluxGen AI
+description: AI image generator that creates visuals from text prompts via Replicate.
+role: Solo Developer
+tech_stack:
+  - Next.js
+  - Replicate
+link: https://github.com/islamhafez0/flux-gen-ai
+highlights:
+  - Text-to-image generation pipeline with async polling

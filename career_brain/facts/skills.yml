@@ -1,3 +1,4 @@
+summary: Islam's technical skills span expert React and Next.js, advanced TypeScript and JavaScript, Odoo ERP customization with Python, and modern tooling from Tailwind to Docker.
 frontend:
   - React.js (Expert)
   - Next.js (Expert)
@@ -7,6 +8,9 @@ frontend:
   - Tailwind CSS
   - Framer Motion
   - Shadcn UI
+  - Angular with NgRx
+  - Three.js
+  - Shopify Liquid themes
 backend_and_erp:
   - Odoo ERP Customization
   - Python
@@ -17,6 +21,11 @@ tools_and_platforms:
   - Vercel
   - Docker
   - VS Code
+  - Firebase
+  - Stripe
+  - Sanity CMS
+  - GraphQL
+  - SEO tooling
 soft_skills:
   - UI/UX Implementation
   - Web Performance Optimization

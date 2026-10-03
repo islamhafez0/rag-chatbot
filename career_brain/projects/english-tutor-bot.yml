@@ -1,0 +1,10 @@
+name: English Tutor Telegram Bot
+description: "Telegram bot that analyzes English paragraphs and teaches in Arabic: corrections, error analysis, and learning tips powered by OpenAI."
+role: Solo Developer
+tech_stack:
+  - Python
+  - OpenAI
+  - Telegram Bot API
+link: https://github.com/islamhafez0/english-tutor-telegram-bot
+highlights:
+  - Bilingual feedback loop: English input, Arabic explanations

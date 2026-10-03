@@ -100,6 +100,7 @@ describe("chunkYamlDoc", () => {
     const chunks = chunkYamlDoc(rolesDoc, meta("previous", "roles/previous.yml"));
     expect(chunks).toHaveLength(3);
     expect(chunks[0].text.startsWith("Role 1:")).toBe(true);
+    expect(chunks[0].text).toContain("(roles)");
     expect(chunks[0].text).toContain("TaqaTechno");
     expect(chunks[0].text).not.toContain("Code Alpha");
     expect(chunks[1].text).toContain("Self-Employed");
@@ -111,7 +112,7 @@ describe("chunkYamlDoc", () => {
   it("labels single entities by file title", () => {
     const chunks = chunkYamlDoc({ company: "TaqaTechno" }, meta("current"));
     expect(chunks).toHaveLength(1);
-    expect(chunks[0].text.startsWith("Current\n")).toBe(true);
+    expect(chunks[0].text.startsWith("Current (")).toBe(true);
   });
 
   it("skips empty files entirely", () => {
