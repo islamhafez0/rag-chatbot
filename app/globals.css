@@ -116,13 +116,35 @@
   .markdown li {
     margin: 0;
   }
-  .markdown a {
-    color: hsl(var(--primary));
+  .markdown a,
+  .rich-link {
+    color: #2563eb;
+    font-weight: 500;
     text-decoration: underline;
-    text-underline-offset: 2px;
+    text-decoration-color: color-mix(in srgb, #2563eb 45%, transparent);
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    border-radius: 0.25rem;
+    transition: color 150ms ease, text-decoration-color 150ms ease,
+      background-color 150ms ease, text-underline-offset 150ms ease;
   }
-  .markdown a:hover {
-    opacity: 0.8;
+  .markdown a:hover,
+  .rich-link:hover {
+    color: #1d4ed8;
+    text-decoration-color: #1d4ed8;
+    text-underline-offset: 5px;
+    background-color: color-mix(in srgb, #2563eb 8%, transparent);
+  }
+  .dark .markdown a,
+  .dark .rich-link {
+    color: #38bdf8;
+    text-decoration-color: color-mix(in srgb, #38bdf8 45%, transparent);
+  }
+  .dark .markdown a:hover,
+  .dark .rich-link:hover {
+    color: #7dd3fc;
+    text-decoration-color: #7dd3fc;
+    background-color: color-mix(in srgb, #38bdf8 12%, transparent);
   }
   .markdown strong {
     font-weight: 600;
@@ -214,5 +236,22 @@
   .markdown img {
     max-width: 100%;
     border-radius: 0.5rem;
+  }
+  .table-shell {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.35) transparent;
+  }
+  .table-shell::-webkit-scrollbar {
+    height: 8px;
+  }
+  .table-shell::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .table-shell::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.3);
+    border-radius: 999px;
+  }
+  .table-shell::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--muted-foreground) / 0.5);
   }
 }
