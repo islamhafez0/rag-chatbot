@@ -1,0 +1,10 @@
+title: Curriculum Vitae (CV) downloads
+description: Islam's CV is available as downloadable PDFs in multiple versions, one per specialty. Always match the version to what the user asked about.
+versions:
+  - label: Frontend Developer CV
+    url: /files/islam-hafez-frontend.pdf
+    use_when: the user asks about frontend, React, Next.js, web development, or does not specify a specialty (default choice)
+  - label: Odoo Developer CV
+    url: /files/islam-hafez-odoo.pdf
+    use_when: the user asks about Odoo, ERP, OWL, Python backend, or business workflows
+usage: When asked for the CV or resume, pick the version matching the conversation topic using use_when, defaulting to the Frontend Developer CV. Reply briefly and include it as a markdown link, for example [Frontend Developer CV](/files/islam-hafez-frontend.pdf). Only use these exact URLs. To add a future version, append one entry with label, url, and use_when.

@@ -1,0 +1,11 @@
+name: Emdad
+description: Live humanitarian e-commerce storefront built on Odoo, letting the team curate the homepage and pricing from the ERP.
+role: Odoo Frontend Developer
+tech_stack:
+  - Odoo 17
+  - Python
+  - OWL
+  - e-commerce
+highlights:
+  - Extended the catalog model: category flags, translatable descriptions, hero icons
+  - Role-gated pricing and a B2B quote flow

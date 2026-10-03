@@ -1,0 +1,8 @@
+name: Google Docs Clone
+description: Collaborative document editor clone built with JavaScript.
+role: Solo Developer
+tech_stack:
+  - JavaScript
+link: https://github.com/islamhafez0/google-docs-clone
+highlights:
+  - Rich-text editing experience in the browser

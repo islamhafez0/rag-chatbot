@@ -1,6 +1,7 @@
 import { StreamingTextResponse } from "ai";
 import { runPipeline } from "@/lib/pipeline";
 import { buildSystemPrompt, createAnswerStream } from "@/lib/generate";
+import { buildCoverageNote, approxTokens } from "@/lib/coverage";
 import { validateChatBody, createRateLimiter } from "@/lib/api-guard";
 import { envOptionalNumber } from "@/lib/env";
 
@@ -58,8 +59,10 @@ export async function POST(req: Request) {
 
     let ttftMs = 0;
     const llmStart = performance.now();
+    const coverageNote = buildCoverageNote(pipeline.context.coverage);
+    const systemPrompt = buildSystemPrompt(pipeline.context.text, { coverageNote });
     const stream = await createAnswerStream({
-      systemPrompt: buildSystemPrompt(pipeline.context.text),
+      systemPrompt,
       turns: conversation.map((message) => ({
         role: message.role,
         content: message.content,
@@ -79,11 +82,19 @@ export async function POST(req: Request) {
           totalMs: Math.round(totalMs),
           prepMs: Math.round(pipeline.timings.prepMs),
           retrieveMs: Math.round(pipeline.timings.retrieveMs),
+          assemblyMs: Math.round(pipeline.timings.assemblyMs * 100) / 100,
           llmTTFTMs: Math.round(ttftMs),
           llmGenMs: Math.round(genMs),
           turns: conversation.length,
           historyChars,
           contextChars: pipeline.context.text.length,
+          promptTokens: approxTokens(systemPrompt.length),
+          mode: pipeline.intent.mode,
+          coverage:
+            pipeline.context.coverage.coverage !== null
+              ? `${pipeline.context.coverage.retrievedChunks}/${pipeline.context.coverage.expectedChunks}`
+              : "n/a",
+          truncated: pipeline.context.coverage.truncated,
           sources: pipeline.context.sources.length,
           category: pipeline.category ?? "none",
           model: process.env.LLM_MODEL ?? "unknown",
@@ -107,8 +118,13 @@ ${c.cyan}${c.bold}[timing]${c.reset}
 ${c.cyan}total:${c.reset}        ${c.yellow}${fields.totalMs}ms${c.reset} ${c.dim}(request start to generation end)${c.reset}
 ${c.cyan}prep:${c.reset}         ${c.yellow}${fields.prepMs}ms${c.reset} ${c.dim}(query build/rewrite)${c.reset}
 ${c.cyan}retrieve:${c.reset}     ${c.yellow}${fields.retrieveMs}ms${c.reset} ${c.dim}(embedding + vector search)${c.reset}
+${c.cyan}assembly:${c.reset}     ${c.yellow}${fields.assemblyMs}ms${c.reset} ${c.dim}(merge/dedupe/budget)${c.reset}
 ${c.cyan}llmTTFT:${c.reset}      ${c.yellow}${fields.llmTTFTMs}ms${c.reset} ${c.dim}(time to first token)${c.reset}
 ${c.cyan}llmGen:${c.reset}       ${c.yellow}${fields.llmGenMs}ms${c.reset} ${c.dim}(total generation)${c.reset}
+${c.cyan}mode:${c.reset}         ${c.magenta}${fields.mode}${c.reset} ${c.dim}(focused/expanded/complete)${c.reset}
+${c.cyan}coverage:${c.reset}     ${c.green}${fields.coverage}${c.reset} ${c.dim}(category records retrieved/expected)${c.reset}
+${c.cyan}truncated:${c.reset}    ${c.green}${fields.truncated}${c.reset} ${c.dim}(context budget trim)${c.reset}
+${c.cyan}promptTokens:${c.reset} ${c.green}${fields.promptTokens}${c.reset} ${c.dim}(~chars/4 incl. coverage note)${c.reset}
 ${c.cyan}turns:${c.reset}        ${c.green}${fields.turns}${c.reset} ${c.dim}(messages in conversation)${c.reset}
 ${c.cyan}historyChars:${c.reset} ${c.green}${fields.historyChars}${c.reset} ${c.dim}(total history chars sent to LLM)${c.reset}
 ${c.cyan}contextChars:${c.reset} ${c.green}${fields.contextChars}${c.reset} ${c.dim}(retrieved context chars)${c.reset}

@@ -1,0 +1,15 @@
+name: Portfolio Website
+description: Personal portfolio built with Next.js 16 and React 19, featuring animated UI with Framer Motion, image galleries, GitHub contribution visualizations, and a dark-themed responsive design.
+role: Solo Developer
+tech_stack:
+  - Next.js
+  - React
+  - TypeScript
+  - Tailwind CSS
+  - Framer Motion
+  - Vercel
+link: https://islamhafez.vercel.app
+highlights:
+  - SEO optimized with structured data
+  - Animated UI with scroll exploration and project carousel
+  - Documents experience, impact, certifications, and contact

@@ -20,3 +20,10 @@ tech_stack:
   - JavaScript
   - Figma
   - PostgreSQL
+open_source_proof:
+  - note: 280+ commits across Taqat Techno organization repositories under the islamhafez0 username
+  - Apiary-and-Honey, 235 commits, Odoo and Python with bilingual client documentation: https://github.com/taqat-techno/Apiary-and-Honey
+  - pearlpixels company site, 61 commits, JavaScript: https://github.com/taqat-techno/pearlpixels
+  - herbalgardens Shopify bundles, 36 commits, pack upsell and cart auto-upgrade banners
+  - taqat-prop company website, 35 commits, staging isolation and sitemap fixes: https://github.com/taqat-techno/taqat-prop
+  - multi-theming-17 Odoo website themes, 5 commits

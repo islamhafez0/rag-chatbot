@@ -1,0 +1,9 @@
+name: Online Courses Platform
+description: Learning platform with user authentication, course management, quizzes, discussions, and Stripe payments.
+role: Solo Developer
+tech_stack:
+  - JavaScript
+  - Stripe
+link: https://github.com/islamhafez0/online-courses-platform
+highlights:
+  - Full learning loop: courses, quizzes, discussions, paid enrollment

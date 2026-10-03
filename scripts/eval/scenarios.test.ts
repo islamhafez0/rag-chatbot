@@ -35,10 +35,10 @@ describe("SCENARIOS", () => {
     }
   });
 
-  it("marks absent-KB scenarios as emptyKnowledge", () => {
+  it("marks absent-KB scenarios as emptyKnowledge or conversational", () => {
     for (const s of SCENARIOS) {
       if (s.expectedSources.length === 0) {
-        expect(s.emptyKnowledge).toBe(true);
+        expect(s.emptyKnowledge === true || s.conversational === true).toBe(true);
       }
     }
   });

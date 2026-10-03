@@ -1,0 +1,9 @@
+name: .NET Angular JWT Auth
+description: Full-stack JWT authentication demo with a C# backend and an Angular frontend.
+role: Solo Developer
+tech_stack:
+  - C#
+  - Angular
+link: https://github.com/islamhafez0/dotnet-angular-jwt
+highlights:
+  - Token issue, validation, and guarded routes across two stacks

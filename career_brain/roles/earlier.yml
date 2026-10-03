@@ -1,0 +1,13 @@
+roles:
+  - company: New Start Egypt
+    location: Nasr City, Egypt
+    title: Search Engine Optimization Executive
+    start_date: March 2023
+    end_date: October 2023
+    summary: Islam's first job was SEO Executive at New Start Egypt, working on search visibility for client websites before moving into frontend development.
+    description: >
+      First professional role in tech, focused on search engine optimization: on-page improvements, content structure, and search visibility for client websites.
+    tech_stack:
+      - SEO
+      - Content structure
+      - Web analytics

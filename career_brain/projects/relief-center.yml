@@ -1,0 +1,15 @@
+name: Relief Center
+description: Live disaster-response platform that pulls real-time data from USGS, NASA, and GDACS into one coordinated view for relief teams.
+role: Frontend Developer (OWL)
+tech_stack:
+  - Odoo 19
+  - Python
+  - OWL (Odoo Web Library)
+  - PostgreSQL
+  - MapTiler SDK
+  - SCSS
+link: https://reliefcenter.com/
+highlights:
+  - Interactive 3D globe rendering live multi-source disaster data
+  - Automated subscriber alerts secured with OTP authentication
+  - CRM-integrated coordination flows

@@ -1,0 +1,9 @@
+name: Apiary and Honey
+description: Odoo and Python project for an apiary/honey business, with bilingual client guides, an Arabic user guide, client data sheets, and VSCode run configurations. Islam is the top committer with 235 commits.
+role: Odoo Developer
+tech_stack:
+  - Python
+  - Odoo
+link: https://github.com/taqat-techno/Apiary-and-Honey
+highlights:
+  - 235 commits: client documentation in two languages plus developer tooling

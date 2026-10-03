@@ -1,0 +1,32 @@
+articles:
+  - title: POST /search Is a Lie. HTTP Finally Admits It.
+    outlet: DEV Community
+    date: July 2026
+    topics: HTTP, APIs, web development
+  - title: You Don't Use Linked Lists. But They're Running Half Your Software.
+    outlet: DEV Community
+    date: June 2026
+    topics: data structures, JavaScript, system design
+  - title: Monolithic vs Microservices
+    outlet: DEV Community
+    date: June 2026
+    topics: architecture, backend
+  - title: TOON, Token-Oriented Object Notation, a Complete Guide for LLM Data Efficiency
+    outlet: DEV Community
+    date: December 2025
+    topics: LLMs, data efficiency, AI
+  - title: The React Compiler Just Made Your Memoization Knowledge Obsolete
+    outlet: Hashnode
+    date: July 2026
+    topics: React, compilers, frontend
+  - title: JavaScript ES2026 Is Not a Feature Drop. It Is a 30-Year Debt Payment.
+    outlet: Hashnode
+    date: July 2026
+    topics: JavaScript, TC39, frontend
+  - outlet: Medium
+    note: Islam also publishes on Medium under islamhafez0
+open_source:
+  - contribution: Docs fix for tmpfile example in google/zx
+    link: https://github.com/google/zx/pull/1498
+    date: August 2026
+profile: https://dev.to/islamhafez0
