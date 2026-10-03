@@ -1,91 +1,63 @@
-"use client";
+﻿"use client";
 
 import { useChat } from "ai/react";
 import type { Message } from "ai";
 import { Send, Bot, User, AlertTriangle, X } from "lucide-react";
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
 import { cn } from "@/lib/utils";
 
 import { ThemeToggle } from "@/components/theme-toggle";
+import { RichAnswer } from "@/components/chat/RichAnswer";
 import Image from "next/image";
 
-const Markdown = memo(function Markdown({ content }: { content: string }) {
-  return (
-    <ReactMarkdown
-      remarkPlugins={[remarkGfm]}
-      rehypePlugins={[rehypeRaw]}
-      components={{
-        a: ({ href, children }) => (
-          <a href={href} target="_blank" rel="noopener noreferrer">
-            {children}
-          </a>
-        ),
-        img: ({ src, alt }) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={src}
-            alt={alt}
-            className="w-45 h-70 object-cover rounded-lg border border-border shadow-sm"
-            loading="lazy"
-          />
-        ),
-        table: ({ children }) => (
-          <div className="table-shell my-2 flex w-full max-w-3xl overflow-x-auto rounded-lg border border-border">
-            <table className="w-max min-w-full shrink-0 text-sm">{children}</table>
-          </div>
-        ),
-        p: ({ children }) => (
-          <p className="has-[img]:flex has-[img]:flex-wrap has-[img]:gap-2">{children}</p>
-        ),
-      }}
-    >
-      {content}
-    </ReactMarkdown>
-  );
-});
-
-const ChatMessage = memo(function ChatMessage({ m }: { m: Message }) {
+const ChatMessage = memo(function ChatMessage({
+  m,
+  onFollowUp,
+}: {
+  m: Message;
+  onFollowUp: (q: string) => void;
+}) {
+  const isUser = m.role === "user";
   return (
     <div
       className={cn(
-        "flex w-full max-w-3xl mx-auto gap-4",
-        "has-[table]:max-w-none has-[table]:ml-[max(0px,calc((100%-48rem)/2))] has-[table]:w-[min(72rem,100%,calc((100%+40rem)/2))]",
-        m.role === "user" ? "justify-end" : "justify-start",
+        "mx-auto flex w-full max-w-4xl gap-4",
+        isUser ? "justify-end" : "justify-start",
       )}
     >
-      {m.role !== "user" && (
-        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-          <Bot className="w-5 h-5 text-primary" />
+      {!isUser && (
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+          <Bot className="h-5 w-5 text-primary" />
         </div>
       )}
 
-      <div className="flex flex-col gap-2 min-w-0 max-w-[80%] has-[table]:max-w-full has-[table]:flex-1">
+      <div
+        className={cn(
+          "flex min-w-0 flex-col gap-2",
+          isUser ? "max-w-[80%]" : "w-full flex-1",
+        )}
+      >
         <div
           className={cn(
-            "p-4 rounded-xl shadow-sm",
-            m.role === "user"
-              ? "bg-primary text-primary-foreground rounded-br-none"
-              : "bg-muted text-foreground rounded-bl-none",
+            "rounded-xl p-4 shadow-sm",
+            isUser
+              ? "rounded-br-none bg-primary text-primary-foreground"
+              : "rounded-bl-none bg-muted text-foreground",
           )}
         >
-          {m.role === "user" ? (
+          {isUser ? (
             <p className="text-sm leading-relaxed whitespace-pre-wrap wrap-break-word text-primary-foreground opacity-90">
               {m.content}
             </p>
           ) : (
-            <div className="markdown text-sm leading-relaxed min-w-0 has-[table]:[&>*:not(.table-shell)]:max-w-[40rem]">
-              <Markdown content={m.content} />
-            </div>
+            <RichAnswer content={m.content} onFollowUp={onFollowUp} />
           )}
         </div>
       </div>
 
-      {m.role === "user" && (
-        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center shrink-0">
-          <User className="w-5 h-5 text-secondary-foreground" />
+      {isUser && (
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary">
+          <User className="h-5 w-5 text-secondary-foreground" />
         </div>
       )}
     </div>
@@ -94,37 +66,80 @@ const ChatMessage = memo(function ChatMessage({ m }: { m: Message }) {
 
 export default function Home() {
   const emptyRetriesRef = useRef(0);
-  const { messages, input, handleInputChange, handleSubmit, isLoading, reload, error } =
-    useChat({
-      keepLastMessageOnError: true,
-      onFinish: (message) => {
-        if (message.role === "assistant" && !message.content.trim()) {
-          if (emptyRetriesRef.current < 2) {
-            emptyRetriesRef.current += 1;
-            reload();
-          } else {
-            emptyRetriesRef.current = 0;
-          }
+  const formRef = useRef<HTMLFormElement>(null);
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    reload,
+    error,
+    append,
+    setInput,
+  } = useChat({
+    keepLastMessageOnError: true,
+    onFinish: (message) => {
+      if (message.role === "assistant" && !message.content.trim()) {
+        if (emptyRetriesRef.current < 2) {
+          emptyRetriesRef.current += 1;
+          reload();
         } else {
           emptyRetriesRef.current = 0;
         }
-      },
-    });
+      } else {
+        emptyRetriesRef.current = 0;
+      }
+    },
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [errorDismissed, setErrorDismissed] = useState(false);
 
   const errorMessage =
     error instanceof Error
       ? (() => {
-        try {
-          const parsed = JSON.parse(error.message);
-          if (parsed && typeof parsed.error === "string") return parsed.error;
-        } catch {
-          // fall through to raw message
-        }
-        return error.message || "Something went wrong with that request.";
-      })()
+          try {
+            const parsed = JSON.parse(error.message);
+            if (parsed && typeof parsed.error === "string") return parsed.error;
+          } catch {
+            // fall through to raw message
+          }
+          return error.message || "Something went wrong with that request.";
+        })()
       : "Something went wrong with that request.";
+
+  /** Follow-up chips + starter prompts submit through the same chat flow. */
+  const submitQuestion = useCallback(
+    (q: string) => {
+      const question = q.trim();
+      if (!question || isLoading) return;
+      setErrorDismissed(false);
+      try {
+        const maybeAppend = append as unknown as
+          | ((msg: { role: "user"; content: string }) => void)
+          | undefined;
+        if (typeof maybeAppend === "function") {
+          void maybeAppend({ role: "user", content: question });
+          return;
+        }
+      } catch {
+        // fall through to input-based submit
+      }
+      try {
+        const maybeSetInput = setInput as unknown as ((v: string) => void) | undefined;
+        if (typeof maybeSetInput === "function" && formRef.current) {
+          maybeSetInput(question);
+          requestAnimationFrame(() => {
+            formRef.current?.requestSubmit();
+          });
+          return;
+        }
+      } catch {
+        // no-op: input remains user-controlled
+      }
+    },
+    [append, isLoading, setInput],
+  );
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
@@ -139,12 +154,12 @@ export default function Home() {
   }, [messages, isLoading, scrollToBottom]);
 
   return (
-    <div className="flex h-screen bg-background text-foreground overflow-hidden">
-      <main className="flex-1 flex flex-col h-full relative overflow-hidden">
-        <header className="p-4 border-b border-border flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-md z-10 w-full">
-          <div className="w-25 h-15 flex items-center justify-center shrink-0">
-            <Image src="/images/logo-light.png" alt="Logo" width={100} height={100} className="w-full h-full object-contain dark:hidden" />
-            <Image src="/images/logo-dark.png" alt="Logo" width={100} height={100} className="hidden w-full h-full object-contain dark:block" />
+    <div className="flex h-screen overflow-hidden bg-background text-foreground">
+      <main className="relative flex h-full flex-1 flex-col overflow-hidden">
+        <header className="sticky top-0 z-10 flex w-full items-center justify-between border-b border-border bg-background/80 p-4 backdrop-blur-md">
+          <div className="flex h-15 w-25 shrink-0 items-center justify-center">
+            <Image src="/images/logo-light.png" alt="Logo" width={100} height={100} className="h-full w-full object-contain dark:hidden" />
+            <Image src="/images/logo-dark.png" alt="Logo" width={100} height={100} className="hidden h-full w-full object-contain dark:block" />
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
@@ -154,26 +169,26 @@ export default function Home() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-8 space-y-6 no-scrollbar">
+        <div className="flex-1 space-y-6 overflow-x-hidden overflow-y-auto p-4 no-scrollbar md:p-8">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center space-y-4 opacity-50">
-              <Bot className="w-12 h-12 mb-4" />
+            <div className="flex h-full flex-col items-center justify-center space-y-4 text-center opacity-100">
+              <Bot className="mb-4 h-12 w-12 text-muted-foreground" />
               <h2 className="text-2xl font-semibold">Ready to assist.</h2>
               <p className="max-w-md text-sm text-muted-foreground">
                 Ask about Islam’s experience, projects, technical decisions, or the thinking behind what he builds.
               </p>
             </div>
           ) : (
-            messages.map((m) => <ChatMessage key={m.id} m={m} />)
+            messages.map((m) => <ChatMessage key={m.id} m={m} onFollowUp={submitQuestion} />)
           )}
 
           {isLoading && (
-            <div className="flex w-full max-w-3xl mx-auto gap-4 justify-start">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <Bot className="w-5 h-5 text-primary" />
+            <div className="mx-auto flex w-full max-w-4xl justify-start gap-4">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                <Bot className="h-5 w-5 text-primary" />
               </div>
-              <span className="inline-flex text-xl text-muted-foreground tracking-widest">
-                <span className="animate-[pulse_1s_ease-in-out_infinite] w-2 h-2">
+              <span className="inline-flex text-xl tracking-widest text-muted-foreground">
+                <span className="h-2 w-2 animate-[pulse_1s_ease-in-out_infinite]">
                   .
                 </span>
                 <span className="animate-[pulse_1s_ease-in-out_0.2s_infinite]">
@@ -187,19 +202,19 @@ export default function Home() {
           )}
 
           {error && !errorDismissed && (
-            <div className="flex w-full max-w-3xl mx-auto gap-4 justify-start">
-              <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
-                <Bot className="w-5 h-5 text-destructive" />
+            <div className="mx-auto flex w-full max-w-4xl justify-start gap-4">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+                <Bot className="h-5 w-5 text-destructive" />
               </div>
-              <div className="flex flex-col gap-2 max-w-[80%]">
-                <div className="flex items-start gap-2 p-4 rounded-xl shadow-sm bg-destructive/10 text-destructive rounded-bl-none border border-destructive/30">
-                  <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+              <div className="flex max-w-[80%] flex-col gap-2">
+                <div className="flex items-start gap-2 rounded-xl rounded-bl-none border border-destructive/30 bg-destructive/10 p-4 text-destructive shadow-sm">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
                   <div className="flex-1 space-y-1">
                     <p className="text-sm font-medium">
                       Something went wrong with that request.
                     </p>
                     {errorMessage && (
-                      <p className="text-xs text-destructive/80 wrap-break-word">
+                      <p className="text-xs wrap-break-word text-destructive/80">
                         {errorMessage}
                       </p>
                     )}
@@ -207,10 +222,10 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => setErrorDismissed(true)}
-                    className="shrink-0 rounded-md p-1 hover:bg-destructive/20 transition-colors"
+                    className="shrink-0 rounded-md p-1 transition-colors hover:bg-destructive/20"
                     aria-label="Dismiss error"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
               </div>
@@ -219,8 +234,9 @@ export default function Home() {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-4 bg-background border-t border-border sticky bottom-0 w-full">
+        <div className="sticky bottom-0 w-full border-t border-border bg-background p-4">
           <form
+            ref={formRef}
             onSubmit={(e) => {
               setErrorDismissed(false);
               handleSubmit(e);
@@ -232,11 +248,11 @@ export default function Home() {
                 handleSubmit(e);
               }
             }}
-            className="max-w-3xl mx-auto relative flex items-center gap-2"
+            className="relative mx-auto flex max-w-4xl items-center gap-2"
           >
             <textarea
               autoFocus
-              className="field-sizing-content resize-none no-scrollbar max-h-36 flex-1 p-3 pl-4 pr-12 rounded-xl border border-input bg-muted/50 focus:bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all placeholder:text-muted-foreground/70"
+              className="max-h-36 flex-1 resize-none rounded-xl border border-input bg-muted/50 p-3 pr-12 pl-4 field-sizing-content no-scrollbar transition-all placeholder:text-muted-foreground/70 focus:bg-background focus:ring-2 focus:ring-primary/20 focus:outline-none"
               value={input}
               onChange={handleInputChange}
               placeholder="Ask a question..."
@@ -245,12 +261,12 @@ export default function Home() {
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="absolute right-2 p-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50 transition-all shadow-md"
+              className="absolute right-2 rounded-lg bg-primary p-2 text-primary-foreground shadow-md transition-all hover:opacity-90 disabled:opacity-50"
             >
-              <Send className="w-4 h-4" />
+              <Send className="h-4 w-4" />
             </button>
           </form>
-          <div className="text-center mt-2">
+          <div className="mt-2 text-center">
             <p className="text-[10px] text-muted-foreground">
               Powered by RAG + Your Experience
             </p>
