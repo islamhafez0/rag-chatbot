@@ -343,6 +343,9 @@ describe("adaptive system prompt", () => {
   it("forbids suggested follow-up questions", () => {
     expect(prompt).toContain("Never append suggested follow-up questions");
   });
+  it("forbids repeating block contents in prose", () => {
+    expect(prompt).toContain("Details live in the blocks; prose is only the intro.");
+  });
 });
 
 describe("bare-JSON fallback (issue #37)", () => {
