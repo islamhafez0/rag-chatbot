@@ -22,6 +22,23 @@ const embeddings = new GoogleGenerativeAIEmbeddings({
 
 let initialised = false;
 
+/**
+ * Pre-warm the retrieval path without paying embedding/LLM cost.
+ * Runs ensureTable DDL once + opens a pooled connection, so the first
+ * POST /api/chat doesn't pay for both. Safe to call multiple times;
+ * errors propagate so callers (warmup route, instrumentation) can log.
+ * Fixes #35: moves cold-start work from first request to server boot.
+ */
+export async function warmupRetrieval(): Promise<void> {
+  await ensureTable();
+  await pool.query(`SELECT 1;`);
+}
+
+/** Test-only: reset the ensureTable gate so tests stay isolated. */
+export function __resetWarmupForTests(): void {
+  initialised = false;
+}
+
 async function ensureTable(): Promise<void> {
   if (initialised) return;
   await pool.query(`CREATE EXTENSION IF NOT EXISTS vector;`);

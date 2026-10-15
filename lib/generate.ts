@@ -17,11 +17,21 @@ function thinkingParam(): object {
   return DISABLE_THINKING ? { thinking: { type: "disabled" } } : {};
 }
 
-function getClient(): OpenAI {
-  return new OpenAI({
-    apiKey: envString("LLM_API_KEY"),
-    baseURL: envString("LLM_BASE_URL"),
-  });
+let cachedClient: OpenAI | null = null;
+
+export function getClient(): OpenAI {
+  if (!cachedClient) {
+    cachedClient = new OpenAI({
+      apiKey: envString("LLM_API_KEY"),
+      baseURL: envString("LLM_BASE_URL"),
+    });
+  }
+  return cachedClient;
+}
+
+/** Test-only: drop the cached client so env changes take effect. */
+export function __resetClientCacheForTests(): void {
+  cachedClient = null;
 }
 
 function getModel(): string {
