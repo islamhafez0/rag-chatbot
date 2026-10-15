@@ -4,7 +4,6 @@ import { memo, useMemo } from "react";
 import { parseRichContent, type ResponseBlock } from "@/lib/rich-response";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { ResponseBlockRenderer } from "./ResponseBlockRenderer";
-import { FollowUpChips } from "./Interactive";
 
 type BlockGroup =
   | { kind: "single"; block: ResponseBlock; key: string }
@@ -39,13 +38,11 @@ function groupBlocks(blocks: ResponseBlock[]): BlockGroup[] {
 
 export const RichAnswer = memo(function RichAnswer({
   content,
-  onFollowUp,
 }: {
   content: string;
-  onFollowUp: (q: string) => void;
 }) {
   const parsed = useMemo(() => parseRichContent(content), [content]);
-  const { text, blocks, followUps } = parsed;
+  const { text, blocks } = parsed;
   const groups = useMemo(() => groupBlocks(blocks), [blocks]);
 
   return (
@@ -75,7 +72,6 @@ export const RichAnswer = memo(function RichAnswer({
           <ResponseBlockRenderer key={g.key} block={g.block} />
         ),
       )}
-      <FollowUpChips questions={followUps} onSelect={onFollowUp} />
     </div>
   );
 });

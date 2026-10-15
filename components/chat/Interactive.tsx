@@ -1,34 +1,8 @@
 "use client";
 
-import { memo } from "react";
-import { ArrowRight, ChevronDown, Code2, Copy, Check, FileCode2 } from "lucide-react";
+import { ChevronDown, Code2, Copy, Check, FileCode2 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-
-export const FollowUpChips = memo(function FollowUpChips({
-  questions,
-  onSelect,
-}: {
-  questions: string[];
-  onSelect: (q: string) => void;
-}) {
-  if (questions.length === 0) return null;
-  return (
-    <div className="flex flex-wrap gap-1.5" aria-label="Suggested follow-up questions">
-      {questions.map((q) => (
-        <button
-          key={q}
-          type="button"
-          onClick={() => onSelect(q)}
-          className="group inline-flex max-w-full items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm transition-all hover:border-primary/40 hover:text-foreground"
-        >
-          <span className="truncate">{q}</span>
-          <ArrowRight className="h-3 w-3 shrink-0 transition-transform group-hover:translate-x-0.5" />
-        </button>
-      ))}
-    </div>
-  );
-});
 
 export function EvidencePanel({
   title,

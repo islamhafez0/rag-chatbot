@@ -4,7 +4,7 @@
  * Wire format (single LLM generation, no second call):
  *   <markdown answer>
  *   ```rich-ui
- *   {"blocks":[...],"followUps":[...]}
+ *   {"blocks":[...]}
  *   ```
  *
  * The markdown streams progressively; the fenced JSON is hidden from the
@@ -168,12 +168,6 @@ export const DetailsBlockSchema = z.object({
 });
 export type DetailsBlock = z.infer<typeof DetailsBlockSchema>;
 
-export const FollowUpsBlockSchema = z.object({
-  type: z.literal("followups"),
-  questions: z.array(shortText(160)).min(1).max(5),
-});
-export type FollowUpsBlock = z.infer<typeof FollowUpsBlockSchema>;
-
 /** Discriminated union — unknown block types are rejected, never executed. */
 const ResponseBlockBase = z.discriminatedUnion("type", [
   MetricsBlockSchema,
@@ -185,7 +179,6 @@ const ResponseBlockBase = z.discriminatedUnion("type", [
   DiagramBlockSchema,
   TechBlockSchema,
   DetailsBlockSchema,
-  FollowUpsBlockSchema,
 ]);
 
 /**
@@ -225,7 +218,6 @@ export type ResponseBlock = z.infer<typeof ResponseBlockBase>;
 export const RichPayloadSchema = z.object({
   version: z.literal(1).nullish(),
   blocks: z.array(z.unknown()).max(24).nullish().default([]),
-  followUps: z.array(shortText(160)).max(5).nullish().default([]),
 });
 export type RichPayloadRaw = z.infer<typeof RichPayloadSchema>;
 
@@ -234,8 +226,6 @@ export interface ParsedRichResponse {
   text: string;
   /** Individually validated blocks (invalid ones dropped). */
   blocks: ResponseBlock[];
-  /** Top-level follow-ups + any followups blocks, deduplicated. */
-  followUps: string[];
   /** True when a fence was present but JSON was malformed/partial. */
   hadMalformed: boolean;
   /** Validation issues for observability (never shown raw to users). */
@@ -336,26 +326,10 @@ function preTrimBlock(raw: unknown): unknown {
     case "details":
       sliceStr("content", 8000);
       break;
-    case "followups":
-      sliceArr("questions", 5);
-      break;
     default:
       break;
   }
   return b;
-}
-
-function dedupeFollowUps(lists: string[][]): string[] {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const q of lists.flat()) {
-    const t = q.trim();
-    if (!t || seen.has(t.toLowerCase())) continue;
-    seen.add(t.toLowerCase());
-    out.push(t);
-    if (out.length >= 5) break;
-  }
-  return out;
 }
 
 /**
@@ -383,15 +357,6 @@ export function sanitizeBlocks(input: unknown[]): {
   return { blocks, errors };
 }
 
-function validateFollowUps(input: unknown): string[] {
-  if (!Array.isArray(input)) return [];
-  return input
-    .filter((q): q is string => typeof q === "string")
-    .map((q) => q.trim())
-    .filter(Boolean)
-    .slice(0, 5);
-}
-
 /**
  * True when a parsed JSON value plausibly carries rich-ui content, used to
  * gate the bare-JSON fallback so ordinary prose with braces is untouched.
@@ -400,7 +365,7 @@ function looksLikeRichPayload(raw: unknown): boolean {
   if (Array.isArray(raw)) return true;
   if (!raw || typeof raw !== "object") return false;
   const r = raw as Record<string, unknown>;
-  return "blocks" in r || "block" in r || "followUps" in r || "type" in r;
+  return "blocks" in r || "block" in r || "type" in r;
 }
 
 /**
@@ -438,9 +403,9 @@ function decodeParsedPayload(
   empty: ParsedRichResponse,
 ): ParsedRichResponse {
 
-  // Accept {blocks,followUps}, a bare array of blocks, or a bare single
-  // block object (models sometimes emit the block directly). The `block`
-  // singular key is accepted as well.
+  // Accept {blocks}, a bare array of blocks, or a bare single block object
+  // (models sometimes emit the block directly). The `block` singular key
+  // is accepted as well.
   const normalized = Array.isArray(raw)
     ? { blocks: raw }
     : raw !== null && typeof raw === "object" && "type" in raw && !("blocks" in raw)
@@ -471,20 +436,15 @@ function decodeParsedPayload(
   }
 
   const { blocks: validBlocks, errors } = sanitizeBlocks(top.data.blocks ?? []);
-  const blockFollowUps = validBlocks.flatMap((b) =>
-    b.type === "followups" ? b.questions : [],
-  );
-  const blocks = validBlocks.filter((b) => b.type !== "followups");
   // Grounding guard: cap total visual blocks so a runaway generation cannot
   // flood the UI; text fallback always preserved. Sized for full project
   // listings (15 projects + supporting blocks).
-  const capped = blocks.slice(0, 16);
-  if (blocks.length > capped.length) errors.push("too many blocks; truncated");
+  const capped = validBlocks.slice(0, 16);
+  if (validBlocks.length > capped.length) errors.push("too many blocks; truncated");
 
   return {
     text,
     blocks: capped,
-    followUps: dedupeFollowUps([validateFollowUps(top.data.followUps), blockFollowUps]),
     hadMalformed: errors.length > 0 && capped.length === 0,
     errors,
   };
@@ -494,7 +454,6 @@ export function parseRichContent(content: string): ParsedRichResponse {
   const empty: ParsedRichResponse = {
     text: content,
     blocks: [],
-    followUps: [],
     hadMalformed: false,
     errors: [],
   };
@@ -531,9 +490,9 @@ export function parseRichContent(content: string): ParsedRichResponse {
   const bare = extractBareJsonSuffix(content);
   if (!bare) return empty;
   const decoded = decodeParsedPayload(bare.raw, bare.text, empty);
-  // Only claim the trailing JSON when it actually validated into blocks or
-  // follow-ups; otherwise leave the original text untouched.
-  if (decoded.blocks.length === 0 && decoded.followUps.length === 0) return empty;
+  // Only claim the trailing JSON when it actually validated into blocks;
+  // otherwise leave the original text untouched.
+  if (decoded.blocks.length === 0) return empty;
   return decoded;
 }
 
@@ -545,11 +504,10 @@ export function stripRichFenceForDisplay(content: string): string {
     const decoded = decodeParsedPayload(bare.raw, bare.text, {
       text: content,
       blocks: [],
-      followUps: [],
       hadMalformed: false,
       errors: [],
     });
-    if (decoded.blocks.length === 0 && decoded.followUps.length === 0) return content;
+    if (decoded.blocks.length === 0) return content;
     return bare.text;
   }
   const closed = RICH_FENCE_RE.exec(content);
