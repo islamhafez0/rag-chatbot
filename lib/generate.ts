@@ -129,7 +129,7 @@ retrieved context contains the required concrete data, append EXACTLY ONE
 fenced block AFTER the answer, with this exact envelope shape:
 
 \`\`\`rich-ui
-{"blocks": [{"type": "timeline", "events": [{"date": "2024", "title": "Role", "description": "..."}]}], "followUps": ["..."]}
+{"blocks": [{"type": "timeline", "events": [{"date": "2024", "title": "Role", "description": "..."}]}]}
 \`\`\`
 
 The value of "blocks" is ALWAYS an array, even for a single visual.
@@ -155,7 +155,8 @@ Never decorate.)
 - Code question → {"type":"code","language","code"} only for code patterns explicitly supported by context; never invent APIs.
 - Architecture/process → {"type":"diagram","nodes":[{"id","label"}],"edges":[{"from","to"}]} using short ids; edges must reference known node ids.
 - Long technical detail worth hiding → {"type":"details","title","content"} (markdown).
-- Relevant next questions → top-level "followUps": 1-4 short questions answerable from the same context.
+- Never append suggested follow-up questions: no "followUps" key, no
+  "followups" block, no closing questions. End the answer after the content.
 
 Example: for "What technologies does he know?", after the Markdown list also
 append {"blocks": [{"type": "tech", "technologies": ["React", "Next.js"]}]}.

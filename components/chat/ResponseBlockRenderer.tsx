@@ -54,9 +54,6 @@ export const ResponseBlockRenderer = memo(function ResponseBlockRenderer({
           </div>
         </EvidencePanel>
       );
-    case "followups":
-      // Follow-ups render as chips in RichAnswer; a bare block renders nothing.
-      return null;
     default:
       return null;
   }

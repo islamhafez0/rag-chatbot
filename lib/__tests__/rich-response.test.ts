@@ -16,7 +16,6 @@ describe("rich-response schema validation", () => {
     const p = parseRichContent("I built a **RAG chatbot** with Next.js.");
     expect(p.text).toBe("I built a **RAG chatbot** with Next.js.");
     expect(p.blocks).toEqual([]);
-    expect(p.followUps).toEqual([]);
     expect(p.hadMalformed).toBe(false);
   });
 
@@ -35,14 +34,12 @@ describe("rich-response schema validation", () => {
               unit: "ms",
             },
           ],
-          followUps: ["How is retrieval implemented?"],
         }),
       ),
     );
     expect(p.text).toBe("Here is the latency breakdown.");
     expect(p.blocks).toHaveLength(1);
     expect(p.blocks[0].type).toBe("chart");
-    expect(p.followUps).toEqual(["How is retrieval implemented?"]);
   });
 
   it("accepts a valid project response", () => {
@@ -297,18 +294,22 @@ describe("rich-response streaming compatibility", () => {
     expect(p.blocks).toEqual([]);
   });
 
-  it("merges top-level and block-level follow-ups, deduplicated", () => {
+  it("drops followups blocks and top-level followUps (feature removed)", () => {
     const p = parseRichContent(
       withFence(
         "Hi.",
         JSON.stringify({
-          blocks: [{ type: "followups", questions: ["What projects?"] }],
+          blocks: [
+            { type: "followups", questions: ["What projects?"] },
+            { type: "tech", technologies: ["React"] },
+          ],
           followUps: ["What projects?", "What is his timeline?"],
         }),
       ),
     );
-    expect(p.blocks).toEqual([]);
-    expect(p.followUps).toEqual(["What projects?", "What is his timeline?"]);
+    expect(p.text).toBe("Hi.");
+    expect(p.blocks).toHaveLength(1);
+    expect(p.blocks[0].type).toBe("tech");
   });
 });
 
@@ -339,6 +340,9 @@ describe("adaptive system prompt", () => {
   it("forbids bare JSON outside the fence", () => {
     expect(prompt).toContain("without the fence it renders");
   });
+  it("forbids suggested follow-up questions", () => {
+    expect(prompt).toContain("Never append suggested follow-up questions");
+  });
 });
 
 describe("bare-JSON fallback (issue #37)", () => {
@@ -352,7 +356,6 @@ describe("bare-JSON fallback (issue #37)", () => {
         highlights: ["235 commits"],
       },
     ],
-    followUps: ["Want detail on any project?"],
   });
 
   it("renders a trailing bare blocks payload instead of leaking raw JSON", () => {
@@ -360,7 +363,6 @@ describe("bare-JSON fallback (issue #37)", () => {
     expect(p.text).toBe("Here are my projects:");
     expect(p.blocks).toHaveLength(1);
     expect(p.blocks[0].type).toBe("project");
-    expect(p.followUps).toEqual(["Want detail on any project?"]);
     expect(p.hadMalformed).toBe(false);
   });
 

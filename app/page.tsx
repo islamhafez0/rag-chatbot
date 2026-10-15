@@ -10,13 +10,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { RichAnswer } from "@/components/chat/RichAnswer";
 import Image from "next/image";
 
-const ChatMessage = memo(function ChatMessage({
-  m,
-  onFollowUp,
-}: {
-  m: Message;
-  onFollowUp: (q: string) => void;
-}) {
+const ChatMessage = memo(function ChatMessage({ m }: { m: Message }) {
   const isUser = m.role === "user";
   return (
     <div
@@ -50,7 +44,7 @@ const ChatMessage = memo(function ChatMessage({
               {m.content}
             </p>
           ) : (
-            <RichAnswer content={m.content} onFollowUp={onFollowUp} />
+            <RichAnswer content={m.content} />
           )}
         </div>
       </div>
@@ -75,8 +69,6 @@ export default function Home() {
     isLoading,
     reload,
     error,
-    append,
-    setInput,
   } = useChat({
     keepLastMessageOnError: true,
     onFinish: (message) => {
@@ -107,39 +99,6 @@ export default function Home() {
           return error.message || "Something went wrong with that request.";
         })()
       : "Something went wrong with that request.";
-
-  /** Follow-up chips + starter prompts submit through the same chat flow. */
-  const submitQuestion = useCallback(
-    (q: string) => {
-      const question = q.trim();
-      if (!question || isLoading) return;
-      setErrorDismissed(false);
-      try {
-        const maybeAppend = append as unknown as
-          | ((msg: { role: "user"; content: string }) => void)
-          | undefined;
-        if (typeof maybeAppend === "function") {
-          void maybeAppend({ role: "user", content: question });
-          return;
-        }
-      } catch {
-        // fall through to input-based submit
-      }
-      try {
-        const maybeSetInput = setInput as unknown as ((v: string) => void) | undefined;
-        if (typeof maybeSetInput === "function" && formRef.current) {
-          maybeSetInput(question);
-          requestAnimationFrame(() => {
-            formRef.current?.requestSubmit();
-          });
-          return;
-        }
-      } catch {
-        // no-op: input remains user-controlled
-      }
-    },
-    [append, isLoading, setInput],
-  );
 
   const scrollToBottom = useCallback(() => {
     requestAnimationFrame(() => {
@@ -179,7 +138,7 @@ export default function Home() {
               </p>
             </div>
           ) : (
-            messages.map((m) => <ChatMessage key={m.id} m={m} onFollowUp={submitQuestion} />)
+            messages.map((m) => <ChatMessage key={m.id} m={m} />)
           )}
 
           {isLoading && (
