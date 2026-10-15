@@ -336,4 +336,58 @@ describe("adaptive system prompt", () => {
     expect(prompt).toContain("source of truth");
     expect(prompt).toContain("Never invent URLs");
   });
+  it("forbids bare JSON outside the fence", () => {
+    expect(prompt).toContain("without the fence it renders");
+  });
+});
+
+describe("bare-JSON fallback (issue #37)", () => {
+  const projectPayload = JSON.stringify({
+    blocks: [
+      {
+        type: "project",
+        title: "Apiary and Honey",
+        description: "A bilingual Odoo and Python application.",
+        technologies: ["Odoo", "Python"],
+        highlights: ["235 commits"],
+      },
+    ],
+    followUps: ["Want detail on any project?"],
+  });
+
+  it("renders a trailing bare blocks payload instead of leaking raw JSON", () => {
+    const p = parseRichContent(`Here are my projects:\n\n${projectPayload}`);
+    expect(p.text).toBe("Here are my projects:");
+    expect(p.blocks).toHaveLength(1);
+    expect(p.blocks[0].type).toBe("project");
+    expect(p.followUps).toEqual(["Want detail on any project?"]);
+    expect(p.hadMalformed).toBe(false);
+  });
+
+  it("renders a bare single-block object without a fence", () => {
+    const p = parseRichContent(
+      `My timeline:\n\n${JSON.stringify({ type: "timeline", events: [{ date: "2024", title: "Dev", description: "ERP work" }] })}`,
+    );
+    expect(p.text).toBe("My timeline:");
+    expect(p.blocks).toHaveLength(1);
+    expect(p.blocks[0].type).toBe("timeline");
+  });
+
+  it("leaves ordinary prose with braces untouched", () => {
+    const prose = "Use { brackets } sparingly in config {name: value} notes.";
+    const p = parseRichContent(prose);
+    expect(p.text).toBe(prose);
+    expect(p.blocks).toEqual([]);
+  });
+
+  it("leaves invalid trailing JSON untouched", () => {
+    const raw = "Almost.\n{not json at all}";
+    const p = parseRichContent(raw);
+    expect(p.text).toBe(raw);
+    expect(p.blocks).toEqual([]);
+  });
+
+  it("strips bare payloads in the display helper too", () => {
+    expect(stripRichFenceForDisplay(`Intro.\n\n${projectPayload}`)).toBe("Intro.");
+  });
 });

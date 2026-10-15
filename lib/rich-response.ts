@@ -392,38 +392,51 @@ function validateFollowUps(input: unknown): string[] {
     .slice(0, 5);
 }
 
-export function parseRichContent(content: string): ParsedRichResponse {
-  const empty: ParsedRichResponse = {
-    text: content,
-    blocks: [],
-    followUps: [],
-    hadMalformed: false,
-    errors: [],
-  };
-  if (!content || !RICH_FENCE_START_RE.test(content)) return empty;
+/**
+ * True when a parsed JSON value plausibly carries rich-ui content, used to
+ * gate the bare-JSON fallback so ordinary prose with braces is untouched.
+ */
+function looksLikeRichPayload(raw: unknown): boolean {
+  if (Array.isArray(raw)) return true;
+  if (!raw || typeof raw !== "object") return false;
+  const r = raw as Record<string, unknown>;
+  return "blocks" in r || "block" in r || "followUps" in r || "type" in r;
+}
 
-  const match = RICH_FENCE_RE.exec(content);
-  // Fence opened but not closed yet (streaming partial): hide the partial
-  // fence + everything after it so users never see raw partial JSON.
-  if (!match) {
-    const idx = content.search(RICH_FENCE_START_RE);
-    return {
-      ...empty,
-      text: content.slice(0, idx).trimEnd(),
-      hadMalformed: false, // not malformed — just incomplete
-    };
+/**
+ * Bare-JSON fallback (issue #37): models sometimes emit the payload as raw
+ * `{"blocks": [...]}` text without the required ```rich-ui fence. Scan
+ * `{` positions from the end and return the first trailing substring that
+ * parses as a plausible rich payload, so it can be rendered as blocks and
+ * stripped from the text view instead of leaking as raw JSON.
+ */
+function extractBareJsonSuffix(content: string): { text: string; raw: unknown } | null {
+  const trimmed = content.trimEnd();
+  if (!trimmed.endsWith("}")) return null;
+  if (!trimmed.includes("{") || !trimmed.includes('"')) return null;
+  let attempts = 0;
+  for (let i = trimmed.length - 1; i >= 0 && attempts < 300; i--) {
+    if (trimmed[i] !== "{") continue;
+    attempts += 1;
+    const snippet = trimmed.slice(i);
+    if (snippet.length > 60000) continue;
+    try {
+      const parsed: unknown = JSON.parse(snippet);
+      if (looksLikeRichPayload(parsed)) {
+        return { text: trimmed.slice(0, i).trim(), raw: parsed };
+      }
+    } catch {
+      // Not a complete JSON object from here — try an earlier brace.
+    }
   }
+  return null;
+}
 
-  const text = (content.slice(0, match.index) + content.slice(match.index + match[0].length)).trim();
-  const rawJson = match[1].trim();
-  if (!rawJson) return { ...empty, text, hadMalformed: true, errors: ["empty rich-ui payload"] };
-
-  let raw: unknown;
-  try {
-    raw = JSON.parse(rawJson);
-  } catch {
-    return { ...empty, text, hadMalformed: true, errors: ["rich-ui JSON parse error"] };
-  }
+function decodeParsedPayload(
+  raw: unknown,
+  text: string,
+  empty: ParsedRichResponse,
+): ParsedRichResponse {
 
   // Accept {blocks,followUps}, a bare array of blocks, or a bare single
   // block object (models sometimes emit the block directly). The `block`
@@ -477,9 +490,68 @@ export function parseRichContent(content: string): ParsedRichResponse {
   };
 }
 
+export function parseRichContent(content: string): ParsedRichResponse {
+  const empty: ParsedRichResponse = {
+    text: content,
+    blocks: [],
+    followUps: [],
+    hadMalformed: false,
+    errors: [],
+  };
+  if (!content) return empty;
+
+  const match = RICH_FENCE_RE.exec(content);
+  if (match) {
+    const text = (content.slice(0, match.index) + content.slice(match.index + match[0].length)).trim();
+    const rawJson = match[1].trim();
+    if (!rawJson) return { ...empty, text, hadMalformed: true, errors: ["empty rich-ui payload"] };
+
+    let raw: unknown;
+    try {
+      raw = JSON.parse(rawJson);
+    } catch {
+      return { ...empty, text, hadMalformed: true, errors: ["rich-ui JSON parse error"] };
+    }
+    return decodeParsedPayload(raw, text, empty);
+  }
+
+  // Fence opened but not closed yet (streaming partial): hide the partial
+  // fence + everything after it so users never see raw partial JSON.
+  if (RICH_FENCE_START_RE.test(content)) {
+    const idx = content.search(RICH_FENCE_START_RE);
+    return {
+      ...empty,
+      text: content.slice(0, idx).trimEnd(),
+      hadMalformed: false, // not malformed — just incomplete
+    };
+  }
+
+  // No fence at all: try the bare-JSON fallback before giving up, so a
+  // payload emitted without fences still renders instead of leaking (#37).
+  const bare = extractBareJsonSuffix(content);
+  if (!bare) return empty;
+  const decoded = decodeParsedPayload(bare.raw, bare.text, empty);
+  // Only claim the trailing JSON when it actually validated into blocks or
+  // follow-ups; otherwise leave the original text untouched.
+  if (decoded.blocks.length === 0 && decoded.followUps.length === 0) return empty;
+  return decoded;
+}
+
 /** Strip any (open or closed) rich-ui fence for the streaming text view. */
 export function stripRichFenceForDisplay(content: string): string {
-  if (!RICH_FENCE_START_RE.test(content)) return content;
+  if (!RICH_FENCE_START_RE.test(content)) {
+    const bare = extractBareJsonSuffix(content);
+    if (!bare) return content;
+    const decoded = decodeParsedPayload(bare.raw, bare.text, {
+      text: content,
+      blocks: [],
+      followUps: [],
+      hadMalformed: false,
+      errors: [],
+    });
+    if (decoded.blocks.length === 0 && decoded.followUps.length === 0) return content;
+    return bare.text;
+  }
   const closed = RICH_FENCE_RE.exec(content);
   if (closed) {
     return (content.slice(0, closed.index) + content.slice(closed.index + closed[0].length)).trim();
