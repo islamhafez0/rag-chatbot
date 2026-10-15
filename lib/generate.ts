@@ -123,10 +123,10 @@ Do not invent an answer to make the response appear complete.
 
 ## Adaptive visual responses (same generation, no extra call)
 
-Write the conversational Markdown answer FIRST, exactly as you normally would.
-Then, ONLY when the question genuinely benefits from a visual AND the
-retrieved context contains the required concrete data, append EXACTLY ONE
-fenced block AFTER the answer, with this exact envelope shape:
+Write a SHORT Markdown intro (one or two sentences) FIRST — never the full
+answer in prose. Then, ONLY when the question genuinely benefits from a
+visual AND the retrieved context contains the required concrete data, append
+EXACTLY ONE fenced block AFTER the intro, with this exact envelope shape:
 
 \`\`\`rich-ui
 {"blocks": [{"type": "timeline", "events": [{"date": "2024", "title": "Role", "description": "..."}]}]}
@@ -139,6 +139,10 @@ fence, then nothing else. Never emit a bare block object without the
 bare {"blocks": ...} JSON outside the fence — without the fence it renders
 as raw text.
 
+No repetition: whenever a visual is appended, the Markdown MUST NOT restate
+the block contents (dates, titles, descriptions, technologies, numbers).
+Details live in the blocks; prose is only the intro.
+
 Intent → presentation. When the question matches one of these intents AND
 the retrieved context holds the data, you MUST append the matching visual —
 do not skip the fence to save tokens or to stay concise. Use plain Markdown
@@ -147,7 +151,7 @@ the exception: emit them only when the context contains explicit numbers.
 Never decorate.)
 - Simple factual question → concise Markdown only, NO rich-ui block.
 - Technical skills → {"type":"tech","technologies":[...]} (only techs named in context).
-- Career history → {"type":"timeline","events":[{"date","title","description"}]} (only dates/roles in context).
+- Career history → {"type":"timeline","events":[{"date","title","description"}]} (only dates/roles in context) — prose is one intro sentence, roles live in the timeline, never both.
 - Project details → {"type":"project","title","description","technologies":[],"highlights":[],"metrics?"} (only fields present in context; omit url unless an explicit URL is in the context).
 - Project listings ("all projects", "what has he built") → one COMPACT project block PER project, never a Markdown table: {"type":"project","title","description":"one or two sentences","technologies":["up to 4"],"highlights":["1-2 strongest points"],"url?"} — a short Markdown intro sentence plus the blocks, nothing else.
 - Performance/latency numbers → {"type":"metrics","items":[{"label","value","unit?"}]} and/or {"type":"chart","chartType":"bar"|"line"|"pie"|"donut","title","labels":[],"values":[]} with equal-length labels/values.
@@ -158,8 +162,9 @@ Never decorate.)
 - Never append suggested follow-up questions: no "followUps" key, no
   "followups" block, no closing questions. End the answer after the content.
 
-Example: for "What technologies does he know?", after the Markdown list also
-append {"blocks": [{"type": "tech", "technologies": ["React", "Next.js"]}]}.
+Example: for "What technologies does he know?", write one intro sentence
+(not a Markdown list — the badges carry the list), then append
+{"blocks": [{"type": "tech", "technologies": ["React", "Next.js"]}]}.
 
 Grounding (hard rules):
 - Never invent metrics, proficiency scores, dates, URLs, or achievements.
