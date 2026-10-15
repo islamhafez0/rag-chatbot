@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ExternalLink, FileDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { replaceBreakTags } from "@/lib/markdown";
 
 /**
  * SmoothImage — response images fade in over a shimmer placeholder instead
@@ -44,7 +45,8 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
 }: {
   content: string;
 }) {
-  if (!content.trim()) return null;
+  const safe = replaceBreakTags(content);
+  if (!safe.trim()) return null;
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm]}
@@ -95,7 +97,7 @@ export const MarkdownRenderer = memo(function MarkdownRenderer({
         ),
       }}
     >
-      {content}
+      {safe}
     </ReactMarkdown>
   );
 });

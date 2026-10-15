@@ -346,6 +346,9 @@ describe("adaptive system prompt", () => {
   it("forbids repeating block contents in prose", () => {
     expect(prompt).toContain("Details live in the blocks; prose is only the intro.");
   });
+  it("forbids HTML tags in answers", () => {
+    expect(prompt).toContain("Never emit HTML tags");
+  });
 });
 
 describe("bare-JSON fallback (issue #37)", () => {
