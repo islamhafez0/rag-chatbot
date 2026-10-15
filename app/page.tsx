@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { RichAnswer } from "@/components/chat/RichAnswer";
+import { ThinkingLoader } from "@/components/chat/ThinkingLoader";
 import Image from "next/image";
 
 const ChatMessage = memo(function ChatMessage({ m }: { m: Message }) {
@@ -87,6 +88,13 @@ export default function Home() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [errorDismissed, setErrorDismissed] = useState(false);
 
+  // The loader narrates the pre-stream wait only: once the assistant's
+  // first token arrives and RichAnswer has content to show, it steps aside.
+  const lastMessage = messages[messages.length - 1];
+  const streamingStarted =
+    lastMessage?.role === "assistant" && lastMessage.content.trim() !== "";
+  const showLoader = isLoading && !streamingStarted;
+
   const errorMessage =
     error instanceof Error
       ? (() => {
@@ -111,6 +119,13 @@ export default function Home() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading, scrollToBottom]);
+
+  useEffect(() => {
+    // Fire-and-forget: hit the warmup endpoint on page load so the DB pool
+    // + table DDL cold-start happens before the first chat (#35). Watch the
+    // server terminal for the [warmup] log line.
+    fetch("/api/warmup", { cache: "no-store" }).catch(() => {});
+  }, []);
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
@@ -141,22 +156,14 @@ export default function Home() {
             messages.map((m) => <ChatMessage key={m.id} m={m} />)
           )}
 
-          {isLoading && (
+          {showLoader && (
             <div className="mx-auto flex w-full max-w-4xl justify-start gap-4">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
                 <Bot className="h-5 w-5 text-primary" />
               </div>
-              <span className="inline-flex text-xl tracking-widest text-muted-foreground">
-                <span className="h-2 w-2 animate-[pulse_1s_ease-in-out_infinite]">
-                  .
-                </span>
-                <span className="animate-[pulse_1s_ease-in-out_0.2s_infinite]">
-                  .
-                </span>
-                <span className="animate-[pulse_1s_ease-in-out_0.4s_infinite]">
-                  .
-                </span>
-              </span>
+              <div className="flex min-w-0 flex-1 items-center rounded-xl rounded-bl-none bg-muted p-4 text-foreground shadow-sm">
+                <ThinkingLoader />
+              </div>
             </div>
           )}
 
