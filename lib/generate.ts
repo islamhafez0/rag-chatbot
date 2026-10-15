@@ -135,7 +135,9 @@ fenced block AFTER the answer, with this exact envelope shape:
 The value of "blocks" is ALWAYS an array, even for a single visual.
 A complete answer therefore looks like: Markdown text, then one rich-ui
 fence, then nothing else. Never emit a bare block object without the
-{"blocks": [...]} envelope, never emit more than one fence.
+{"blocks": [...]} envelope, never emit more than one fence. Never emit
+bare {"blocks": ...} JSON outside the fence — without the fence it renders
+as raw text.
 
 Intent → presentation. When the question matches one of these intents AND
 the retrieved context holds the data, you MUST append the matching visual —
