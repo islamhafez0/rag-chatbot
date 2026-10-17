@@ -1,25 +1,33 @@
+# Professional Certifications & Badges
+# Verified credentials that prove technical expertise.
 certifications:
-  - title: Introduction to Model Context Protocol
-    issuer: Anthropic
-    date: March 2026
-    verify: https://verify.skilljar.com/c/rvjwfxhyx7mx
-  - title: Introduction to agent skills
-    issuer: Anthropic
-    date: March 2026
-    verify: https://verify.skilljar.com/c/9kqatya2vv9m
-  - title: Building with the Claude API
-    issuer: Anthropic
-    date: March 2026
-    verify: https://verify.skilljar.com/c/uqngr2ye5b66
-  - title: Claude Code in Action
-    issuer: Anthropic
-    date: March 2026
-    verify: https://verify.skilljar.com/c/8gi9q5uogp9a
-  - title: Programming with JavaScript
-    issuer: Meta
-    date: January 2024
-    verify: https://www.coursera.org/verify/ERB6G8PASVYK
-  - title: Web Design for Everybody Specialization
-    issuer: Coursera
-    date: March 2023
-    verify: https://www.coursera.org/account/accomplishments/specialization/certificate/VL3QG4FBAC3K
+  - name: "Model Context Protocol (MCP)"
+    issuer: "Anthropic"
+    date: "2026"
+    url: ""
+    evidence_for: ["AI Engineering", "Claude API"]
+  - name: "Agent Skills"
+    issuer: "Anthropic"
+    date: "2026"
+    url: ""
+    evidence_for: ["AI Agent Design", "Automation"]
+  - name: "Building with Claude API"
+    issuer: "Anthropic"
+    date: "2026"
+    url: ""
+    evidence_for: ["LLM Integration", "Prompt Engineering"]
+  - name: "Claude Code"
+    issuer: "Anthropic"
+    date: "2026"
+    url: ""
+    evidence_for: ["AI-Powered Development"]
+  - name: "Programming with JavaScript"
+    issuer: "Meta"
+    date: ""
+    url: ""
+    evidence_for: ["JavaScript", "Frontend Development"]
+  - name: "Web Design for Everybody Specialization"
+    issuer: "Coursera"
+    date: ""
+    url: ""
+    evidence_for: ["UI/UX", "HTML/CSS"]

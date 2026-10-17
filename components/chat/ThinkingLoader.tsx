@@ -71,7 +71,7 @@ export const ThinkingLoader = memo(function ThinkingLoader() {
 
   return (
     <span
-      className="inline-flex min-w-0 items-center text-sm text-muted-foreground"
+      className="inline-flex min-w-0 items-center text-sm text-[#aaaaaa9e]"
       aria-live="polite"
       aria-label="Working on your answer"
     >

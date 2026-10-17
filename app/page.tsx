@@ -98,14 +98,14 @@ export default function Home() {
   const errorMessage =
     error instanceof Error
       ? (() => {
-          try {
-            const parsed = JSON.parse(error.message);
-            if (parsed && typeof parsed.error === "string") return parsed.error;
-          } catch {
-            // fall through to raw message
-          }
-          return error.message || "Something went wrong with that request.";
-        })()
+        try {
+          const parsed = JSON.parse(error.message);
+          if (parsed && typeof parsed.error === "string") return parsed.error;
+        } catch {
+          // fall through to raw message
+        }
+        return error.message || "Something went wrong with that request.";
+      })()
       : "Something went wrong with that request.";
 
   const scrollToBottom = useCallback(() => {
@@ -124,7 +124,7 @@ export default function Home() {
     // Fire-and-forget: hit the warmup endpoint on page load so the DB pool
     // + table DDL cold-start happens before the first chat (#35). Watch the
     // server terminal for the [warmup] log line.
-    fetch("/api/warmup", { cache: "no-store" }).catch(() => {});
+    fetch("/api/warmup", { cache: "no-store" }).catch(() => { });
   }, []);
 
   return (

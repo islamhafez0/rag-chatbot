@@ -1,34 +1,70 @@
 summary: Islam's technical skills span expert React and Next.js, advanced TypeScript and JavaScript, Odoo ERP customization with Python, and modern tooling from Tailwind to Docker.
-frontend:
-  - React.js (Expert)
-  - Next.js (Expert)
-  - TypeScript (Advanced)
-  - JavaScript (Advanced)
-  - HTML5 & CSS3
-  - Tailwind CSS
-  - Framer Motion
-  - Shadcn UI
-  - Angular with NgRx
-  - Three.js
-  - Shopify Liquid themes
-backend_and_erp:
-  - Odoo ERP Customization
-  - Python
-  - Node.js
-  - PostgreSQL
-tools_and_platforms:
-  - Git & GitHub
-  - Vercel
-  - Docker
-  - VS Code
-  - Firebase
-  - Stripe
-  - Sanity CMS
-  - GraphQL
-  - SEO tooling
-soft_skills:
-  - UI/UX Implementation
-  - Web Performance Optimization
-  - Responsive Web Design
-  - Problem Solving
-  - Technical Communication
+categories:
+  - name: Frontend Development
+    skills:
+      - name: React.js
+        level: Expert
+        evidence: ["projects/rag-chatbot", "projects/nextjs-commerce"]
+        years_used: 2
+      - name: Next.js
+        level: Expert
+        evidence: ["projects/rag-chatbot", "projects/portfolio-website"]
+        years_used: 2
+      - name: TypeScript
+        level: Advanced
+        evidence: ["projects/rag-chatbot", "experience/taqa-techno-angular"]
+        years_used: 2
+      - name: JavaScript
+        level: Advanced
+        evidence: ["experience/taqa-techno-odoo", "experience/taqa-techno-angular"]
+        years_used: 3
+      - name: Angular with NgRx
+        level: Intermediate
+        evidence: ["experience/taqa-techno-angular"]
+        years_used: 1
+      - name: Tailwind CSS
+        level: Advanced
+        evidence: ["projects/portfolio-website", "projects/nextjs-commerce"]
+        years_used: 2
+  - name: Backend & ERP
+    skills:
+      - name: Odoo ERP Customization
+        level: Expert
+        evidence: ["experience/taqa-techno-odoo"]
+        years_used: 1
+      - name: Python
+        level: Advanced
+        evidence: ["experience/taqa-techno-odoo"]
+        years_used: 1
+      - name: PostgreSQL
+        level: Intermediate
+        evidence: ["experience/taqa-techno-odoo"]
+        years_used: 1
+  - name: Tools & Platforms
+    skills:
+      - name: Git & GitHub
+        level: Expert
+        evidence: ["experience/taqa-techno-odoo"]
+        years_used: 3
+      - name: Docker
+        level: Intermediate
+        evidence: ["projects/rag-chatbot"]
+        years_used: 1
+      - name: Firebase
+        level: Intermediate
+        evidence: ["experience/freelance-frontend"]
+        years_used: 1
+  - name: Professional Skills
+    skills:
+      - name: UI/UX Implementation
+        level: Expert
+        evidence: ["experience/taqa-techno-odoo", "projects/portfolio-website"]
+        years_used: 2
+      - name: Web Performance Optimization
+        level: Advanced
+        evidence: ["projects/rag-chatbot"]
+        years_used: 1
+      - name: Technical Communication
+        level: Advanced
+        evidence: ["projects/rag-chatbot"]
+        years_used: 1

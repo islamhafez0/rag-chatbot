@@ -1,15 +1,27 @@
-name: Relief Center
-description: Live disaster-response platform that pulls real-time data from USGS, NASA, and GDACS into one coordinated view for relief teams.
-role: Frontend Developer (OWL)
+# Relief Center - Disaster Response Platform
+# High-impact Odoo project integrating live global data.
+title: "Relief Center"
+description: >
+  A disaster-response platform built on Odoo. I built a 3D interactive globe that
+  pulls live data from NASA, USGS, and GDACS so users can see global emergencies
+  happening in real-time.
 tech_stack:
-  - Odoo 19
-  - Python
+  - Odoo (Python)
   - OWL (Odoo Web Library)
+  - NASA/USGS/GDACS APIs
   - PostgreSQL
-  - MapTiler SDK
-  - SCSS
-link: https://reliefcenter.com/
-highlights:
-  - Interactive 3D globe rendering live multi-source disaster data
-  - Automated subscriber alerts secured with OTP authentication
-  - CRM-integrated coordination flows
+  - JavaScript
+architecture:
+  - "I hooked live external data streams into Odoo's ORM so disaster tracking updates automatically"
+  - "I built the 3D visualization layer with OWL to map geospatial coordinates to the globe"
+  - "I added OTP-secured alerts so field coordinators could get verified notifications during crises"
+contributions:
+  - "Developed the 3D globe engine"
+  - "Set up the data pipelines for NASA and USGS"
+  - "Built the CRM flow to coordinate response teams"
+outcomes:
+  - "The team can now see global disasters in real-time on a map instead of reading lists of coordinates"
+  - "Field alerts are now secure and verified via OTP"
+lessons:
+  - "I learned how to handle high-frequency geospatial data without slowing down Odoo's monolithic architecture"
+  - "I figured out how to integrate complex third-party APIs into Odoo's server-rendered flow"
