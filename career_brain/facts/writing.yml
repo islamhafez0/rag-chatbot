@@ -1,32 +1,38 @@
+# Technical Writing & Thought Leadership
+# List of published articles used as evidence of technical depth and communication skills.
 articles:
-  - title: POST /search Is a Lie. HTTP Finally Admits It.
-    outlet: DEV Community
-    date: July 2026
-    topics: HTTP, APIs, web development
-  - title: You Don't Use Linked Lists. But They're Running Half Your Software.
-    outlet: DEV Community
-    date: June 2026
-    topics: data structures, JavaScript, system design
-  - title: Monolithic vs Microservices
-    outlet: DEV Community
-    date: June 2026
-    topics: architecture, backend
-  - title: TOON, Token-Oriented Object Notation, a Complete Guide for LLM Data Efficiency
-    outlet: DEV Community
-    date: December 2025
-    topics: LLMs, data efficiency, AI
-  - title: The React Compiler Just Made Your Memoization Knowledge Obsolete
-    outlet: Hashnode
-    date: July 2026
-    topics: React, compilers, frontend
-  - title: JavaScript ES2026 Is Not a Feature Drop. It Is a 30-Year Debt Payment.
-    outlet: Hashnode
-    date: July 2026
-    topics: JavaScript, TC39, frontend
-  - outlet: Medium
-    note: Islam also publishes on Medium under islamhafez0
-open_source:
-  - contribution: Docs fix for tmpfile example in google/zx
-    link: https://github.com/google/zx/pull/1498
-    date: August 2026
-profile: https://dev.to/islamhafez0
+  - title: "JavaScript ES2026 Is Not a Feature Drop. It’s a 30-Year Debt Payment"
+    topic: "JavaScript / Web Dev"
+    url: "https://dev.to/islamhafez0" # Base URL from search
+    key_takeaway: "Analyzing the evolution of JS and the shift towards fixing legacy architecture."
+    evidence_for: ["TypeScript", "JavaScript", "Frontend Architecture"]
+  - title: "Next.js 16.3 Makes Server Apps Feel Like SPAs"
+    topic: "Next.js"
+    url: "https://dev.to/islamhafez0"
+    key_takeaway: "Exploring the bridge between server-side rendering and single-page app fluidity."
+    evidence_for: ["Next.js", "Web Performance"]
+  - title: "Arrays and Stacks: Two Data Structures That Will Rewire Your Brain"
+    topic: "Computer Science"
+    url: "https://dev.to/islamhafez0"
+    key_takeaway: "Deep dive into fundamental data structures and their real-world application."
+    evidence_for: ["Problem Solving", "Data Structures"]
+  - title: "You Don't Use Linked Lists. But They're Running Half Your Software"
+    topic: "Computer Science"
+    url: "https://dev.to/islamhafez0"
+    key_takeaway: "Explaining the hidden ubiquity of linked lists in modern software."
+    evidence_for: ["Computer Science Fundamentals"]
+  - title: "POST /search Is a Lie. HTTP Finally Admits It"
+    topic: "API Design"
+    url: "https://dev.to/islamhafez0"
+    key_takeaway: "Critique of REST patterns and the movement towards more semantic HTTP usage."
+    evidence_for: ["RESTful APIs", "System Architecture"]
+  - title: "Monolithic vs Microservices"
+    topic: "Architecture"
+    url: "https://dev.to/islamhafez0"
+    key_takeaway: "Comparative analysis of system architecture patterns."
+    evidence_for: ["System Architecture"]
+  - title: "TOON: Token-Oriented Object Notation – A Complete Guide for LLM Data Efficiency"
+    topic: "AI / LLMs"
+    url: "https://dev.to/islamhafez0"
+    key_takeaway: "Proposed a new notation for optimizing data passed to Large Language Models."
+    evidence_for: ["RAG", "LLM Optimization", "AI Engineering"]

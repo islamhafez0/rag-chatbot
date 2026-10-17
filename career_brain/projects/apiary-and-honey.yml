@@ -1,9 +1,15 @@
 name: Apiary and Honey
-description: Odoo and Python project for an apiary/honey business, with bilingual client guides, an Arabic user guide, client data sheets, and VSCode run configurations. Islam is the top committer with 235 commits.
+description: Solo-built Odoo 17 ERP for end-to-end apiary management covering sites, colonies, batches, seasons, inspections, feeding, treatments, extractions, harvests, colony movements/permits, mortality tracking, cost accounting, and field data capture. Designed for traceability, compliance, and bilingual (Arabic/English) operations with role-based access control and custom reporting.
 role: Odoo Developer
 tech_stack:
   - Python
   - Odoo
-link: https://github.com/taqat-techno/Apiary-and-Honey
+  - JavaScript
+  - HTML
+  - CSS
+  - SCSS
+link: null
 highlights:
-  - 235 commits: client documentation in two languages plus developer tooling
+  - Full traceability: colony lifecycle, events, inspections, treatments, feeding, extractions, harvests, movements/permits, and mortality
+  - Costing and field operations: apiary cost accounting, field capture workflows, and site/season management
+  - Bilingual UX (Arabic/English), custom QWeb/PDF reports, security/permissions, data models, and onboarding docs

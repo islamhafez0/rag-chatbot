@@ -1,9 +1,15 @@
 name: Islam Hafez
 title: Frontend Developer | React, Next.js, Odoo Specialist
 location: Cairo, Maadi, Egypt
-email: islamhafez806@gmail.com
-website: https://islamhafez.vercel.app/
-github: https://github.com/islamhafez0
+personal_details:
+  age: 23
+  birthdate: "2002-12-13"
+  hobbies:
+    - Football
+    - Swimming
+    - Gym
+    - Walking
+    - Be Happy
 years_of_experience: 2
 education: Damanhour University
 languages_spoken:
