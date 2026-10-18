@@ -1,16 +1,34 @@
 # Photos of Islam Hafez.
-# src: image URL (public URL or a path under /public, e.g. /images/me.jpg)
-# alt: short text describing what the image shows (used for retrieval + as image alt text)
+# src: public URL or a path under /public.
+# alt: descriptive text used for retrieval and image alt text.
+
 photos:
   - src: "/images/professionalme.png"
-    alt: "Islam Hafez profile photo"
+    alt: "Islam Hafez professional profile photo"
+
   - src: "/images/casualme.png"
     alt: "Islam Hafez casual photo"
+
   - src: "/images/casualme-2.jpg"
-    alt: "Islam Hafez casual  photo 2"
+    alt: "Islam Hafez casual photo 2"
+
   - src: "/images/casualme-3.jpeg"
-    alt: "Islam Hafez casual  photo 3"
-  - src: "/images/graduatedme.png"
-    alt: "Islam Hafez graduated photo"
-  - src: "/images/casualme-4.png"
-    alt: "Islam Hafez casual  photo 4"
+    alt: "Islam Hafez casual photo 3"
+
+  - src: "/images/image-1.png"
+    alt: "Islam Hafez personal photo 1"
+
+  - src: "/images/image-2.png"
+    alt: "Islam Hafez personal photo 2"
+
+  - src: "/images/image-3.png"
+    alt: "Islam Hafez personal photo 3"
+
+  - src: "/images/image-4.jpeg"
+    alt: "Islam Hafez personal photo 4"
+
+  - src: "/images/image-5.jpeg"
+    alt: "Islam Hafez personal photo 5"
+
+  - src: "/images/image-6.webp"
+    alt: "Islam Hafez personal photo 6"

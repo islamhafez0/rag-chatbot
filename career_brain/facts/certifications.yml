@@ -1,33 +1,68 @@
 # Professional Certifications & Badges
-# Verified credentials that prove technical expertise.
+# Selected credentials relevant to frontend development, Odoo, and AI engineering.
 certifications:
-  - name: "Model Context Protocol (MCP)"
+  - name: "Introduction to Model Context Protocol"
     issuer: "Anthropic"
-    date: "2026"
-    url: ""
-    evidence_for: ["AI Engineering", "Claude API"]
-  - name: "Agent Skills"
+    date: "2026-03"
+    url: "https://verify.skilljar.com/c/rvjwfxhyx7mx"
+    credential_id: "rvjwfxhyx7mx"
+    evidence_for:
+      - "Model Context Protocol"
+      - "AI Tool Integration"
+
+  - name: "Introduction to Agent Skills"
     issuer: "Anthropic"
-    date: "2026"
-    url: ""
-    evidence_for: ["AI Agent Design", "Automation"]
-  - name: "Building with Claude API"
+    date: "2026-03"
+    url: "https://verify.skilljar.com/c/9kqatya2vv9m"
+    credential_id: "9kqatya2vv9m"
+    evidence_for:
+      - "AI Agent Design"
+      - "Automation"
+
+  - name: "Building with the Claude API"
     issuer: "Anthropic"
-    date: "2026"
-    url: ""
-    evidence_for: ["LLM Integration", "Prompt Engineering"]
-  - name: "Claude Code"
+    date: "2026-03"
+    url: "https://verify.skilljar.com/c/yv3s3suqeng2"
+    credential_id: "yv3s3suqeng2"
+    evidence_for:
+      - "LLM Integration"
+      - "API Development"
+
+  - name: "Claude Code in Action"
     issuer: "Anthropic"
-    date: "2026"
-    url: ""
-    evidence_for: ["AI-Powered Development"]
+    date: "2026-03"
+    url: "https://verify.skilljar.com/c/8gi9q5uogp9a"
+    credential_id: "8gi9q5uogp9a"
+    evidence_for:
+      - "AI-Assisted Development"
+      - "Developer Automation"
+
   - name: "Programming with JavaScript"
     issuer: "Meta"
-    date: ""
-    url: ""
-    evidence_for: ["JavaScript", "Frontend Development"]
-  - name: "Web Design for Everybody Specialization"
+    date: "2024-01"
+    url: "https://www.coursera.org/verify/ERB6G8PASVYK"
+    credential_id: "ERB6G8PASVYK"
+    evidence_for:
+      - "JavaScript"
+      - "Frontend Development"
+
+  - name: "Web Design for Everybody: Basics of Web Development & Coding Specialization"
     issuer: "Coursera"
-    date: ""
-    url: ""
-    evidence_for: ["UI/UX", "HTML/CSS"]
+    date: "2023-03"
+    url: "https://www.coursera.org/verify/VL3QG4FBAC3K"
+    credential_id: "VL3QG4FBAC3K"
+    evidence_for:
+      - "HTML"
+      - "CSS"
+      - "JavaScript"
+      - "Responsive Web Design"
+
+  - name: "Hands-on Introduction to Linux Commands and Shell Scripting"
+    issuer: "Coursera"
+    date: "2023-05"
+    url: "https://www.coursera.org/verify/ZMU7EE892GMP"
+    credential_id: "ZMU7EE892GMP"
+    evidence_for:
+      - "Linux"
+      - "Shell Scripting"
+      - "Development Tooling"

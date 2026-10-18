@@ -1,0 +1,46 @@
+company: TaqaTechno
+title: Odoo Frontend Developer
+location: Cairo, Egypt
+duration:
+  start: "2024-10"
+  end: "Present"
+description: >
+  I build full-stack web solutions using Odoo. My work focuses on creating custom modules
+  and APIs with Python, and building the frontend using OWL (Odoo Web Library) to handle
+  server-rendered data without losing the feel of a modern app.
+responsibilities:
+  - item: "Building custom modules and APIs with Python"
+    impact: "Added business-specific logic to Odoo that the default modules didn't support"
+  - item: "Developing frontend components with OWL"
+    impact: "Created dynamic interfaces that sync with Odoo's backend"
+  - item: "Turning Figma designs into Odoo themes"
+    impact: "Fixed layout issues and CSS constraints in Odoo to match exact design specs"
+  - item: "Building custom websites within Odoo"
+    impact: "Deployed full web presences for clients while keeping them inside the Odoo ecosystem"
+achievements:
+  - description: "Contributed 280+ commits across Taqat Techno organization repositories"
+    metric: "280+ commits"
+    evidence: "github.com/taqat-techno"
+  - description: "Developed Apiary-and-Honey with bilingual client documentation"
+    metric: "235 commits"
+    evidence: "github.com/taqat-techno/Apiary-and-Honey"
+  - description: "Developed pearlpixels company site"
+    metric: "61 commits"
+    evidence: "github.com/taqat-techno/pearlpixels"
+  - description: "Implemented herbalgardens Shopify bundles"
+    metric: "36 commits"
+    evidence: "pack upsell and cart auto-upgrade banners"
+  - description: "Broke the hardcoded 2-level cap in Odoo's website menu"
+    metric: "Unlimited nesting"
+    evidence: "Modified Odoo core rendering logic to allow deeper navigation hierarchies"
+tech_stack:
+  - Odoo
+  - Python
+  - OWL (Odoo Web Library)
+  - JavaScript
+  - Figma
+  - PostgreSQL
+challenges:
+  - problem: "Odoo's legacy structure often conflicts with modern, pixel-perfect frontend designs"
+    resolution: "I used OWL for the dynamic parts and wrote custom Python modules to expose the exact data the frontend needed"
+    lesson: "I learned how to push Odoo's boundaries to get a modern UI without breaking the ERP's core stability"

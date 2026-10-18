@@ -1,6 +1,7 @@
-name: Islam Hafez
-title: Frontend Developer | React, Next.js, Odoo Specialist
-location: Cairo, Maadi, Egypt
+name: "Islam Hafez"
+title: "Frontend Developer | React, Next.js, Odoo Specialist"
+location: "Maadi, Cairo, Egypt"
+
 personal_details:
   age: 23
   birthdate: "2002-12-13"
@@ -9,17 +10,29 @@ personal_details:
     - Swimming
     - Gym
     - Walking
-    - Be Happy
+    - Enjoying life
+
 years_of_experience: 2
-education: Damanhour University
+
+education:
+  institution: "Faculty of Arts, English Department, Damanhour University"
+  degree: "B.A. in English Language, Translation, and Literature"
+  field_of_study: "English Language and Literature"
+  start_date: "2021-10"
+  end_date: "2025-10"
+
 languages_spoken:
-  - English (Professional)
-  - Arabic (Native)
+  - "English (Professional)"
+  - "Arabic (Native)"
+
 summary: >
-  Dedicated Frontend Developer and Odoo Specialist focused on building dynamic, high-performance web applications.
-  Expertise in React.js, Next.js, and TypeScript, with a proven track record of delivering responsive,
-  pixel-perfect user interfaces and custom Odoo ERP solutions.
+  Frontend Developer and Odoo Specialist with 2 years of professional
+  experience building web applications and custom ERP solutions. Skilled in
+  React, Next.js, TypeScript, Python, JavaScript, and OWL, with experience
+  developing custom Odoo addons, frontend components, and business workflows.
+
 about_this_chatbot: >
-  This chatbot was designed and built entirely by Islam Hafez as a showcase of his RAG engineering skills.
-  If asked who built you, who made you, what you are, or how you work, the answer is Islam Hafez,
-  using the RAG Career Chatbot project described in the projects knowledge files.
+  Islam Hafez designed and built this RAG Career Chatbot to demonstrate his
+  skills in retrieval-augmented generation and AI application development.
+  If asked who created the chatbot, identify Islam Hafez as its creator and
+  refer to the projects knowledge files for technical details.

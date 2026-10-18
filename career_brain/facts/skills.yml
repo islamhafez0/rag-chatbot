@@ -1,70 +1,55 @@
-summary: Islam's technical skills span expert React and Next.js, advanced TypeScript and JavaScript, Odoo ERP customization with Python, and modern tooling from Tailwind to Docker.
+summary: >
+  Frontend Developer and Odoo Specialist experienced in building modern web
+  applications, customizing ERP systems, and developing AI-powered applications.
+  Works with React, Next.js, TypeScript, Odoo, Python, and RAG. Also explores
+  quantized LLM inference using llama.cpp and NVIDIA GPUs.
+
 categories:
   - name: Frontend Development
     skills:
-      - name: React.js
-        level: Expert
-        evidence: ["projects/rag-chatbot", "projects/nextjs-commerce"]
-        years_used: 2
-      - name: Next.js
-        level: Expert
-        evidence: ["projects/rag-chatbot", "projects/portfolio-website"]
-        years_used: 2
-      - name: TypeScript
-        level: Advanced
-        evidence: ["projects/rag-chatbot", "experience/taqa-techno-angular"]
-        years_used: 2
-      - name: JavaScript
-        level: Advanced
-        evidence: ["experience/taqa-techno-odoo", "experience/taqa-techno-angular"]
-        years_used: 3
-      - name: Angular with NgRx
-        level: Intermediate
-        evidence: ["experience/taqa-techno-angular"]
-        years_used: 1
-      - name: Tailwind CSS
-        level: Advanced
-        evidence: ["projects/portfolio-website", "projects/nextjs-commerce"]
-        years_used: 2
-  - name: Backend & ERP
+      - React.js
+      - Next.js
+      - TypeScript
+      - JavaScript
+      - Angular
+      - Tailwind CSS
+      - Web Performance Optimization
+  - name: Odoo Development
     skills:
-      - name: Odoo ERP Customization
-        level: Expert
-        evidence: ["experience/taqa-techno-odoo"]
-        years_used: 1
-      - name: Python
-        level: Advanced
-        evidence: ["experience/taqa-techno-odoo"]
-        years_used: 1
-      - name: PostgreSQL
-        level: Intermediate
-        evidence: ["experience/taqa-techno-odoo"]
-        years_used: 1
-  - name: Tools & Platforms
+      - Odoo 17,18,19
+      - Custom Addon Development
+      - OWL
+      - Python
+      - ERP Customization
+      - Business Workflow Implementation
+      - Cost Management Modules
+      - PostgreSQL
+
+  - name: AI Engineering
     skills:
-      - name: Git & GitHub
-        level: Expert
-        evidence: ["experience/taqa-techno-odoo"]
-        years_used: 3
-      - name: Docker
-        level: Intermediate
-        evidence: ["projects/rag-chatbot"]
-        years_used: 1
-      - name: Firebase
-        level: Intermediate
-        evidence: ["experience/freelance-frontend"]
-        years_used: 1
-  - name: Professional Skills
+      - Retrieval-Augmented Generation (RAG)
+      - LLM API Integration
+      - Embeddings and Vector Search
+      - llama.cpp
+      - Quantized LLM Inference
+      - Embeddings
+      - CUDA-Based Inference
+      
+  - name: Backend and Data
     skills:
-      - name: UI/UX Implementation
-        level: Expert
-        evidence: ["experience/taqa-techno-odoo", "projects/portfolio-website"]
-        years_used: 2
-      - name: Web Performance Optimization
-        level: Advanced
-        evidence: ["projects/rag-chatbot"]
-        years_used: 1
-      - name: Technical Communication
-        level: Advanced
-        evidence: ["projects/rag-chatbot"]
-        years_used: 1
+      - Python
+      - Node.js
+      - Next.js API Routes
+      - RESTful APIs
+      - GraphQL
+      - MongoDB
+      - Firebase
+
+  - name: Tools and Infrastructure
+    skills:
+      - Git
+      - Azure DevOps
+      - Linux
+      - Shell Scripting
+      - Docker
+      - NVIDIA GPUs

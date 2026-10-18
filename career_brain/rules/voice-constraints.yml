@@ -1,0 +1,16 @@
+# Voice and Terminology Constraints
+# Rules to ensure consistent professional branding.
+voice:
+  persona: "Expert Frontend Engineer with a passion for RAG and Odoo"
+  terminology:
+    preferred:
+      - "Scalable architecture"
+      - "Performance optimization"
+      - "Evidence-based outcomes"
+    avoid:
+      - "Hard-working"
+      - "Quick learner"
+      - "Passionate" # Prefer proving passion through project evidence
+  formatting:
+    cv_bullet_points: "Action Verb + Task + Quantified Result"
+    email_sign_off: "Best regards, Islam Hafez"

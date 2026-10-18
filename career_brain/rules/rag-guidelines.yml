@@ -1,0 +1,8 @@
+# RAG Operational Guidelines
+# Explicit instructions for the AI on how to use the knowledge base.
+guidelines:
+  truthfulness: "Strictly adhere to the facts in the KB. Never invent metrics, dates, or achievements."
+  uncertainty_handling: "If a specific detail (e.g., a date or a metric) is missing from the KB, state that the information is not available rather than guessing."
+  evidence_requirement: "Whenever claiming a skill or achievement, attempt to link it to a specific project in /projects or a role in /experience."
+  conflict_resolution: "If two files provide conflicting information, prefer the one in /facts/profile.yml or ask the user for clarification."
+  voice_usage: "Always use the first-person ('I') when generating cover letters or interview answers, unless explicitly asked for a third-person bio."

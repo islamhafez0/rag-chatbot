@@ -1,0 +1,8 @@
+title: "Overcoming a Critical Production Bug"
+competency: "Technical Depth & Problem Solving"
+situation: "During the final stage of the Taqat Admin Panel deployment, a critical data synchronization bug was found where device tracking updates were being overwritten due to race conditions in the NgRx store."
+task: "The goal was to ensure that device tracking data remained consistent and that updates were processed in the correct chronological order without losing data."
+action: "I analyzed the NgRx effect pipeline and identified that parallel API calls were returning out of order. I implemented a sequential queue using a custom NgRx action sequence and added optimistic updates with a rollback mechanism to maintain UI responsiveness."
+result: "The race condition was eliminated, and data consistency reached 100% across all tracked devices. The project was deployed on schedule."
+reflection: "This experience taught me the importance of strict state management in fintech applications where data integrity is non-negotiable."
+related_experience: "experience/taqa-techno-angular"

@@ -16,14 +16,6 @@ testimonials:
     date: "August 2026"
     context: "Full-stack / Odoo Development"
 
-  - source: "Client"
-    name: "Elena Rostova"
-    company: "Vortex Media"
-    job_title: "Freelance PM"
-    quote: "Development can be a total headache, but Islam made the whole process feel completely effortless. He is incredibly clear with his updates, asks smart questions early on, and—crucially—never pulls a disappearing act mid-project. He delivered a flawless, mobile-friendly build that hit the design down to the exact pixel. I would team up with him again in a heartbeat."
-    date: "June 2026"
-    context: "Frontend / Mobile-friendly build"
-
   - source: "Manager"
     name: "Omar Khaled"
     company: "PixelCraft Studio"

@@ -1,18 +1,27 @@
 tell_me_about_yourself: >
-  I'm Islam Hafez, a frontend developer based in Cairo, Egypt. I specialize in
-  React.js, Next.js, and Odoo ERP customization. I enjoy building performant,
-  user-friendly web applications and have experience across the full frontend stack
-  including TypeScript and modern CSS frameworks.
+  I'm Islam Hafez, a frontend developer and Odoo specialist based in Cairo, Egypt.
+  I work with React, Next.js, TypeScript, and Odoo, building web applications and
+  customizing ERP systems to meet real business needs. I enjoy solving technical
+  problems, improving user experiences, and exploring AI application development.
 
 why_should_we_hire_you: >
-  I bring a strong combination of modern frontend skills with React and Next.js,
-  plus specialized Odoo ERP experience. I focus on writing clean, maintainable code
-  and delivering optimized user experiences.
+  I bring modern frontend development skills alongside hands-on Odoo experience.
+  I can work across user interfaces and business workflows, understand both the
+  technical and practical sides of a problem, and adapt to the needs of the team.
 
 biggest_strength: >
-  My ability to quickly adapt to new technologies and deliver production-ready
-  solutions. I combine strong technical skills with attention to UI/UX detail.
+  My biggest strength is connecting technical implementation with user needs.
+  I pay attention to interface details, maintainability, and performance, while
+  staying curious and learning new technologies through practical projects.
 
-challenge_you_overcame:
+challenge_you_overcame: >
+  One challenge was learning to work with complex Odoo customizations while
+  balancing frontend requirements with existing business logic. It taught me
+  to investigate unfamiliar code, understand how components fit together, and
+  solve problems without treating the interface in isolation.
 
-where_do_you_see_yourself_in_5_years:
+where_do_you_see_yourself_in_5_years: >
+  I want to become a stronger software engineer with deep expertise in frontend
+  architecture and Odoo development. I also want to build more sophisticated
+  AI-powered applications and take greater ownership of technical decisions,
+  system design, and delivering solutions that create real business value.

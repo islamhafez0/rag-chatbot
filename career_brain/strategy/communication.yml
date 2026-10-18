@@ -1,0 +1,14 @@
+# Professional Communication Guidelines
+# Guidance on how to handle recruiter interactions and emails.
+communication:
+  preferred_tone: "Professional yet approachable"
+  key_phrases: []
+  response_templates:
+    initial_reach_out: ""
+    scheduling_interview: ""
+    follow_up_after_interview: ""
+    salary_negotiation: ""
+  communication_preferences:
+    email: true
+    linkedin: true
+    phone: false
