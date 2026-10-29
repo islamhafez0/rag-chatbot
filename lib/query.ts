@@ -45,7 +45,14 @@ const CONTINUATION_PREFIX_RE =
 const REFERENTIAL_RE =
   /^(?:the|what about the) .+\b(one|app|project|site|thing|role|company|job|skill)s?\b[?.!]*$/i;
 
-export type FollowUpKind = "bare" | "continuation" | "referential" | null;
+// Deictic follow-ups ("what stack did he use there?", "is it live?") point
+// back at the previous topic with a pronoun instead of naming it. Only short
+// questions qualify, and "this chatbot / this site" names a topic of its own.
+const DEICTIC_RE = /\b(there|it|its|that|those|these|them|this one|that one)\b/i;
+const SELF_REFERENCE_RE = /\bthis (chatbot|bot|assistant|site|website|app|portfolio|chat)\b/i;
+const DEICTIC_MAX_WORDS = 12;
+
+export type FollowUpKind = "bare" | "continuation" | "referential" | "deictic" | null;
 
 /** Classify a user message. Standalone short questions return null. */
 export function followUpKind(content: string): FollowUpKind {
@@ -57,6 +64,13 @@ export function followUpKind(content: string): FollowUpKind {
   // continuation word, but the specific pattern wins.
   if (REFERENTIAL_RE.test(lower)) return "referential";
   if (CONTINUATION_PREFIX_RE.test(trimmed)) return "continuation";
+  if (
+    DEICTIC_RE.test(trimmed) &&
+    !SELF_REFERENCE_RE.test(trimmed) &&
+    trimmed.split(/\s+/).length <= DEICTIC_MAX_WORDS
+  ) {
+    return "deictic";
+  }
   return null;
 }
 

@@ -50,8 +50,15 @@ describe("classifyIntent", () => {
     });
   });
 
+  it("pulls every role record for current/previous role questions", () => {
+    // Only a handful of role records exist; retrieving them all makes
+    // "current role" answerable every time (top-k used to miss it).
+    for (const q of ["what is his current role?", "where does he work?", "what was his first job?"]) {
+      expect(classifyIntent(q)).toMatchObject({ mode: "complete", category: "roles" });
+    }
+  });
+
   it("keeps specific questions focused (today's behavior)", () => {
-    expect(classifyIntent("what is his current role?").mode).toBe("focused");
     expect(classifyIntent("what os his secound role?").mode).toBe("focused");
     expect(classifyIntent("Tell me about the RAG Career Chatbot").mode).toBe("focused");
     expect(classifyIntent("What is the youtube clone project about?").mode).toBe("focused");

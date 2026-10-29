@@ -113,3 +113,24 @@ describe("buildRetrievalQuery", () => {
     expect(buildRetrievalQuery([{ role: "assistant", content: "hi" }]).query).toBe("");
   });
 });
+
+describe("deictic follow-ups", () => {
+  const prev = { role: "user", content: "Tell me about the Emdad project" };
+  const asst = { role: "assistant", content: "Emdad is an Odoo storefront." };
+
+  it("merges a short pronoun follow-up with the previous question", () => {
+    const out = buildRetrievalQuery([prev, asst, { role: "user", content: "what stack did he use there?" }]);
+    expect(out.merged).toBe(true);
+    expect(out.query).toContain("Emdad");
+  });
+
+  it("leaves 'this chatbot' questions standalone", () => {
+    const out = buildRetrievalQuery([prev, asst, { role: "user", content: "How is this chatbot built?" }]);
+    expect(out.merged).toBe(false);
+  });
+
+  it("leaves long self-contained questions standalone", () => {
+    const q = "Can you walk me through the architecture of the Relief Center platform and how it handles live data?";
+    expect(buildRetrievalQuery([prev, asst, { role: "user", content: q }]).merged).toBe(false);
+  });
+});

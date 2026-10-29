@@ -9,7 +9,14 @@ validateEnv();
 const collectionName = envString("ASTRA_DB_COLLECTION");
 assertValidIdentifier("table name (ASTRA_DB_COLLECTION)", collectionName);
 const defaultLimit = envNumber("RETRIEVAL_LIMIT");
-const contextBudget = envOptionalNumber("CONTEXT_BUDGET_CHARS", 12000);
+// One switch for production and eval, so the eval measures what ships.
+// Vector-only is the default: on the 40 KB-backed eval scenarios it scored
+// R@8 0.993 vs 0.968 for hybrid (which also missed one scenario entirely).
+const defaultSearch: "hybrid" | "vector" =
+  process.env.RETRIEVAL_SEARCH === "hybrid" ? "hybrid" : "vector";
+// Complete mode puts every record of a category in context (13 project
+// chunks ~ 14k chars); 24k chars is ~6k tokens, well inside the model window.
+const contextBudget = envOptionalNumber("CONTEXT_BUDGET_CHARS", 24000);
 
 const pool = new Pool({ connectionString: envString("DATABASE_URL") });
 
@@ -151,7 +158,7 @@ export async function getContext(
     sources,
     limit = defaultLimit,
     vector,
-    search = "vector",
+    search = defaultSearch,
     mode = "focused",
     budgetChars = contextBudget,
   } = options;
@@ -203,10 +210,19 @@ export async function getContext(
       // per-source diversity cap. FULL OUTER JOIN on id yields exactly one
       // row per document (no UNION ALL duplication, no score inflation);
       // the id tiebreak keeps ordering deterministic.
+      //
+      // Lexical leg: plainto_tsquery ANDs every word, so a natural question
+      // ("What did Islam do on the Apiary project?") matched 0 of 45 chunks
+      // and the leg fed 16 arbitrary zero-score rows into RRF at full weight.
+      // Terms are now OR-ed (rank_cd still rewards chunks matching more of
+      // them) and only rows that actually match get lexical credit.
       params.push(query);
       const tsIdx = params.length;
+      const tsQuery = `replace(plainto_tsquery('english', $${tsIdx})::text, '&', '|')::tsquery`;
+      const lexicalWhere = where ? `${where} AND lexical @@ q.tsq` : `WHERE lexical @@ q.tsq`;
       sql = `
-      WITH vector_rank AS (
+      WITH q AS (SELECT ${tsQuery} AS tsq),
+      vector_rank AS (
         SELECT id, (1.0 / (60 + row_number() OVER (ORDER BY embedding <=> $1::vector))) AS rrf
         FROM ${collectionName}
         ${where}
@@ -214,10 +230,10 @@ export async function getContext(
         LIMIT $2
       ),
       lexical_rank AS (
-        SELECT id, (1.0 / (60 + row_number() OVER (ORDER BY ts_rank_cd(lexical, plainto_tsquery('english', $${tsIdx})) DESC))) AS rrf
-        FROM ${collectionName}
-        ${where}
-        ORDER BY ts_rank_cd(lexical, plainto_tsquery('english', $${tsIdx})) DESC
+        SELECT id, (1.0 / (60 + row_number() OVER (ORDER BY ts_rank_cd(lexical, q.tsq) DESC, id ASC))) AS rrf
+        FROM ${collectionName}, q
+        ${lexicalWhere}
+        ORDER BY ts_rank_cd(lexical, q.tsq) DESC, id ASC
         LIMIT $2
       ),
       combined AS (
