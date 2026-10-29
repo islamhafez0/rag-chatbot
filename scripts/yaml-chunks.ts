@@ -150,13 +150,15 @@ export function chunkYamlDoc(
     const lines = flattenEntry(entry);
     if (lines.length === 0) return;
     // Indexed labels ("Role 2: ...") only for collection files; single
-    // entities are labeled by file title. Numbering follows file order so
+    // entities are labeled by their own name/title/company when they have
+    // one ("Frontend Angular Developer — TaqaTechno"), else by file title,
+    // so the label carries meaning into the embedding. Numbering follows file order so
     // "second role" keeps matching the source order. The category tag keeps
     // broad listing queries ("what projects...") matched to the right files.
     const base =
       parentKey !== undefined
         ? entryLabel(meta, parentKey, index, entries.length, entry)
-        : humanizeKey(meta.title);
+        : entryName(entry) || humanizeKey(meta.title);
     const label = `${base} (${meta.category})`;
     chunks.push({
       text: `${label}\n${lines.join("\n")}`,

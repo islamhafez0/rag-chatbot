@@ -109,10 +109,15 @@ describe("chunkYamlDoc", () => {
     expect(chunks.map((c) => c.entryTotal)).toEqual([3, 3, 3]);
   });
 
-  it("labels single entities by file title", () => {
-    const chunks = chunkYamlDoc({ company: "TaqaTechno" }, meta("current"));
+  it("labels single entities by their own title and company", () => {
+    const chunks = chunkYamlDoc({ company: "TaqaTechno", title: "Odoo Developer" }, meta("current", "roles/current.yml"));
     expect(chunks).toHaveLength(1);
-    expect(chunks[0].text.startsWith("Current (")).toBe(true);
+    expect(chunks[0].text.startsWith("Odoo Developer — TaqaTechno (roles)")).toBe(true);
+  });
+
+  it("falls back to the file title when the entity has no name", () => {
+    const chunks = chunkYamlDoc({ tone: "friendly" }, meta("personality"));
+    expect(chunks[0].text.startsWith("Personality (")).toBe(true);
   });
 
   it("skips empty files entirely", () => {
