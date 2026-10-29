@@ -10,12 +10,16 @@ import { SCENARIOS, recallAtK, type Scenario } from "./scenarios";
 
 const CACHE_DIR = path.join(process.cwd(), "scripts", "eval", ".cache");
 const SCORES_CACHE = path.join(CACHE_DIR, "scores.json");
-const ANSWERS_CACHE = path.join(CACHE_DIR, "answers.json");
+// Per-model answer cache: parallel runs for different models must not race on one file.
+const ANSWERS_CACHE = path.join(
+  CACHE_DIR,
+  `answers-${(process.env.LLM_MODEL || "default").replace(/[^a-z0-9.-]/gi, "_")}.json`,
+);
 
 /** Bumped when retrieval/generation behavior changes; stale entries recompute. */
-const CACHE_VERSION = "v3-ranked";
+const CACHE_VERSION = "v5-final";
 /** Bumped when the system prompt changes; answers (not retrieval) recompute. */
-const PROMPT_VERSION = "p2-numeric";
+const PROMPT_VERSION = "p4-final";
 
 interface CachedScenario {
   cacheVersion: string;
@@ -81,7 +85,7 @@ async function main() {
 }
 
 const DECLINE_RE =
-  /don'?t have|knowledge base|no information|not available|unable|can'?t (share|reveal|disclose|provide|comply|help)|won'?t (share|reveal|disclose)|cann?ot (share|reveal|comply|help)|not (able|allowed) to share|against my instructions|i must decline|no data|doesn'?t (have|cover)|no such/i;
+  /don'?t have|knowledge base|no information|not available|unable|can'?t (share|reveal|disclose|provide|comply|help)|won'?t (share|reveal|disclose)|cann?ot (share|reveal|comply|help)|not (able|allowed) to share|against my instructions|i must decline|no data|doesn'?t (have|cover)|no such|here to talk about|skip that|stick to|don'?t share|keep (my|his) [a-z ]*private|private and|outside (of )?(my|what i)/i;
 
 /** Normalize model orthography (curly quotes, narrow spaces, unicode dashes)
  *  before fact/decline matching so typography never fails a correct answer. */
@@ -133,7 +137,7 @@ function evaluateAnswer(scenario: Scenario, answer: string): { pass: boolean; de
 }
 
 async function runAnswerPhase() {
-  const searchMode = process.env.EVAL_SEARCH === "vector" ? "vector" : "hybrid";
+  const searchMode = (process.env.EVAL_SEARCH ?? process.env.RETRIEVAL_SEARCH) === "hybrid" ? "hybrid" : "vector";
   const modelName = process.env.LLM_MODEL || "default";
   console.log(`Answer-phase evaluation (key-fact / decline checks via ${modelName}, search=${searchMode}, pipeline modes):\n`);
   const rows = await loadRows(searchMode);
@@ -149,7 +153,7 @@ async function runAnswerPhase() {
   for (const scenario of SCENARIOS) {
     const row = rows.find((r) => r.id === scenario.id);
     if (!row) continue;
-    const cacheKey = `${scenario.id}::${CACHE_VERSION}::${PROMPT_VERSION}::answer::${searchMode}`;
+    const cacheKey = `${scenario.id}::${CACHE_VERSION}::${PROMPT_VERSION}::answer::${searchMode}::${modelName}`;
 
     let answer = answerCache[cacheKey];
     if (!answer) {
@@ -208,7 +212,7 @@ async function loadRows(search: "hybrid" | "vector"): Promise<(CachedScenario & 
 }
 
 async function runRetrievePhase() {
-  const searchMode = process.env.EVAL_SEARCH === "vector" ? "vector" : "hybrid";
+  const searchMode = (process.env.EVAL_SEARCH ?? process.env.RETRIEVAL_SEARCH) === "hybrid" ? "hybrid" : "vector";
   const rows: (CachedScenario & { id: string })[] = [];
   for (const scenario of SCENARIOS) {
     const data = await collect(scenario, searchMode);

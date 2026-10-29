@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import fs from "fs";
+import path from "path";
 import { SCENARIOS, recallAtK } from "./scenarios";
 
 describe("recallAtK", () => {
@@ -41,5 +43,15 @@ describe("SCENARIOS", () => {
         expect(s.emptyKnowledge === true || s.conversational === true).toBe(true);
       }
     }
+  });
+});
+
+describe("SCENARIOS against the knowledge base", () => {
+  it("only expects sources that exist in career_brain/ (no stale eval)", () => {
+    const root = path.join(process.cwd(), "career_brain");
+    const missing = SCENARIOS.flatMap((s) => s.expectedSources).filter(
+      (src) => !fs.existsSync(path.join(root, src)),
+    );
+    expect(missing).toEqual([]);
   });
 });
