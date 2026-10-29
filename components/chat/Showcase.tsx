@@ -1,150 +1,219 @@
 "use client";
 
-import { memo } from "react";
-import { ArrowUpRight, Briefcase, CheckCircle2, Globe } from "lucide-react";
+import { memo, useId, useState } from "react";
+import {
+  ArrowUpRight,
+  Briefcase,
+  ChevronDown,
+  FileText,
+  Github,
+  Globe,
+  Store,
+  Sparkle,
+} from "lucide-react";
 import type { ComparisonBlock, ProjectBlock, TimelineBlock } from "@/lib/rich-response";
+import { cn } from "@/lib/utils";
 import { MetricGrid } from "./MetricCard";
 import { TechnologyBadge } from "./TechnologyBadge";
 import { AutolinkedText } from "./Autolink";
+import { projectLinks, type CardLink } from "./project-links";
 
-const ACCENTS = [
-  "from-sky-500/25 via-sky-500/5 to-transparent",
-  "from-emerald-500/25 via-emerald-500/5 to-transparent",
-  "from-violet-500/25 via-violet-500/5 to-transparent",
-  "from-amber-500/25 via-amber-500/5 to-transparent",
+// ------------------------------------------------------------------ links
+
+const LINK_ICON = { github: Github, store: Store, doc: FileText, live: Globe } as const;
+
+function LinkButton({ link, primary }: { link: CardLink; primary: boolean }) {
+  const Icon = LINK_ICON[link.kind];
+  const external = !link.url.startsWith("/");
+  return (
+    <a
+      href={link.url}
+      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+      className={cn(
+        "group/link inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-[background-color,scale,box-shadow] duration-200 active:scale-95",
+        primary
+          ? "bg-foreground text-background shadow-soft hover:shadow-lift"
+          : "border border-border bg-background/60 text-foreground hover:bg-accent",
+      )}
+    >
+      <Icon className="h-3.5 w-3.5" aria-hidden />
+      <span className="max-w-[10rem] truncate">{link.label}</span>
+      {external && (
+        <ArrowUpRight
+          className="h-3 w-3 opacity-60 transition-transform duration-200 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
+          aria-hidden
+        />
+      )}
+      {external && <span className="sr-only">(opens in a new tab)</span>}
+    </a>
+  );
+}
+
+// ------------------------------------------------------------ project card
+
+const HUES = [
+  ["var(--brand-1)", "var(--brand-2)"],
+  ["var(--brand-2)", "var(--brand-3)"],
+  ["var(--brand-3)", "var(--brand-1)"],
 ] as const;
 
-function accentFor(title: string): (typeof ACCENTS)[number] {
+function hueFor(title: string) {
   let h = 0;
   for (const c of title) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return ACCENTS[h % ACCENTS.length];
+  return HUES[h % HUES.length];
 }
 
-function hostOf(url?: string): string | null {
-  if (!url) return null;
-  try {
-    return new URL(url).host;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * ProjectVisual — a frontend-owned preview panel so every project answer
- * ships with a visual. It is a stylized browser mockup derived ONLY from
- * validated block data (title, techs, real URL host) — never a screenshot
- * and never a fabricated image URL, since the KB has no project images.
- */
-export const ProjectVisual = memo(function ProjectVisual({ block }: { block: ProjectBlock }) {
-  const host = hostOf(block.url ?? undefined);
-  const initial = block.title.trim().charAt(0).toUpperCase() || "P";
-  return (
-    <div
-      role="img"
-      aria-label={`${block.title} preview illustration`}
-      className="border-b border-border"
-    >
-      <div className="flex items-center gap-2 bg-muted/70 px-3.5 py-2">
-        <span className="flex gap-1.5" aria-hidden>
-          <span className="h-2.5 w-2.5 rounded-full bg-rose-400/80" />
-          <span className="h-2.5 w-2.5 rounded-full bg-amber-400/80" />
-          <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
-        </span>
-        <span className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-md bg-background px-3 py-1 font-mono text-[11px] text-muted-foreground">
-          <Globe className="h-3 w-3 shrink-0" />
-          <span className="truncate">{host ?? block.title}</span>
-        </span>
-      </div>
-      <div className={`relative overflow-hidden bg-gradient-to-br to-card ${accentFor(block.title)}`}>
-        <div className="flex items-center gap-3.5 px-4 py-5">
-          <span
-            aria-hidden
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-xl font-bold text-foreground shadow-sm"
-          >
-            {initial}
-          </span>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-foreground">{block.title}</p>
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">
-              {block.technologies.slice(0, 3).join(" · ")}
-              {block.technologies.length > 3 && ` · +${block.technologies.length - 3} more`}
-            </p>
-          </div>
-        </div>
-        <div className="space-y-1.5 px-4 pb-4" aria-hidden>
-          <div className="h-1.5 w-11/12 rounded-full bg-foreground/10" />
-          <div className="h-1.5 w-4/5 rounded-full bg-foreground/10" />
-          <div className="h-1.5 w-3/5 rounded-full bg-foreground/10" />
-        </div>
-      </div>
-    </div>
-  );
-});
-
-const MAX_CARD_TECHS = 5;
-const MAX_CARD_HIGHLIGHTS = 3;
+const MAX_TECHS = 8;
+const SHOWN_HIGHLIGHTS = 3;
 
 export const ProjectCard = memo(function ProjectCard({ block }: { block: ProjectBlock }) {
-  const extraTechs = block.technologies.length - MAX_CARD_TECHS;
-  const extraHighlights = block.highlights.length - MAX_CARD_HIGHLIGHTS;
+  const [open, setOpen] = useState(false);
+  const regionId = useId();
+  const [c1, c2] = hueFor(block.title);
+  const links = projectLinks(block);
+  const techs = [...new Set(block.technologies)];
+  const extraTechs = techs.length - MAX_TECHS;
+  const canExpand = block.highlights.length > SHOWN_HIGHLIGHTS || block.description.length > 180;
+  const highlights = open ? block.highlights : block.highlights.slice(0, SHOWN_HIGHLIGHTS);
+  const initials = block.title
+    .split(/\s+/)
+    .filter((w) => /^[A-Za-z0-9]/.test(w))
+    .slice(0, 2)
+    .map((w) => w[0]!.toUpperCase())
+    .join("");
+
   return (
-    <article aria-label={block.title} className="flex h-full w-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-      <ProjectVisual block={block} />
-      <div className="border-b border-border bg-muted/50 px-4 py-3">
-        <div className="flex items-start justify-between gap-2">
-          <h4 className="line-clamp-2 text-sm leading-snug font-semibold text-foreground">{block.title}</h4>
-          {block.url && (
-            <a
-              href={block.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+    <article
+      aria-label={block.title}
+      className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-soft transition-[translate,scale,box-shadow,border-color] duration-300 ease-out-expo hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lift"
+    >
+      <span
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-[3px] opacity-80 transition-opacity group-hover:opacity-100"
+        style={{ background: `linear-gradient(90deg, ${c1}, ${c2})` }}
+      />
+      <div className="flex flex-1 flex-col gap-3.5 p-4 sm:p-5">
+        <header className="flex items-start gap-3">
+          <span
+            aria-hidden
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white shadow-soft"
+            style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
+          >
+            {initials || <Sparkle className="h-4 w-4" />}
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-[0.95rem] leading-snug font-semibold tracking-tight text-foreground">
+              {block.title}
+            </h3>
+            <p
+              className={cn(
+                "mt-1 text-[0.8125rem] leading-relaxed text-muted-foreground",
+                !open && "line-clamp-3",
+              )}
             >
-              View <ArrowUpRight className="h-3 w-3" />
-            </a>
-          )}
-        </div>
-        <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-muted-foreground"><AutolinkedText text={block.description} /></p>
-      </div>
-      <div className="flex flex-1 flex-col space-y-3 px-4 py-3">
-        <div className="flex flex-wrap items-center gap-1.5" aria-label={`${block.title} technologies`}>
-          {block.technologies.slice(0, MAX_CARD_TECHS).map((t) => (
-            <TechnologyBadge key={t} name={t} />
-          ))}
-          {extraTechs > 0 && (
-            <span className="text-xs font-medium text-muted-foreground">+{extraTechs} more</span>
-          )}
-        </div>
-        <ul className="space-y-1.5">
-          {block.highlights.slice(0, MAX_CARD_HIGHLIGHTS).map((h) => (
-            <li key={h} className="flex items-start gap-2 text-xs leading-relaxed text-foreground/90">
-              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-              <span className="line-clamp-2"><AutolinkedText text={h} /></span>
+              <AutolinkedText text={block.description} />
+            </p>
+          </div>
+        </header>
+
+        <ul className="flex flex-wrap gap-1.5" aria-label={`${block.title} technologies`}>
+          {techs.slice(0, open ? techs.length : MAX_TECHS).map((t) => (
+            <li key={t}>
+              <TechnologyBadge name={t} />
             </li>
           ))}
+          {!open && extraTechs > 0 && (
+            <li className="self-center text-xs font-medium text-muted-foreground">+{extraTechs}</li>
+          )}
         </ul>
-        {extraHighlights > 0 && (
-          <p className="text-xs font-medium text-muted-foreground">+{extraHighlights} more highlights</p>
+
+        {highlights.length > 0 && (
+          <ul id={regionId} className="space-y-1.5">
+            {highlights.map((h, i) => (
+              <li
+                key={`${i}-${h.slice(0, 24)}`}
+                className={cn(
+                  "flex items-start gap-2 text-[0.8125rem] leading-relaxed text-foreground/90",
+                  i >= SHOWN_HIGHLIGHTS && "animate-rise",
+                )}
+              >
+                <span
+                  aria-hidden
+                  className="mt-[0.55em] h-1.5 w-1.5 shrink-0 rounded-full"
+                  style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
+                />
+                <span className="min-w-0">
+                  <AutolinkedText text={h} />
+                </span>
+              </li>
+            ))}
+          </ul>
         )}
-        {block.metrics && block.metrics.length > 0 && (
-          <div className="mt-auto pt-1">
-            <MetricGrid items={block.metrics} />
-          </div>
+
+        {block.metrics && block.metrics.length > 0 && <MetricGrid items={block.metrics} />}
+
+        {(links.length > 0 || canExpand) && (
+          <footer className="mt-auto flex flex-wrap items-center gap-2 pt-1">
+            {links.map((l, i) => (
+              <LinkButton key={l.url} link={l} primary={i === 0} />
+            ))}
+            {canExpand && (
+              <button
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                aria-expanded={open}
+                aria-controls={regionId}
+                className="ml-auto inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                {open
+                  ? "Show less"
+                  : block.highlights.length > SHOWN_HIGHLIGHTS
+                    ? `${block.highlights.length - SHOWN_HIGHLIGHTS} more`
+                    : "More"}
+                <ChevronDown
+                  aria-hidden
+                  className={cn("h-3.5 w-3.5 transition-transform duration-300", open && "rotate-180")}
+                />
+              </button>
+            )}
+          </footer>
         )}
       </div>
     </article>
   );
 });
 
+// ---------------------------------------------------------------- timeline
+
 export const Timeline = memo(function Timeline({ block }: { block: TimelineBlock }) {
   return (
-    <section aria-label={block.title ?? "Timeline"} className="w-full rounded-xl border border-border bg-card p-4 shadow-sm">
-      {block.title && <h4 className="mb-3 text-sm font-semibold text-foreground">{block.title}</h4>}
-      <ol className="relative ml-1.5 space-y-4 border-l border-border pl-5">
-        {block.events.map((e) => (
-          <li key={`${e.date ?? ""}-${e.title}`} className="relative">
-            <span className="absolute top-1 -left-[27px] h-2.5 w-2.5 rounded-full border-2 border-background bg-primary ring-1 ring-border" aria-hidden />
-            <div className="flex flex-wrap items-center gap-2">
+    <section
+      aria-label={block.title ?? "Timeline"}
+      className="w-full rounded-2xl border border-border bg-card p-4 shadow-soft sm:p-5"
+    >
+      {block.title && <h3 className="mb-4 text-sm font-semibold text-foreground">{block.title}</h3>}
+      <div className="relative">
+      <span
+        aria-hidden
+        className="absolute top-2 bottom-2 left-[5px] w-px"
+        style={{ background: "linear-gradient(var(--brand-1), var(--brand-2), transparent)" }}
+      />
+      <ol className="space-y-5 stagger">
+        {block.events.map((e, i) => (
+          <li
+            key={`${i}-${e.title}`}
+            className="relative pl-7"
+            style={{ "--i": Math.min(i, 10) } as React.CSSProperties}
+          >
+            <span
+              aria-hidden
+              className={cn(
+                "absolute top-[0.35rem] left-0 h-[11px] w-[11px] rounded-full border-2 border-card",
+                i === 0 ? "bg-primary ring-4 ring-primary/15" : "bg-muted-foreground/60",
+              )}
+            />
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <p className="text-sm font-semibold text-foreground">{e.title}</p>
               {e.date && (
                 <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-[11px] font-medium text-muted-foreground">
                   {e.date}
@@ -152,38 +221,48 @@ export const Timeline = memo(function Timeline({ block }: { block: TimelineBlock
               )}
               {e.tag && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                  <Briefcase className="h-3 w-3" /> {e.tag}
+                  <Briefcase className="h-3 w-3" aria-hidden /> {e.tag}
                 </span>
               )}
             </div>
-            <p className="mt-1 text-sm font-medium text-foreground">{e.title}</p>
             {e.description && (
-              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground"><AutolinkedText text={e.description} /></p>
+              <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted-foreground">
+                <AutolinkedText text={e.description} />
+              </p>
             )}
           </li>
         ))}
       </ol>
+      </div>
     </section>
   );
 });
 
+// -------------------------------------------------------------- comparison
+
 export const ComparisonTable = memo(function ComparisonTable({ block }: { block: ComparisonBlock }) {
   return (
-    <section aria-label={block.title ?? "Comparison"} className="w-full overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+    <section
+      aria-label={block.title ?? "Comparison"}
+      className="w-full overflow-hidden rounded-2xl border border-border bg-card shadow-soft"
+    >
       {block.title && (
-        <h4 className="border-b border-border bg-muted/50 px-4 py-2.5 text-sm font-semibold text-foreground">
+        <h3 className="border-b border-border px-4 py-2.5 text-sm font-semibold text-foreground">
           {block.title}
-        </h4>
+        </h3>
       )}
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[480px] border-collapse text-xs">
+      <div className="table-shell overflow-x-auto">
+        <table className="w-full border-collapse text-[0.8125rem]">
           <thead>
             <tr>
-              {block.columns.map((c) => (
+              {block.columns.map((c, i) => (
                 <th
-                  key={c}
+                  key={`${i}-${c}`}
                   scope="col"
-                  className="border-b border-border bg-muted/40 px-3.5 py-2.5 text-left font-semibold tracking-wide text-muted-foreground uppercase"
+                  className={cn(
+                    "border-b border-border bg-muted/60 px-3.5 py-2.5 text-left text-xs font-semibold tracking-wide text-muted-foreground",
+                    i === 0 && "sticky left-0 z-10 bg-muted",
+                  )}
                 >
                   {c}
                 </th>
@@ -191,13 +270,19 @@ export const ComparisonTable = memo(function ComparisonTable({ block }: { block:
             </tr>
           </thead>
           <tbody>
-            {block.rows.map((r) => (
-              <tr key={r.label} className="transition-colors hover:bg-accent/40">
-                <th scope="row" className="border-b border-border px-3.5 py-2.5 text-left font-medium text-foreground">
+            {block.rows.map((r, ri) => (
+              <tr key={`${ri}-${r.label}`} className="transition-colors hover:bg-accent/40">
+                <th
+                  scope="row"
+                  className="sticky left-0 z-10 min-w-[7rem] border-b border-border bg-card px-3.5 py-2.5 text-left align-top font-medium text-foreground"
+                >
                   {r.label}
                 </th>
                 {r.values.map((v, i) => (
-                  <td key={i} className="border-b border-border px-3.5 py-2.5 text-muted-foreground">
+                  <td
+                    key={i}
+                    className="min-w-[9rem] border-b border-border px-3.5 py-2.5 align-top text-muted-foreground"
+                  >
                     {v}
                   </td>
                 ))}

@@ -2,31 +2,23 @@
 
 import { memo } from "react";
 import { cn } from "@/lib/utils";
+import { techColor } from "./tech-color";
 
-/** Semantic tech colors — stable per technology, not random per render. */
-function techColor(name: string): string {
-  const t = name.toLowerCase();
-  if (/(react|next\.?js|typescript|javascript)/.test(t))
-    return "bg-sky-500/10 text-sky-600 border-sky-500/25 dark:text-sky-300";
-  if (/(node|express|odoo|python|fastapi)/.test(t))
-    return "bg-emerald-500/10 text-emerald-700 border-emerald-500/25 dark:text-emerald-300";
-  if (/(postgres|pgvector|redis|mongo|sql|prisma|drizzle)/.test(t))
-    return "bg-indigo-500/10 text-indigo-700 border-indigo-500/25 dark:text-indigo-300";
-  if (/(tailwind|css|framer|shadcn)/.test(t))
-    return "bg-violet-500/10 text-violet-700 border-violet-500/25 dark:text-violet-300";
-  if (/(openai|gemini|langchain|rag|ai|llm|embed)/.test(t))
-    return "bg-amber-500/10 text-amber-700 border-amber-500/25 dark:text-amber-300";
-  if (/(docker|vercel|aws|git|stripe|telegram)/.test(t))
-    return "bg-rose-500/10 text-rose-700 border-rose-500/25 dark:text-rose-300";
-  return "bg-muted text-muted-foreground border-border";
-}
+export { techColor };
 
-export const TechnologyBadge = memo(function TechnologyBadge({ name }: { name: string }) {
+export const TechnologyBadge = memo(function TechnologyBadge({
+  name,
+  className,
+}: {
+  name: string;
+  className?: string;
+}) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap",
+        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium whitespace-nowrap transition-transform duration-200 hover:-translate-y-px",
         techColor(name),
+        className,
       )}
     >
       {name}
@@ -42,11 +34,14 @@ export const TechnologyBadgeGroup = memo(function TechnologyBadgeGroup({
   label?: string;
 }) {
   if (technologies.length === 0) return null;
+  const unique = [...new Set(technologies)];
   return (
-    <div className="flex flex-wrap items-center gap-1.5" aria-label={label ?? "Technologies"}>
-      {technologies.map((t) => (
-        <TechnologyBadge key={t} name={t} />
+    <ul className="flex flex-wrap items-center gap-1.5 stagger" aria-label={label ?? "Technologies"}>
+      {unique.map((t, i) => (
+        <li key={t} style={{ "--i": Math.min(i, 12) } as React.CSSProperties}>
+          <TechnologyBadge name={t} />
+        </li>
       ))}
-    </div>
+    </ul>
   );
 });
