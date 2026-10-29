@@ -1,0 +1,26 @@
+# Contract side project, alongside the full-time Odoo role. Sources: portfolio
+# experience + impact sections, previous knowledge base, Islam's own statement.
+# Dates: the portfolio says June 2025 to September 2025 (older CV drafts said
+# 2024 by mistake; the portfolio and knowledge base agree on 2025).
+company: TaqaTechno
+title: Frontend Angular Developer
+employment_type: Contract (side project alongside the Odoo role)
+start_date: June 2025
+end_date: September 2025
+description: >
+  I built two enterprise fintech applications from scratch with Angular 17 and NgRx:
+  the Taqat Admin Panel and the Taqat Merchant Panel. I integrated 60+ RESTful APIs
+  with robust error handling, every API call was encrypted with AES-256 + HMAC, and
+  the settlement flow enforced maker-checker discipline. These are my two strongest
+  frontend projects (see projects/taqat-admin-panel.yml and projects/taqat-merchant-panel.yml).
+tech_stack:
+  - Angular 17
+  - NgRx
+  - TypeScript
+  - RESTful APIs
+  - AES-256 + HMAC
+evidence:
+  - Portfolio experience and impact sections: https://islamhafez.vercel.app
+  - Code lived in the Taqat For Technology GitHub organization (taqatfortechnology) on non-default branches; Islam is no longer a member, so commits are not publicly verifiable.
+unknowns:
+  - Repository links are private and cannot be shared.

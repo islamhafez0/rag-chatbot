@@ -1,0 +1,26 @@
+# Sources: both CVs, portfolio experience section, GitHub repositories.
+company: Self-Employed
+title: Frontend Developer (Freelance)
+employment_type: Freelance
+start_date: August 2024
+end_date: Present
+description: >
+  As a freelance frontend developer I build full-stack React and Next.js applications,
+  custom WordPress themes from scratch, e-commerce frontends, personal portfolios and
+  UI-heavy apps, often with Firebase. One project I'm proud of is a secure quiz app
+  with OTP-protected access and session validation.
+highlights:
+  - Secure quiz app with OTP-protected access and session validation (otp-system repositories, 2025)
+  - Custom WordPress themes built from scratch
+  - E-commerce frontends and personal portfolios
+tech_stack:
+  - React.js
+  - Next.js
+  - TypeScript
+  - Firebase
+  - WordPress
+  - Tailwind CSS
+evidence:
+  - https://github.com/islamhafez0/otp-system
+unknowns:
+  - Client names are not public.
