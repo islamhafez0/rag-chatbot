@@ -25,6 +25,20 @@ export interface GuardLimits {
   maxHistoryChars: number;
 }
 
+// Visual payloads (```rich-ui / ```json fences) are UI data, not
+// conversation: they are stripped from assistant history before length checks.
+const VISUAL_FENCE_RE = /```\s*(?:rich-ui|richui|rich_ui|json)\b[\s\S]*?(?:```|$)/gi;
+
+/**
+ * Assistant turns are our own earlier output echoed back by the client, so an
+ * over-long one is compacted (fence stripped, then truncated) instead of
+ * failing the whole request: a big rich answer must never break the next turn.
+ */
+export function compactAssistantContent(content: string, maxChars: number): string {
+  const prose = content.replace(VISUAL_FENCE_RE, "").trim() || content.trim();
+  return prose.length <= maxChars ? prose : `${prose.slice(0, maxChars - 1).trimEnd()}…`;
+}
+
 export function validateChatBody(
   body: unknown,
   limits: GuardLimits
@@ -67,7 +81,8 @@ export function validateChatBody(
     if (typeof content !== "string" || content.trim() === "") {
       return { reject: { status: 400, error: "Message content must be a non-empty string." } };
     }
-    if (content.length > limits.maxMessageChars) {
+    const text = role === "assistant" ? compactAssistantContent(content, limits.maxMessageChars) : content;
+    if (text.length > limits.maxMessageChars) {
       return {
         reject: {
           status: 413,
@@ -75,8 +90,8 @@ export function validateChatBody(
         },
       };
     }
-    totalChars += content.length;
-    clean.push({ role, content });
+    totalChars += text.length;
+    clean.push({ role, content: text });
   }
 
   if (totalChars > limits.maxHistoryChars) {

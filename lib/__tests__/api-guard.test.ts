@@ -36,6 +36,26 @@ describe("validateChatBody", () => {
     expect(out.reject.status).toBe(413);
   });
 
+  it("compacts an overlong assistant turn instead of rejecting it", () => {
+    const rich = "Here are my projects.\n\n```rich-ui\n" + JSON.stringify({ blocks: ["x".repeat(500)] }) + "\n```";
+    const out = validateChatBody(
+      { messages: [user("projects?"), { role: "assistant", content: rich }, user("and the first one?")] },
+      LIMITS
+    );
+    if ("reject" in out) throw new Error(`unexpected reject: ${out.reject.error}`);
+    expect(out.messages[1].content).toBe("Here are my projects.");
+  });
+
+  it("truncates long assistant prose to the per-message cap", () => {
+    const out = validateChatBody(
+      { messages: [user("hi"), { role: "assistant", content: "y".repeat(500) }, user("ok")] },
+      LIMITS
+    );
+    if ("reject" in out) throw new Error("unexpected reject");
+    expect(out.messages[1].content.length).toBeLessThanOrEqual(100);
+    expect(out.messages[1].content.endsWith("…")).toBe(true);
+  });
+
   it("rejects too many messages with 413", () => {
     const out = validateChatBody(
       { messages: [user("a"), user("b"), user("c"), user("d"), user("e")] },
