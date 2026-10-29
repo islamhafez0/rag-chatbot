@@ -1,70 +1,36 @@
-summary: Islam's technical skills span expert React and Next.js, advanced TypeScript and JavaScript, Odoo ERP customization with Python, and modern tooling from Tailwind to Docker.
+# Levels are self-assessed (from the CVs). Evidence points at knowledge-base
+# files, so every skill can be traced to real work.
+summary: My skills span expert React and Next.js, advanced TypeScript, enterprise Angular 17 with NgRx, and Odoo 17/19 customization with Python and OWL, plus AI/RAG engineering.
 categories:
-  - name: Frontend Development
+  - name: Frontend
     skills:
-      - name: React.js
-        level: Expert
-        evidence: ["projects/rag-chatbot", "projects/nextjs-commerce"]
-        years_used: 2
-      - name: Next.js
-        level: Expert
-        evidence: ["projects/rag-chatbot", "projects/portfolio-website"]
-        years_used: 2
-      - name: TypeScript
-        level: Advanced
-        evidence: ["projects/rag-chatbot", "experience/taqa-techno-angular"]
-        years_used: 2
-      - name: JavaScript
-        level: Advanced
-        evidence: ["experience/taqa-techno-odoo", "experience/taqa-techno-angular"]
-        years_used: 3
-      - name: Angular with NgRx
-        level: Intermediate
-        evidence: ["experience/taqa-techno-angular"]
-        years_used: 1
-      - name: Tailwind CSS
-        level: Advanced
-        evidence: ["projects/portfolio-website", "projects/nextjs-commerce"]
-        years_used: 2
-  - name: Backend & ERP
+      - "React.js: Expert. Evidence: roles/freelance-frontend.yml, projects/other-projects.yml (Quranik, Gemini clone)"
+      - "Next.js: Expert. Evidence: projects/rag-chatbot.yml, projects/other-projects.yml (Next.js Commerce, FluxGen AI)"
+      - "TypeScript: Advanced. Evidence: projects/taqat-admin-panel.yml, projects/rag-chatbot.yml"
+      - "JavaScript: Advanced. Evidence: roles/taqatechno-odoo-frontend.yml"
+      - "Angular 17 with NgRx: Intermediate. Evidence: projects/taqat-admin-panel.yml, projects/taqat-merchant-panel.yml"
+      - "HTML5, CSS3, SCSS, Tailwind CSS: Advanced. Evidence: projects/rag-chatbot.yml, projects/other-projects.yml"
+      - "Framer Motion, shadcn/ui: used in Quranik and portfolio work"
+  - name: Odoo and backend
     skills:
-      - name: Odoo ERP Customization
-        level: Expert
-        evidence: ["experience/taqa-techno-odoo"]
-        years_used: 1
-      - name: Python
-        level: Advanced
-        evidence: ["experience/taqa-techno-odoo"]
-        years_used: 1
-      - name: PostgreSQL
-        level: Intermediate
-        evidence: ["experience/taqa-techno-odoo"]
-        years_used: 1
-  - name: Tools & Platforms
+      - "Odoo ERP customization (17, 19): Expert. Evidence: projects/apiary-and-honey.yml, projects/translate-dashboard.yml, projects/relief-center.yml"
+      - "OWL (Odoo Web Library), QWeb: Advanced. Evidence: projects/translate-dashboard.yml, projects/emdad.yml"
+      - "Python: Advanced. Evidence: projects/apiary-and-honey.yml, projects/odoo-saas-tenant-provisioning.yml"
+      - "PostgreSQL: Intermediate. Evidence: projects/translate-dashboard.yml (batched UPSERT), projects/rag-chatbot.yml (pgvector)"
+      - "REST and GraphQL APIs, Node.js: Advanced. Evidence: roles/taqatechno-angular-fintech.yml (60+ REST APIs), roles/code-alpha-intern.yml"
+      - "Shopify Liquid: Intermediate. Evidence: roles/taqatechno-odoo-frontend.yml (Herbal Gardens)"
+  - name: AI engineering
     skills:
-      - name: Git & GitHub
-        level: Expert
-        evidence: ["experience/taqa-techno-odoo"]
-        years_used: 3
-      - name: Docker
-        level: Intermediate
-        evidence: ["projects/rag-chatbot"]
-        years_used: 1
-      - name: Firebase
-        level: Intermediate
-        evidence: ["experience/freelance-frontend"]
-        years_used: 1
-  - name: Professional Skills
+      - "RAG pipelines (pgvector, embeddings, hybrid retrieval, evaluation): Evidence: projects/rag-chatbot.yml"
+      - "LLM integration (OpenAI-compatible APIs, Gemini, Claude API): Evidence: projects/rag-chatbot.yml, facts/certifications.yml"
+  - name: Tools and platforms
     skills:
-      - name: UI/UX Implementation
-        level: Expert
-        evidence: ["experience/taqa-techno-odoo", "projects/portfolio-website"]
-        years_used: 2
-      - name: Web Performance Optimization
-        level: Advanced
-        evidence: ["projects/rag-chatbot"]
-        years_used: 1
-      - name: Technical Communication
-        level: Advanced
-        evidence: ["projects/rag-chatbot"]
-        years_used: 1
+      - "Git and GitHub: Expert. Evidence: facts/github-activity.yml"
+      - "Docker: Intermediate"
+      - "Firebase: Intermediate. Evidence: roles/freelance-frontend.yml"
+      - "Vercel, VS Code, Figma"
+  - name: Professional
+    skills:
+      - "UI/UX implementation from Figma: Expert"
+      - "Web performance (Core Web Vitals, LCP/CLS): Advanced. Evidence: roles/taqatechno-odoo-frontend.yml (Herbal Gardens)"
+      - "Accessibility, technical writing (facts/writing.yml), client communication"

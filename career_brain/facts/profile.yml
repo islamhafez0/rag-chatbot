@@ -1,25 +1,34 @@
+# Sources: both CVs, portfolio, GitHub profile (checked 2026-10-29).
 name: Islam Hafez
-title: Frontend Developer | React, Next.js, Odoo Specialist
-location: Cairo, Maadi, Egypt
+title: Frontend Developer (React, Next.js, TypeScript) and Odoo Specialist
+location: Cairo (Maadi), Egypt
 personal_details:
-  age: 23
   birthdate: "2002-12-13"
+  age: 23 (as of October 2026)
   hobbies:
     - Football
     - Swimming
     - Gym
     - Walking
-    - Be Happy
-years_of_experience: 2
-education: Damanhour University
+years_of_experience: 2+ years of professional development experience (since April 2024), after a first role in SEO in 2023
+current_role: Odoo Frontend Developer at TaqaTechno (October 2024 to present), plus freelance frontend work
+education:
+  institution: Damanhour University
+  status: Graduate
+  unknowns: Degree title and graduation year are not documented in the knowledge base.
 languages_spoken:
   - English (Professional)
   - Arabic (Native)
 summary: >
-  Dedicated Frontend Developer and Odoo Specialist focused on building dynamic, high-performance web applications.
-  Expertise in React.js, Next.js, and TypeScript, with a proven track record of delivering responsive,
-  pixel-perfect user interfaces and custom Odoo ERP solutions.
+  I'm a frontend developer and Odoo specialist. I build fast, pixel-perfect web apps
+  with React, Next.js and TypeScript, enterprise Angular 17 + NgRx fintech panels,
+  and custom Odoo 17/19 modules, themes and websites with Python and OWL. I also ship
+  AI features: this RAG chatbot and a paid Odoo app on the Odoo Apps store.
+focus_areas:
+  - Frontend engineering with React, Next.js and TypeScript (see the Frontend CV)
+  - Odoo ERP customization with Python and OWL (see the Odoo CV)
 about_this_chatbot: >
-  This chatbot was designed and built entirely by Islam Hafez as a showcase of his RAG engineering skills.
-  If asked who built you, who made you, what you are, or how you work, the answer is Islam Hafez,
-  using the RAG Career Chatbot project described in the projects knowledge files.
+  This chatbot was designed and built entirely by me, Islam Hafez. If you ask who
+  built it or how it works, the details are in the RAG Career Chatbot project
+  (projects/rag-chatbot.yml): Next.js, PostgreSQL + pgvector, Gemini embeddings and
+  gemma4:31b on Ollama Cloud.

@@ -1,0 +1,19 @@
+# Source: GitHub GraphQL contributionsCollection and REST API for islamhafez0,
+# queried 2026-10-29. Private-repository contributions are counted by GitHub but
+# their repositories are not public.
+profile: https://github.com/islamhafez0
+contributions_by_year:
+  - "2023: 18 contributions"
+  - "2024: 101 contributions"
+  - "2025: 629 contributions (559 in private repositories)"
+  - "Last 12 months (Oct 2025 to Oct 2026): 775 contributions, 620 in private repositories, 31 pull requests"
+organizations:
+  - taqat-techno (TaqaTechno client and product work, private repositories)
+  - Islamdev-org
+  - taqatfortechnology (former member; Angular fintech panels, commits on non-default branches)
+most_active_public_repositories:
+  - rag-chatbot, this chatbot, 66 commits
+  - quranik, 18 commits
+  - gemini-clone, 15 commits
+  - youtube-clone, 11 commits
+  - dotnet-angular-jwt, 10 commits

@@ -1,38 +1,29 @@
-# Technical Writing & Thought Leadership
-# List of published articles used as evidence of technical depth and communication skills.
+# Sources: DEV Community profile (checked 2026-10-29). Profile: https://dev.to/islamhafez0
+profile: https://dev.to/islamhafez0
 articles:
-  - title: "JavaScript ES2026 Is Not a Feature Drop. It’s a 30-Year Debt Payment"
-    topic: "JavaScript / Web Dev"
-    url: "https://dev.to/islamhafez0" # Base URL from search
-    key_takeaway: "Analyzing the evolution of JS and the shift towards fixing legacy architecture."
-    evidence_for: ["TypeScript", "JavaScript", "Frontend Architecture"]
-  - title: "Next.js 16.3 Makes Server Apps Feel Like SPAs"
-    topic: "Next.js"
-    url: "https://dev.to/islamhafez0"
-    key_takeaway: "Exploring the bridge between server-side rendering and single-page app fluidity."
-    evidence_for: ["Next.js", "Web Performance"]
-  - title: "Arrays and Stacks: Two Data Structures That Will Rewire Your Brain"
-    topic: "Computer Science"
-    url: "https://dev.to/islamhafez0"
-    key_takeaway: "Deep dive into fundamental data structures and their real-world application."
-    evidence_for: ["Problem Solving", "Data Structures"]
-  - title: "You Don't Use Linked Lists. But They're Running Half Your Software"
-    topic: "Computer Science"
-    url: "https://dev.to/islamhafez0"
-    key_takeaway: "Explaining the hidden ubiquity of linked lists in modern software."
-    evidence_for: ["Computer Science Fundamentals"]
   - title: "POST /search Is a Lie. HTTP Finally Admits It"
-    topic: "API Design"
-    url: "https://dev.to/islamhafez0"
-    key_takeaway: "Critique of REST patterns and the movement towards more semantic HTTP usage."
-    evidence_for: ["RESTful APIs", "System Architecture"]
-  - title: "Monolithic vs Microservices"
-    topic: "Architecture"
-    url: "https://dev.to/islamhafez0"
-    key_takeaway: "Comparative analysis of system architecture patterns."
-    evidence_for: ["System Architecture"]
+    topic: API design
+    url: https://dev.to/islamhafez0/post-search-is-a-lie-http-finally-admits-it-7jn
+    key_takeaway: A critique of REST patterns and the move towards more semantic HTTP.
+  - title: "You Don't Use Linked Lists. But They're Running Half Your Software"
+    topic: Computer science
+    url: https://dev.to/islamhafez0/you-dont-use-linked-lists-but-theyre-running-half-your-software-4b37
+    key_takeaway: The hidden ubiquity of linked lists in modern software.
+  - title: Monolithic vs Microservices
+    topic: Architecture
+    url: https://dev.to/islamhafez0/monolithic-vs-microservices-1g3p
+    key_takeaway: A comparison of the two architecture styles.
   - title: "TOON: Token-Oriented Object Notation – A Complete Guide for LLM Data Efficiency"
-    topic: "AI / LLMs"
-    url: "https://dev.to/islamhafez0"
-    key_takeaway: "Proposed a new notation for optimizing data passed to Large Language Models."
-    evidence_for: ["RAG", "LLM Optimization", "AI Engineering"]
+    topic: AI / LLMs
+    date: December 11, 2025
+    url: https://dev.to/islamhafez0/toon-token-oriented-object-notation-a-complete-guide-for-llm-data-efficiency-1ng4
+    key_takeaway: A guide to TOON, a compact notation for passing structured data to LLMs with fewer tokens.
+  - title: "JavaScript ES2026 Is Not a Feature Drop. It's a 30-Year Debt Payment"
+    topic: JavaScript
+    url_status: not found on the DEV profile listing; link unverified
+  - title: "Next.js 16.3 Makes Server Apps Feel Like SPAs"
+    topic: Next.js
+    url_status: not found on the DEV profile listing; link unverified
+  - title: "Arrays and Stacks: Two Data Structures That Will Rewire Your Brain"
+    topic: Computer science
+    url_status: not found on the DEV profile listing; link unverified

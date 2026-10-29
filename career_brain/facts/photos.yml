@@ -1,0 +1,10 @@
+# One chunk for all photos (six tiny per-photo chunks used to crowd out real
+# answers for any "who is Islam" style question).
+description: Photos of Islam Hafez. Only show them when someone asks for a photo, picture or image.
+gallery:
+  - "/images/professionalme.png: professional profile photo"
+  - "/images/casualme.png: casual photo"
+  - "/images/casualme-2.jpg: casual photo 2"
+  - "/images/casualme-3.jpeg: casual photo 3"
+  - "/images/casualme-4.png: casual photo 4"
+  - "/images/graduatedme.png: graduation photo"
