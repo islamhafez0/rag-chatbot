@@ -1,15 +1,17 @@
-﻿/**
+/**
  * Rich adaptive response schema + streaming-safe parser.
  *
- * Wire format (single LLM generation, no second call):
- *   <markdown answer>
+ * Wire format (single LLM generation):
+ *   <complete markdown answer>
  *   ```rich-ui
  *   {"blocks":[...]}
  *   ```
  *
- * The markdown streams progressively; the fenced JSON is hidden from the
- * text view and rendered as components only after it parses + validates.
- * Malformed / partial / unknown blocks fall back to plain text.
+ * The prose is always the answer; visuals are an optional enhancement.
+ * The parser is deliberately forgiving about the wire (```json fences,
+ * several fences, an unfenced trailing payload, a fence cut mid-stream) and
+ * strict about content (per-field validation, https-only links). Raw JSON is
+ * never returned as prose.
  */
 import { z } from "zod";
 
@@ -62,6 +64,32 @@ export const ChartBlockSchema = z.object({
 });
 export type ChartBlock = z.infer<typeof ChartBlockSchema>;
 
+/**
+ * Link safety: only absolute https: URLs or site-relative paths ("/files/x.pdf").
+ * Anything else ("github.com/x", "javascript:", "http:", "//evil") is rejected,
+ * and because validation is per field, a bad url only drops that field.
+ */
+export function isSafeUrl(raw: string): boolean {
+  const u = raw.trim();
+  if (!u || u.length > 300 || /[\s<>"'`]/.test(u)) return false;
+  if (u.startsWith("/")) return !u.startsWith("//") && !u.startsWith("/\\");
+  try {
+    const parsed = new URL(u);
+    return parsed.protocol === "https:" && parsed.hostname.includes(".");
+  } catch {
+    return false;
+  }
+}
+
+const safeUrl = () =>
+  z.string().trim().min(1).max(300).refine(isSafeUrl, { message: "unsafe url" });
+
+export const ProjectLinkSchema = z.object({
+  label: shortText(60),
+  url: safeUrl(),
+});
+export type ProjectLink = z.infer<typeof ProjectLinkSchema>;
+
 export const ProjectBlockSchema = z.object({
   type: z.literal("project"),
   title: shortText(),
@@ -69,7 +97,8 @@ export const ProjectBlockSchema = z.object({
   technologies: z.array(shortText(48)).min(1).max(16),
   highlights: z.array(medText(300)).min(1).max(8),
   metrics: z.array(MetricItemSchema).min(1).max(6).nullish(),
-  url: z.string().trim().url().max(300).nullish(),
+  url: safeUrl().nullish(),
+  links: z.array(ProjectLinkSchema).min(1).max(6).nullish(),
 });
 export type ProjectBlock = z.infer<typeof ProjectBlockSchema>;
 
@@ -221,51 +250,185 @@ export const RichPayloadSchema = z.object({
 });
 export type RichPayloadRaw = z.infer<typeof RichPayloadSchema>;
 
+export type BlockType = ResponseBlock["type"];
+
+export const BLOCK_TYPES: readonly BlockType[] = [
+  "metrics",
+  "chart",
+  "project",
+  "timeline",
+  "comparison",
+  "code",
+  "diagram",
+  "tech",
+  "details",
+];
+
+/** A visual that has started streaming but is not complete yet. */
+export interface PendingVisual {
+  /** First block type seen in the partial payload, if any yet. */
+  type: BlockType | null;
+  /** How many block objects have started so far (for skeleton sizing). */
+  count: number;
+}
+
 export interface ParsedRichResponse {
-  /** Markdown answer with the rich-ui fence stripped. */
+  /** Markdown answer with every visual payload (fenced or bare) stripped. */
   text: string;
-  /** Individually validated blocks (invalid ones dropped). */
+  /** Individually validated blocks (invalid ones dropped or repaired). */
   blocks: ResponseBlock[];
-  /** True when a fence was present but JSON was malformed/partial. */
+  /** True when a visual payload was present but nothing usable came out of it. */
   hadMalformed: boolean;
   /** Validation issues for observability (never shown raw to users). */
   errors: string[];
+  /** Set while a visual payload is open/incomplete (streaming). */
+  pending: PendingVisual | null;
 }
 
-// ------------------------------------------------------------ wire parsing
+// ------------------------------------------------------ per-field repair
 
-/** Matches a closed ```rich-ui fence (case-insensitive tag variants). */
-const RICH_FENCE_RE =
-  /```\s*(?:rich-ui|richui|rich_ui)\s*\n([\s\S]*?)\n?\s*```/i;
+type AnyZod = z.ZodTypeAny;
 
-/** Matches the *start* of a rich-ui fence, closed or not (streaming). */
-const RICH_FENCE_START_RE = /```\s*(?:rich-ui|richui|rich_ui)\b/i;
+const MEMBER_SCHEMAS: Record<BlockType, z.AnyZodObject> = {
+  metrics: MetricsBlockSchema,
+  chart: ChartBlockSchema,
+  project: ProjectBlockSchema,
+  timeline: TimelineBlockSchema,
+  comparison: ComparisonBlockSchema,
+  code: CodeBlockSchema,
+  diagram: DiagramBlockSchema,
+  tech: TechBlockSchema,
+  details: DetailsBlockSchema,
+};
+
+/** Peel optional/nullable/default/effects wrappers off a schema. */
+function unwrap(s: AnyZod | undefined): AnyZod | undefined {
+  let cur = s;
+  for (let i = 0; i < 8 && cur; i++) {
+    if (cur instanceof z.ZodOptional || cur instanceof z.ZodNullable) cur = cur.unwrap();
+    else if (cur instanceof z.ZodDefault) cur = cur.removeDefault();
+    else if (cur instanceof z.ZodEffects) cur = cur.innerType();
+    else break;
+  }
+  return cur;
+}
+
+function schemaAt(root: AnyZod, path: (string | number)[]): AnyZod | undefined {
+  let cur: AnyZod | undefined = unwrap(root);
+  for (const seg of path) {
+    if (!cur) return undefined;
+    if (cur instanceof z.ZodObject && typeof seg === "string") {
+      cur = unwrap((cur.shape as Record<string, AnyZod>)[seg]);
+    } else if (cur instanceof z.ZodArray && typeof seg === "number") {
+      cur = unwrap(cur.element as AnyZod);
+    } else {
+      return undefined;
+    }
+  }
+  return cur;
+}
+
+function valueAt(root: unknown, path: (string | number)[]): unknown {
+  let cur: unknown = root;
+  for (const seg of path) {
+    if (cur === null || typeof cur !== "object") return undefined;
+    cur = (cur as Record<string | number, unknown>)[seg];
+  }
+  return cur;
+}
+
+function setAt(root: unknown, path: (string | number)[], v: unknown): boolean {
+  if (path.length === 0) return false;
+  const parent = valueAt(root, path.slice(0, -1));
+  if (parent === null || typeof parent !== "object") return false;
+  (parent as Record<string | number, unknown>)[path[path.length - 1]] = v;
+  return true;
+}
+
+/**
+ * Apply ONE minimal fix for a validation issue, preferring the smallest
+ * possible loss: truncate an over-long string/array, coerce a lone string
+ * into a one-item array, drop a bad array item, drop a bad OPTIONAL field.
+ * Returns false when the only fix would be dropping the whole block.
+ */
+function fixIssue(schema: AnyZod, root: unknown, issue: z.ZodIssue): boolean {
+  const path = issue.path;
+  const here = valueAt(root, path);
+
+  if (issue.code === "too_big") {
+    const max = Number(issue.maximum);
+    if (typeof here === "string" && Number.isFinite(max)) return setAt(root, path, here.slice(0, max).trim());
+    if (Array.isArray(here) && Number.isFinite(max)) return setAt(root, path, here.slice(0, max));
+  }
+  if (issue.code === "invalid_type") {
+    if (issue.expected === "array" && typeof here === "string" && here.trim()) {
+      return setAt(root, path, [here]);
+    }
+    if (issue.expected === "string" && typeof here === "number") {
+      return setAt(root, path, String(here));
+    }
+  }
+
+  for (let j = path.length - 1; j >= 0; j--) {
+    const parentPath = path.slice(0, j);
+    const key = path[j];
+    const parentSchema = schemaAt(schema, parentPath);
+    const parentVal = valueAt(root, parentPath);
+    if (parentSchema instanceof z.ZodArray && Array.isArray(parentVal) && typeof key === "number") {
+      parentVal.splice(key, 1);
+      return true;
+    }
+    if (
+      parentSchema instanceof z.ZodObject &&
+      typeof key === "string" &&
+      parentVal !== null &&
+      typeof parentVal === "object"
+    ) {
+      const field = (parentSchema.shape as Record<string, AnyZod>)[key];
+      if (field?.isOptional()) {
+        delete (parentVal as Record<string, unknown>)[key];
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/** Parse with per-field repair: one fix per pass, bounded passes. */
+function repairParse<T extends z.AnyZodObject>(
+  schema: T,
+  input: unknown,
+): { ok: true; data: z.infer<T>; repaired: number } | { ok: false; error: string } {
+  let value: unknown;
+  try {
+    value = JSON.parse(JSON.stringify(input));
+  } catch {
+    return { ok: false, error: "not serializable" };
+  }
+  let repaired = 0;
+  for (let pass = 0; pass < 48; pass++) {
+    const r = schema.safeParse(value);
+    if (r.success) return { ok: true, data: r.data, repaired };
+    const issue = r.error.issues[0];
+    if (!issue || !fixIssue(schema, value, issue)) {
+      return { ok: false, error: issue ? `${issue.path.join(".") || "block"}: ${issue.message}` : "invalid" };
+    }
+    repaired++;
+  }
+  return { ok: false, error: "too many repairs" };
+}
 
 function asArr(v: unknown): unknown[] {
   return Array.isArray(v) ? v : [];
 }
 
 /**
- * Forgiving pre-trim: oversized (but otherwise valid) blocks are trimmed to
- * schema caps instead of dropped, so a 27-technology skills answer still
- * renders badges. Only excess is ever removed — never padded or reshaped —
- * so genuinely malformed data (wrong types, missing fields, mismatched
- * chart parity) is still rejected by validation below.
+ * Forgiving pre-shape: cross-field fixes the per-field repair cannot see
+ * (chart parity, comparison row width, dangling diagram edges).
  */
-function preTrimBlock(raw: unknown): unknown {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return raw;
-  const b = { ...(raw as Record<string, unknown>) };
-  const sliceArr = (k: string, n: number) => {
-    if (Array.isArray(b[k])) b[k] = (b[k] as unknown[]).slice(0, n);
-  };
-  const sliceStr = (k: string, n: number) => {
-    if (typeof b[k] === "string" && (b[k] as string).length > n)
-      b[k] = (b[k] as string).slice(0, n);
-  };
+function preTrimBlock(raw: Record<string, unknown>): Record<string, unknown> {
+  const b = { ...raw };
   switch (b.type) {
-    case "metrics":
-      sliceArr("items", 6);
-      break;
     case "chart": {
       const labels = asArr(b.labels);
       const values = asArr(b.values);
@@ -275,38 +438,30 @@ function preTrimBlock(raw: unknown): unknown {
       }
       break;
     }
-    case "project":
-      sliceArr("technologies", 16);
-      sliceArr("highlights", 8);
-      sliceArr("metrics", 6);
-      sliceStr("description", 1200);
-      break;
-    case "timeline":
-      sliceArr("events", 16);
-      break;
     case "comparison": {
       const cols = asArr(b.columns).slice(0, 6);
       b.columns = cols;
+      const width = Math.max(0, cols.length - 1);
       if (Array.isArray(b.rows)) {
         b.rows = (b.rows as unknown[]).slice(0, 16).map((r) => {
           if (!r || typeof r !== "object" || Array.isArray(r)) return r;
           const row = { ...(r as Record<string, unknown>) };
-          if (Array.isArray(row.values) && row.values.length > Math.max(0, cols.length - 1))
-            row.values = row.values.slice(0, Math.max(0, cols.length - 1));
+          if (Array.isArray(row.values)) {
+            const vals = row.values.slice(0, width).map((v) =>
+              typeof v === "string" && v.trim() ? v : typeof v === "number" ? String(v) : "—",
+            );
+            while (vals.length < width) vals.push("—");
+            row.values = vals;
+          }
           return row;
         });
       }
       break;
     }
-    case "code":
-      sliceStr("code", 12000);
-      break;
     case "diagram": {
       const nodes = asArr(b.nodes).slice(0, 12);
       b.nodes = nodes;
-      const ids = new Set(
-        nodes.map((n) => (n as { id?: unknown } | null)?.id),
-      );
+      const ids = new Set(nodes.map((n) => (n as { id?: unknown } | null)?.id));
       if (Array.isArray(b.edges)) {
         b.edges = (b.edges as unknown[])
           .filter(
@@ -320,12 +475,6 @@ function preTrimBlock(raw: unknown): unknown {
       }
       break;
     }
-    case "tech":
-      sliceArr("technologies", 24);
-      break;
-    case "details":
-      sliceStr("content", 8000);
-      break;
     default:
       break;
   }
@@ -333,8 +482,9 @@ function preTrimBlock(raw: unknown): unknown {
 }
 
 /**
- * Validate blocks individually so one bad block never kills the good ones.
- * Unknown `type` values are dropped (discriminated-union safety).
+ * Validate blocks individually so one bad block never kills the good ones,
+ * and validate fields individually so one bad field never kills its block.
+ * Unknown `type` values are dropped (nothing is ever executed).
  */
 export function sanitizeBlocks(input: unknown[]): {
   blocks: ResponseBlock[];
@@ -342,180 +492,377 @@ export function sanitizeBlocks(input: unknown[]): {
 } {
   const blocks: ResponseBlock[] = [];
   const errors: string[] = [];
+  const seen = new Set<string>();
   for (const [i, raw] of input.entries()) {
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
       errors.push(`block[${i}]: not an object`);
       continue;
     }
-    const parsed = ResponseBlockSchema.safeParse(preTrimBlock(raw));
-    if (parsed.success) {
-      blocks.push(parsed.data);
-    } else {
-      errors.push(`block[${i}]: ${parsed.error.issues[0]?.message ?? "invalid"}`);
+    const type = (raw as { type?: unknown }).type;
+    const schema = typeof type === "string" ? MEMBER_SCHEMAS[type as BlockType] : undefined;
+    if (!schema) {
+      errors.push(`block[${i}]: unknown type`);
+      continue;
     }
+    const repaired = repairParse(schema, preTrimBlock(raw as Record<string, unknown>));
+    if (!repaired.ok) {
+      errors.push(`block[${i}]: ${repaired.error}`);
+      continue;
+    }
+    if (repaired.repaired > 0) errors.push(`block[${i}]: repaired ${repaired.repaired} field(s)`);
+    const final = ResponseBlockSchema.safeParse(preTrimBlock(repaired.data));
+    if (!final.success) {
+      errors.push(`block[${i}]: ${final.error.issues[0]?.message ?? "invalid"}`);
+      continue;
+    }
+    // Models occasionally repeat a block (e.g. in a second fence): dedupe.
+    const sig = JSON.stringify(final.data);
+    if (seen.has(sig)) continue;
+    seen.add(sig);
+    blocks.push(final.data as ResponseBlock);
   }
   return { blocks, errors };
 }
 
-/**
- * True when a parsed JSON value plausibly carries rich-ui content, used to
- * gate the bare-JSON fallback so ordinary prose with braces is untouched.
- */
+// ------------------------------------------------------------ wire parsing
+
+const RICH_TAGS = new Set(["rich-ui", "richui", "rich_ui", "richui-json"]);
+const JSONISH_TAGS = new Set(["json", "jsonc", "json5", ""]);
+/** Every prefix a streaming fence opener can be cut at ("`", "```ric", …). */
+const OPENER_WORDS = ["rich-ui", "richui", "rich_ui", "json"];
+
 function looksLikeRichPayload(raw: unknown): boolean {
-  if (Array.isArray(raw)) return true;
+  if (Array.isArray(raw)) {
+    return raw.some(
+      (b) => b !== null && typeof b === "object" && typeof (b as { type?: unknown }).type === "string",
+    );
+  }
   if (!raw || typeof raw !== "object") return false;
   const r = raw as Record<string, unknown>;
-  return "blocks" in r || "block" in r || "type" in r;
+  if ("blocks" in r || "block" in r) return true;
+  return typeof r.type === "string" && (BLOCK_TYPES as readonly string[]).includes(r.type);
+}
+
+/** Starts like a rich payload: `{"blocks"`, `{"type"`, `[{"type"` … */
+const PAYLOAD_HEAD_RE = /^\s*(?:\[\s*)?\{\s*"(?:blocks|block|type|version)"\s*:/;
+
+function tryParseJson(s: string): unknown {
+  try {
+    return JSON.parse(s);
+  } catch {
+    // Common model slip: trailing commas.
+    try {
+      return JSON.parse(s.replace(/,(\s*[}\]])/g, "$1"));
+    } catch {
+      return undefined;
+    }
+  }
+}
+
+/** Normalise the accepted envelope shapes into a plain array of blocks. */
+function blocksOf(raw: unknown): unknown[] | null {
+  if (Array.isArray(raw)) return raw;
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  if (!("blocks" in r) && !("block" in r) && typeof r.type === "string") return [r];
+  const inner = "blocks" in r ? r.blocks : r.block;
+  if (inner && typeof inner === "object" && !Array.isArray(inner)) return [inner];
+  const top = RichPayloadSchema.safeParse({ ...r, blocks: inner });
+  if (!top.success) {
+    return Array.isArray(inner) ? inner.slice(0, 24) : null;
+  }
+  return top.data.blocks ?? [];
+}
+
+function detectPending(partial: string): PendingVisual {
+  const types = [...partial.matchAll(/"type"\s*:\s*"([a-z]+)"/g)].map((m) => m[1]);
+  const known = types.filter((t): t is BlockType => (BLOCK_TYPES as readonly string[]).includes(t));
+  return { type: known[0] ?? null, count: Math.max(1, known.length) };
+}
+
+interface FenceSpan {
+  start: number;
+  end: number;
+  info: string;
+  body: string;
+  closed: boolean;
+}
+
+/** Sequentially pair ``` openers and closers (CommonMark-ish, forgiving). */
+function scanFences(content: string): FenceSpan[] {
+  const spans: FenceSpan[] = [];
+  let from = 0;
+  while (from < content.length) {
+    const start = content.indexOf("```", from);
+    if (start === -1) break;
+    const afterTicks = start + 3;
+    const nl = content.indexOf("\n", afterTicks);
+    const lineEnd = nl === -1 ? content.length : nl;
+    const lineRest = content.slice(afterTicks, lineEnd);
+    const im = /^[ \t]*([A-Za-z0-9_+-]*)/.exec(lineRest);
+    const head = im ? im[0] : "";
+    const info = (im?.[1] ?? "").toLowerCase();
+    // ```json {"blocks":…} on one line: the body starts right after the tag.
+    const bodyStart = lineRest.slice(head.length).trim()
+      ? afterTicks + head.length
+      : nl === -1
+        ? content.length
+        : nl + 1;
+    const close = content.indexOf("```", bodyStart);
+    if (close === -1) {
+      spans.push({ start, end: content.length, info, body: content.slice(bodyStart).trim(), closed: false });
+      break;
+    }
+    spans.push({ start, end: close + 3, info, body: content.slice(bodyStart, close).trim(), closed: true });
+    from = close + 3;
+  }
+  return spans;
+}
+
+/** Strip a fence opener cut mid-stream at the very end ("\n``", "```ric"). */
+function stripTrailingOpenerPrefix(text: string): string {
+  const m = /(^|\n)[ \t]*(`{1,3})([A-Za-z_-]{0,8})[ \t]*$/.exec(text);
+  if (!m) return text;
+  const word = m[3].toLowerCase();
+  if (word && !OPENER_WORDS.some((w) => w.startsWith(word))) return text;
+  if (m[2].length < 3 && word) return text; // "`json" inline code start, leave it
+  // Only an OPENER: with an odd number of fences before it, it is a closer.
+  const before = text.slice(0, m.index);
+  if ((before.match(/```/g)?.length ?? 0) % 2 === 1) return text;
+  return before.trimEnd();
 }
 
 /**
- * Bare-JSON fallback (issue #37): models sometimes emit the payload as raw
- * `{"blocks": [...]}` text without the required ```rich-ui fence. Scan
- * `{` positions from the end and return the first trailing substring that
- * parses as a plausible rich payload, so it can be rendered as blocks and
- * stripped from the text view instead of leaking as raw JSON.
+ * Bare-JSON fallback: models sometimes emit `{"blocks": [...]}` with no
+ * fence at all. Find a trailing payload (complete → render; incomplete →
+ * hide as pending) so raw JSON never leaks into prose.
  */
-function extractBareJsonSuffix(content: string): { text: string; raw: unknown } | null {
+function extractBarePayload(
+  content: string,
+): { text: string; raw: unknown; complete: boolean } | null {
   const trimmed = content.trimEnd();
-  if (!trimmed.endsWith("}")) return null;
-  if (!trimmed.includes("{") || !trimmed.includes('"')) return null;
-  let attempts = 0;
-  for (let i = trimmed.length - 1; i >= 0 && attempts < 300; i--) {
-    if (trimmed[i] !== "{") continue;
-    attempts += 1;
-    const snippet = trimmed.slice(i);
+  if (!trimmed.includes("{")) return null;
+  // Candidate starts: line-start `{` or `[` that look like a payload head.
+  const starts: number[] = [];
+  const re = /(^|\n)[ \t]*(?=[[{])/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(trimmed))) {
+    const idx = m.index + m[0].length;
+    if (PAYLOAD_HEAD_RE.test(trimmed.slice(idx, idx + 40))) starts.push(idx);
+    if (re.lastIndex === m.index) re.lastIndex++;
+  }
+  for (const idx of starts) {
+    const snippet = trimmed.slice(idx);
     if (snippet.length > 60000) continue;
-    try {
-      const parsed: unknown = JSON.parse(snippet);
-      if (looksLikeRichPayload(parsed)) {
-        return { text: trimmed.slice(0, i).trim(), raw: parsed };
-      }
-    } catch {
-      // Not a complete JSON object from here — try an earlier brace.
+    const parsed = tryParseJson(snippet);
+    if (parsed !== undefined && looksLikeRichPayload(parsed)) {
+      return { text: trimmed.slice(0, idx).trim(), raw: parsed, complete: true };
     }
+  }
+  // Legacy shape: a payload glued to the prose on the same line.
+  if (trimmed.endsWith("}")) {
+    let attempts = 0;
+    for (let i = trimmed.length - 1; i >= 0 && attempts < 300; i--) {
+      if (trimmed[i] !== "{") continue;
+      attempts++;
+      const parsed = tryParseJson(trimmed.slice(i));
+      if (parsed !== undefined && looksLikeRichPayload(parsed)) {
+        return { text: trimmed.slice(0, i).trim(), raw: parsed, complete: true };
+      }
+    }
+  }
+  if (starts.length > 0) {
+    const idx = starts[0];
+    return { text: trimmed.slice(0, idx).trim(), raw: trimmed.slice(idx), complete: false };
   }
   return null;
 }
 
-function decodeParsedPayload(
-  raw: unknown,
-  text: string,
-  empty: ParsedRichResponse,
-): ParsedRichResponse {
+const MAX_TOTAL_BLOCKS = 16;
 
-  // Accept {blocks}, a bare array of blocks, or a bare single block object
-  // (models sometimes emit the block directly). The `block` singular key
-  // is accepted as well.
-  const normalized = Array.isArray(raw)
-    ? { blocks: raw }
-    : raw !== null && typeof raw === "object" && "type" in raw && !("blocks" in raw)
-      ? { blocks: [raw] }
-      : (raw as Record<string, unknown>);
-  if (
-    normalized !== null &&
-    typeof normalized === "object" &&
-    !Array.isArray(normalized.blocks) &&
-    normalized.blocks !== undefined &&
-    typeof normalized.blocks === "object" &&
-    normalized.blocks !== null &&
-    "type" in (normalized.blocks as Record<string, unknown>)
-  ) {
-    normalized.blocks = [normalized.blocks];
-  }
-  if (
-    normalized !== null &&
-    typeof normalized === "object" &&
-    "block" in normalized &&
-    !("blocks" in normalized)
-  ) {
-    normalized.blocks = [normalized.block];
-  }
-  const top = RichPayloadSchema.safeParse(normalized);
-  if (!top.success) {
-    return { ...empty, text, hadMalformed: true, errors: ["rich-ui envelope invalid"] };
-  }
-
-  const { blocks: validBlocks, errors } = sanitizeBlocks(top.data.blocks ?? []);
-  // Grounding guard: cap total visual blocks so a runaway generation cannot
-  // flood the UI; text fallback always preserved. Sized for full project
-  // listings (15 projects + supporting blocks).
-  const capped = validBlocks.slice(0, 16);
-  if (validBlocks.length > capped.length) errors.push("too many blocks; truncated");
-
-  return {
-    text,
-    blocks: capped,
-    hadMalformed: errors.length > 0 && capped.length === 0,
-    errors,
-  };
-}
-
+/**
+ * Parse an assistant message (complete or mid-stream) into prose + blocks.
+ * Accepts ```rich-ui, ```json (when it carries a blocks payload), several
+ * fences (merged), and an unfenced trailing payload. Open/partial payloads
+ * are hidden and reported as `pending` so the UI can show a skeleton.
+ */
 export function parseRichContent(content: string): ParsedRichResponse {
-  const empty: ParsedRichResponse = {
-    text: content,
+  const result: ParsedRichResponse = {
+    text: content ?? "",
     blocks: [],
     hadMalformed: false,
     errors: [],
+    pending: null,
   };
-  if (!content) return empty;
+  if (!content) return result;
 
-  const match = RICH_FENCE_RE.exec(content);
-  if (match) {
-    const text = (content.slice(0, match.index) + content.slice(match.index + match[0].length)).trim();
-    const rawJson = match[1].trim();
-    if (!rawJson) return { ...empty, text, hadMalformed: true, errors: ["empty rich-ui payload"] };
+  const rawBlocks: unknown[] = [];
+  let sawVisual = false;
+  let text = "";
+  let cursor = 0;
 
-    let raw: unknown;
-    try {
-      raw = JSON.parse(rawJson);
-    } catch {
-      return { ...empty, text, hadMalformed: true, errors: ["rich-ui JSON parse error"] };
+  for (const f of scanFences(content)) {
+    const rich = RICH_TAGS.has(f.info);
+    const jsonish = JSONISH_TAGS.has(f.info);
+    // Opener cut mid-tag while streaming ("```ric", "```js").
+    const cutTag = !f.closed && !f.body && !!f.info && OPENER_WORDS.some((w) => w.startsWith(f.info));
+    if (!rich && !jsonish && !cutTag) continue;
+    let isVisual = false;
+    let parsed: unknown;
+    if (f.closed) {
+      parsed = tryParseJson(f.body);
+      isVisual = rich || (parsed !== undefined && looksLikeRichPayload(parsed));
+    } else {
+      // Open fence: rich-ui always; json/bare only once it looks like a payload
+      // (or is still too short to tell — better a skeleton than a flash).
+      isVisual =
+        rich ||
+        cutTag ||
+        PAYLOAD_HEAD_RE.test(f.body) ||
+        /^\s*(?:\[\s*)?(?:\{\s*(?:"[a-z]{0,8})?)?$/.test(f.body);
     }
-    return decodeParsedPayload(raw, text, empty);
+    if (!isVisual) continue;
+
+    sawVisual = true;
+    text += content.slice(cursor, f.start);
+    cursor = f.end;
+    if (!f.closed) {
+      result.pending = detectPending(f.body);
+      continue;
+    }
+    if (!f.body) {
+      result.errors.push("empty rich-ui payload");
+      continue;
+    }
+    if (parsed === undefined) {
+      result.errors.push("rich-ui JSON parse error");
+      continue;
+    }
+    const arr = blocksOf(parsed);
+    if (!arr) {
+      result.errors.push("rich-ui envelope invalid");
+      continue;
+    }
+    rawBlocks.push(...arr);
+  }
+  text += content.slice(cursor);
+
+  if (!sawVisual) {
+    const bare = extractBarePayload(text);
+    if (bare?.complete) {
+      const arr = blocksOf(bare.raw);
+      if (arr && arr.length > 0 && sanitizeBlocks(arr).blocks.length > 0) {
+        sawVisual = true;
+        text = bare.text;
+        rawBlocks.push(...arr);
+      }
+    } else if (bare) {
+      sawVisual = true;
+      text = bare.text;
+      result.pending = detectPending(String(bare.raw));
+    } else {
+      // A payload head still being typed: `{`, `{"bl` on the last line.
+      const head = /(^|\n)[ \t]*\[?[ \t]*\{[ \t]*(?:"[a-z]{0,8}"?[ \t]*:?[ \t]*)?$/.exec(text);
+      if (head) {
+        sawVisual = true;
+        text = text.slice(0, head.index);
+        result.pending = { type: null, count: 1 };
+      }
+    }
   }
 
-  // Fence opened but not closed yet (streaming partial): hide the partial
-  // fence + everything after it so users never see raw partial JSON.
-  if (RICH_FENCE_START_RE.test(content)) {
-    const idx = content.search(RICH_FENCE_START_RE);
-    return {
-      ...empty,
-      text: content.slice(0, idx).trimEnd(),
-      hadMalformed: false, // not malformed — just incomplete
-    };
+  if (!sawVisual) {
+    // Plain answer: keep the text exactly as written (minus a cut opener).
+    const cleaned = stripTrailingOpenerPrefix(content);
+    result.text = cleaned === content ? content : cleaned.trimEnd();
+    return result;
   }
+  result.text = stripTrailingOpenerPrefix(text.replace(/\n{3,}/g, "\n\n")).trim();
 
-  // No fence at all: try the bare-JSON fallback before giving up, so a
-  // payload emitted without fences still renders instead of leaking (#37).
-  const bare = extractBareJsonSuffix(content);
-  if (!bare) return empty;
-  const decoded = decodeParsedPayload(bare.raw, bare.text, empty);
-  // Only claim the trailing JSON when it actually validated into blocks;
-  // otherwise leave the original text untouched.
-  if (decoded.blocks.length === 0) return empty;
-  return decoded;
+  const { blocks, errors } = sanitizeBlocks(rawBlocks);
+  result.errors.push(...errors);
+  result.blocks = blocks.slice(0, MAX_TOTAL_BLOCKS);
+  if (blocks.length > result.blocks.length) result.errors.push("too many blocks; truncated");
+  result.hadMalformed = result.blocks.length === 0 && result.pending === null && result.errors.length > 0;
+  return result;
 }
 
-/** Strip any (open or closed) rich-ui fence for the streaming text view. */
+/** Prose only, with every (open or closed) visual payload removed. */
 export function stripRichFenceForDisplay(content: string): string {
-  if (!RICH_FENCE_START_RE.test(content)) {
-    const bare = extractBareJsonSuffix(content);
-    if (!bare) return content;
-    const decoded = decodeParsedPayload(bare.raw, bare.text, {
-      text: content,
-      blocks: [],
-      hadMalformed: false,
-      errors: [],
-    });
-    if (decoded.blocks.length === 0) return content;
-    return bare.text;
+  return parseRichContent(content).text;
+}
+
+const BLOCK_NOUNS: Record<BlockType, [string, string]> = {
+  project: ["project card", "project cards"],
+  timeline: ["timeline", "timelines"],
+  tech: ["tech list", "tech lists"],
+  comparison: ["comparison table", "comparison tables"],
+  diagram: ["diagram", "diagrams"],
+  details: ["details panel", "details panels"],
+  metrics: ["metrics panel", "metrics panels"],
+  chart: ["chart", "charts"],
+  code: ["code block", "code blocks"],
+};
+
+/** "[visual: 3 project cards, 1 timeline]" — a compact trace of what was shown. */
+export function summarizeBlocks(blocks: ResponseBlock[]): string {
+  if (blocks.length === 0) return "";
+  const counts = new Map<BlockType, number>();
+  for (const b of blocks) counts.set(b.type, (counts.get(b.type) ?? 0) + 1);
+  const parts = [...counts].map(([t, n]) => `${n} ${BLOCK_NOUNS[t][n === 1 ? 0 : 1]}`);
+  return `[visual: ${parts.join(", ")}]`;
+}
+
+/**
+ * History form of an assistant message for the next request: prose only plus
+ * a short visual note, capped so it always fits the server's per-message
+ * limit. The fenced JSON never travels back to the server.
+ */
+export function toHistoryContent(content: string, maxChars = 1800): string {
+  const parsed = parseRichContent(content);
+  const note = summarizeBlocks(parsed.blocks);
+  const budget = Math.max(0, maxChars - (note ? note.length + 2 : 0));
+  let prose = parsed.text.trim();
+  if (prose.length > budget) {
+    const cut = prose.slice(0, Math.max(0, budget - 1));
+    const lastSpace = cut.lastIndexOf(" ");
+    prose = `${(lastSpace > budget * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
   }
-  const closed = RICH_FENCE_RE.exec(content);
-  if (closed) {
-    return (content.slice(0, closed.index) + content.slice(closed.index + closed[0].length)).trim();
+  const out = [prose, note].filter(Boolean).join("\n\n");
+  return out.slice(0, maxChars);
+}
+
+export interface HistoryMessage {
+  role: string;
+  content: string;
+}
+
+/**
+ * Request payload for POST /api/chat: assistant turns reduced to prose (+ a
+ * visual note), empty turns dropped, and the oldest turns trimmed so the
+ * request stays inside the server's message-count and history-size caps.
+ */
+export function toRequestMessages(
+  messages: HistoryMessage[],
+  { maxMessages = 24, maxTotalChars = 11000, maxMessageChars = 1800 } = {},
+): { role: "user" | "assistant"; content: string }[] {
+  const out = messages
+    .filter((m) => m.role === "user" || m.role === "assistant")
+    .map((m) => ({
+      role: m.role as "user" | "assistant",
+      content:
+        m.role === "assistant"
+          ? toHistoryContent(m.content, maxMessageChars)
+          : m.content.slice(0, maxMessageChars),
+    }))
+    .filter((m) => m.content.trim().length > 0);
+  let total = out.reduce((n, m) => n + m.content.length, 0);
+  while (out.length > 1 && (out.length > maxMessages || total > maxTotalChars)) {
+    total -= out.shift()!.content.length;
   }
-  const idx = content.search(RICH_FENCE_START_RE);
-  return content.slice(0, idx).trimEnd();
+  // The conversation sent must open with a user turn.
+  while (out.length > 1 && out[0].role !== "user") out.shift();
+  return out;
 }
 
 // ------------------------------------------------------- grounding helpers
