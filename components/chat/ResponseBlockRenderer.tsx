@@ -3,11 +3,13 @@
 import { memo } from "react";
 import type { ResponseBlock } from "@/lib/rich-response";
 import { ChartRenderer } from "./ChartRenderer";
+import { Callout } from "./Callout";
 import { CodeBlock, EvidencePanel } from "./Interactive";
 import { DiagramRenderer } from "./DiagramRenderer";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { MetricGrid } from "./MetricCard";
 import { ComparisonTable, ProjectCard, Timeline } from "./Showcase";
+import { StepsList } from "./Steps";
 import { TechnologyBadgeGroup } from "./TechnologyBadge";
 
 /**
@@ -54,6 +56,10 @@ export const ResponseBlockRenderer = memo(function ResponseBlockRenderer({
           </div>
         </EvidencePanel>
       );
+    case "callout":
+      return <Callout block={block} />;
+    case "steps":
+      return <StepsList block={block} />;
     default:
       return null;
   }

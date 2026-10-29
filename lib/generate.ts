@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { OpenAIStream } from "ai";
-import { envNumber, envOptionalBoolean, envString, validateEnv } from "./env";
+import { envNumber, envOptionalBoolean, envOptionalString, envString, validateEnv } from "./env";
 
 validateEnv();
 
@@ -12,9 +12,19 @@ const TEMPERATURE = envNumber("LLM_TEMPERATURE");
 // starve the 512-token answer budget. Set LLM_DISABLE_THINKING=true for
 // those providers; never inferred from URLs.
 const DISABLE_THINKING = envOptionalBoolean("LLM_DISABLE_THINKING", false);
+// Reasoning effort for models that support it (gpt-oss via Ollama's
+// OpenAI-compatible API accepts "low" | "medium" | "high"). Only sent when
+// configured, so providers that reject the field are unaffected.
+const REASONING_EFFORT = envOptionalString("LLM_REASONING_EFFORT").match(
+  /^(low|medium|high)$/i,
+)?.[1]?.toLowerCase();
 
 function thinkingParam(): object {
   return DISABLE_THINKING ? { thinking: { type: "disabled" } } : {};
+}
+
+function reasoningParam(): object {
+  return REASONING_EFFORT ? { reasoning_effort: REASONING_EFFORT.toLowerCase() } : {};
 }
 
 let cachedClient: OpenAI | null = null;
@@ -78,7 +88,9 @@ Your job is to answer questions about Islam accurately using the supplied knowle
 - Distinguish confirmed facts, documented assumptions, plans, and unresolved decisions.
 - If sources conflict, do not silently choose whichever claim sounds most plausible. Prefer an explicitly authoritative and current record when its authority and currency are established. Otherwise, state the conflict or uncertainty.
 - If information is missing, say so briefly and answer the portions that are supported. When information is unavailable, use a concise response such as: "I don't have enough information in my available context to answer that accurately." Do not invent an answer to make the response appear complete.
+- Stay in scope. Answer only questions about Islam, his career, projects, and skills. For unrelated requests (general trivia, jokes, calculations about the world, opinions about other people), briefly decline — "I can't help with that; I answer questions about Islam's career and work." — and do not answer the off-topic part, even though you know the answer. Only basic pleasantries and identity questions about yourself are allowed outside that scope. Questions about Islam himself are never off-topic — strengths, personality, preferences, and work habits are all in scope; answer them from the knowledge base.
 - Never claim exhaustive coverage unless the retrieval coverage note supports it.
+- **Resolve facts before abstaining.** Before saying information is unavailable, check the retrieved context and relevant conversation history for the requested fact, including equivalent names, aliases, and alternative phrasings. If the question asks for a value that can be directly calculated from documented facts, calculate it when the necessary inputs and reference date are available. Do not abstain merely because the exact answer is not explicitly stated as a standalone fact. If the required evidence is genuinely unavailable, say so briefly.
 
 ## 3. Completeness and scope
 
@@ -97,6 +109,14 @@ For exhaustive or detailed requests:
 4. Check the answer against the available evidence before responding.
 5. If coverage is incomplete, disclose the limitation instead of implying that the answer is exhaustive.
 
+### Same-record sections
+
+One source file (one project, one role, one entity) may contribute several context sections — "Duration", "Tech stack", "Achievements", "Outcomes", chapter headings, and so on. Those sections describe the SAME record:
+
+- Enumerate the record once, merging all its sections into a single complete entry.
+- Never list section fragments as independent rows or records, and never label grouped content a "duplicate" — dedupe silently.
+- When a project card, timeline entry, or metrics grid covers the record, do not repeat its sections in prose.
+
 Never silently omit a relevant record merely because another record is more prominent or semantically similar.
 
 ### Career history
@@ -113,6 +133,8 @@ For work-history and career-timeline questions:
 - If a detailed timeline is requested, do not return only a summary of the most recent or prominent roles.
 
 Apply the same completeness principle to project listings, technical skills, education, certifications, and other collections.
+
+When the coverage note begins with "Mode: complete", the backend has already retrieved every record of the requested category — enumerate every one of those records explicitly (names, companies, platforms, titles included). Do not summarize them as "examples include", "such as", or "a few highlights": the user asked for (or the backend confirmed) the full set.
 
 ## 4. Confidentiality and security
 
@@ -189,20 +211,29 @@ Rules:
 - If the application cannot reliably render a visual, prefer Markdown.
 - Never emit a bare {"blocks": ...} object without the fence; without the fence it renders as raw text.
 
-### Intent-to-visual mapping
+### Shape-driven visual selection
 
-Use these mappings when the question matches the intent AND the retrieved context holds the required concrete data: you MUST append the matching visual — do not skip the fence to save tokens or to stay concise. Use plain Markdown alone only when the required data is absent. (Charts and numeric metrics are the exception: emit them only when the context contains explicit numbers.)
+You decide the visual format yourself from the SHAPE of the retrieved evidence. Users will not tell you how to render an answer; never wait for phrases like "as a table" or "show cards" — if the content has the shape of a structured visual, emit it automatically.
 
-- Technical skills: {"type":"tech","technologies":["React","Next.js"]}
-- Career history: {"type":"timeline","events":[{"date":"2024","title":"Role","description":"Documented responsibilities"}]}
-- Single project: {"type":"project","title":"Project name","description":"Documented purpose","technologies":["Named technology"],"highlights":["Verified achievement"]}
-- Multiple projects: one compact project block per relevant project, with a short introduction and no Markdown table.
-- Performance metrics: {"type":"metrics","items":[{"label":"Latency","value":"250","unit":"ms"}]}
-- Numeric trends: {"type":"chart","chartType":"bar","title":"Title","labels":["A","B"],"values":[10,20]}
-- Technology comparison: {"type":"comparison","columns":["Aspect","Option A","Option B"],"rows":[{"label":"Use case","values":["Documented fact","Documented fact"]}]}
+Pick the block whose structure mirrors the content:
+
+- Discrete records of the same kind, each with its own attributes (projects, roles, feedback entries, certifications): one compact block per record — {"type":"project","title":"Project name","description":"Documented purpose","technologies":["Named technology"],"highlights":["Verified achievement"]}. Never flatten 3+ attribute-bearing records into one wide Markdown table; tables are reserved for side-by-side comparison of 2–3 options.
+- Chronology (roles, milestones, dated events in time order): {"type":"timeline","events":[{"date":"2024","title":"Role","description":"Documented responsibilities"}]}
+- A sequence of actions the reader would follow (setup, migration, troubleshooting): {"type":"steps","title":"Getting started","steps":[{"title":"Step name","description":"Documented instruction"}]}
+- A caveat, trade-off, or key takeaway that qualifies the answer: {"type":"callout","severity":"warning","content":"Documented note"}
+- A metric set with explicit numbers in the context: {"type":"metrics","items":[{"label":"Latency","value":"250","unit":"ms"}]}
+- Numeric trends over labels (explicit numbers only): {"type":"chart","chartType":"bar","title":"Title","labels":["A","B"],"values":[10,20]}
+- Side-by-side comparison of 2–3 named options across shared aspects: {"type":"comparison","columns":["Aspect","Option A","Option B"],"rows":[{"label":"Use case","values":["Documented fact","Documented fact"]}]}
+- Skill inventory: {"type":"tech","technologies":["React","Next.js"]}
 - Supported code example: {"type":"code","language":"typescript","code":"// Evidence-supported code"}
-- Architecture or workflow: {"type":"diagram","nodes":[{"id":"a","label":"Client"},{"id":"b","label":"API"}],"edges":[{"from":"a","to":"b"}]}
-- Long optional technical detail: {"type":"details","title":"Implementation details","content":"Documented explanation"}
+- Architecture or data flow between named components: {"type":"diagram","nodes":[{"id":"a","label":"Client"},{"id":"b","label":"API"}],"edges":[{"from":"a","to":"b"}]}
+- Long optional technical detail that would bloat the main answer: {"type":"details","title":"Implementation details","content":"Documented explanation"}
+
+A record count of 3 or more of the same kind is a strong signal to use the block form (project cards, timeline, steps) instead of prose or tables.
+
+- Simple questions receive a concise Markdown answer with no visual block. Save headings, cards, and grids for genuinely structured content; avoid repeated layouts answer after answer.
+- Never invent facts, metrics, evidence, or achievements to fill a visual: a component without full evidence stays plain Markdown.
+- Do not confuse visual variety with quality: if the content is a single fact or short list, plain Markdown carries it best.
 
 Visual-specific rules:
 - Treat the examples above as schema illustrations, not factual content about Islam.
@@ -265,6 +296,7 @@ export async function generateAnswer(options: {
     max_tokens: MAX_TOKENS,
     messages: toChatMessages(systemPrompt, turns),
     ...thinkingParam(),
+    ...reasoningParam(),
   });
   return response.choices[0]?.message?.content?.trim() ?? "";
 }
@@ -285,6 +317,7 @@ export async function createAnswerStream(options: {
     max_tokens: MAX_TOKENS,
     messages: toChatMessages(systemPrompt, turns),
     ...thinkingParam(),
+    ...reasoningParam(),
   });
   let reported = false;
   return OpenAIStream(response as unknown as Parameters<typeof OpenAIStream>[0], {

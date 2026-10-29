@@ -30,7 +30,7 @@ describe("SCENARIOS", () => {
   it("references plausible source paths", () => {
     for (const s of SCENARIOS) {
       for (const src of s.expectedSources) {
-        expect(src).toMatch(/^[a-z-]+\/[a-z0-9-]+\.ya?ml$/);
+        expect(src).toMatch(/^([a-z-]+\/)+[a-z0-9-]+\.ya?ml$/);
       }
     }
   });

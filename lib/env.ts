@@ -52,6 +52,12 @@ export function envNumber(name: string): number {
   return num;
 }
 
+/** Optional string; empty string when unset (never throws). */
+export function envOptionalString(name: string): string {
+  const raw = process.env[name];
+  return isSet(raw) ? (raw as string).trim() : "";
+}
+
 /** Optional number with a validated default (never throws when unset). */
 export function envOptionalNumber(name: string, fallback: number): number {
   const raw = process.env[name];

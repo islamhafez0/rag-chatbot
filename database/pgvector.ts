@@ -165,19 +165,32 @@ export async function getContext(
   // and keep at most MAX_PER_SOURCE chunks per source, preserving rank
   // order. Measured on the 23-scenario eval: mean R@8 0.804 -> 0.904 and
   // every KB-backed scenario retrieves >= 1 relevant doc (issue #10).
-  const MAX_PER_SOURCE = 3;
+  // Refill: when fewer relevant sources exist than the limit (e.g. a 4-entry
+  // testimonials file matched by "any more feedback"), capped-out candidates
+  // backfill empty slots in rank order instead of wasting them — the cap
+  // protects diversity, never cost.
+  const MAX_PER_SOURCE = 4;
   const fetchLimit = limit * 3;
 
   const applyCap = (candidates: StoredDoc[]): StoredDoc[] => {
     const perSource = new Map<string, number>();
     const picked: StoredDoc[] = [];
-    for (const doc of candidates) {
+    const skip = new Set<number>();
+    for (let i = 0; i < candidates.length; i++) {
+      const doc = candidates[i];
       if (picked.length >= limit) break;
       const key = doc.source ?? "";
       const used = perSource.get(key) ?? 0;
-      if (used >= MAX_PER_SOURCE) continue;
+      if (used >= MAX_PER_SOURCE) {
+        skip.add(i);
+        continue;
+      }
       perSource.set(key, used + 1);
       picked.push(doc);
+    }
+    for (const i of skip) {
+      if (picked.length >= limit) break;
+      picked.push(candidates[i]);
     }
     return picked;
   };
@@ -203,10 +216,28 @@ export async function getContext(
       // per-source diversity cap. FULL OUTER JOIN on id yields exactly one
       // row per document (no UNION ALL duplication, no score inflation);
       // the id tiebreak keeps ordering deterministic.
+      //
+      // Lexical leg is OR-based with prefix matching: plainto_tsquery
+      // ANDs every query lexeme, so conversational sentences (which span
+      // 4+ unrelated words and never co-occur verbatim in one chunk)
+      // matched NOTHING — ts_rank_cd == 0 for every row, the ORDER BY
+      // degenerated to plan order, and that noise outranked excellent
+      // vector matches after fusion. Per-lexeme OR ('panel:*' matches
+      // panels/panel) restores a meaningful ranking; docs matching more
+      // lexemes rank higher, ties break by position. The COALESCE keeps
+      // the SQL valid when every lexeme is a stopword ('zzz:*' matches
+      // nothing — vector-only ordering prevails).
       params.push(query);
       const tsIdx = params.length;
       sql = `
-      WITH vector_rank AS (
+      WITH query_lexemes AS (
+        SELECT COALESCE(
+          (SELECT string_agg(lexeme || ':*', ' | ')
+           FROM unnest(tsvector_to_array(to_tsvector('english', $${tsIdx}))) AS lexeme),
+          'zzz:*'
+        ) AS or_query
+      ),
+      vector_rank AS (
         SELECT id, (1.0 / (60 + row_number() OVER (ORDER BY embedding <=> $1::vector))) AS rrf
         FROM ${collectionName}
         ${where}
@@ -214,10 +245,10 @@ export async function getContext(
         LIMIT $2
       ),
       lexical_rank AS (
-        SELECT id, (1.0 / (60 + row_number() OVER (ORDER BY ts_rank_cd(lexical, plainto_tsquery('english', $${tsIdx})) DESC))) AS rrf
+        SELECT id, (1.0 / (60 + row_number() OVER (ORDER BY ts_rank_cd(lexical, to_tsquery('english', (SELECT or_query FROM query_lexemes))) DESC))) AS rrf
         FROM ${collectionName}
         ${where}
-        ORDER BY ts_rank_cd(lexical, plainto_tsquery('english', $${tsIdx})) DESC
+        ORDER BY ts_rank_cd(lexical, to_tsquery('english', (SELECT or_query FROM query_lexemes))) DESC
         LIMIT $2
       ),
       combined AS (

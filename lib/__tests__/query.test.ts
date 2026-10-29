@@ -41,6 +41,20 @@ describe("isDegenerateFollowUp", () => {
     expect(isDegenerateFollowUp("the tech stack one")).toBe(true);
   });
 
+  it("flags short helper-only 'more' asks as bare follow-ups", () => {
+    expect(isDegenerateFollowUp("have more?")).toBe(true);
+    expect(isDegenerateFollowUp("any more?")).toBe(true);
+    expect(isDegenerateFollowUp("more?")).toBe(true);
+    expect(isDegenerateFollowUp("what else do you have?")).toBe(true);
+    expect(isDegenerateFollowUp("got anything else?")).toBe(true);
+  });
+
+  it("still treats topic-bearing short questions as standalone", () => {
+    expect(isDegenerateFollowUp("more feedback?")).toBe(false);
+    expect(isDegenerateFollowUp("any more feedback entries?")).toBe(false);
+    expect(isDegenerateFollowUp("what more do you have about projects?")).toBe(false);
+  });
+
   it("does not flag self-contained questions", () => {
     expect(isDegenerateFollowUp("What is his full experience timeline?")).toBe(false);
     expect(isDegenerateFollowUp("does he has any internships?")).toBe(false);

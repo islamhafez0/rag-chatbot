@@ -168,6 +168,32 @@ export const DetailsBlockSchema = z.object({
 });
 export type DetailsBlock = z.infer<typeof DetailsBlockSchema>;
 
+export const CalloutSeveritySchema = z.enum(["info", "success", "warning", "danger"]);
+export type CalloutSeverity = z.infer<typeof CalloutSeveritySchema>;
+
+/** Restrained highlight for important insights, decisions, caveats. */
+export const CalloutBlockSchema = z.object({
+  type: z.literal("callout"),
+  title: shortText().nullish(),
+  severity: CalloutSeveritySchema.nullish(),
+  content: medText(800),
+});
+export type CalloutBlock = z.infer<typeof CalloutBlockSchema>;
+
+/** Ordered procedures and troubleshooting instructions. */
+export const StepItemSchema = z.object({
+  title: shortText(),
+  description: z.string().trim().max(500).nullish(),
+});
+export type StepItem = z.infer<typeof StepItemSchema>;
+
+export const StepsBlockSchema = z.object({
+  type: z.literal("steps"),
+  title: shortText().nullish(),
+  steps: z.array(StepItemSchema).min(2).max(12),
+});
+export type StepsBlock = z.infer<typeof StepsBlockSchema>;
+
 /** Discriminated union — unknown block types are rejected, never executed. */
 const ResponseBlockBase = z.discriminatedUnion("type", [
   MetricsBlockSchema,
@@ -179,6 +205,8 @@ const ResponseBlockBase = z.discriminatedUnion("type", [
   DiagramBlockSchema,
   TechBlockSchema,
   DetailsBlockSchema,
+  CalloutBlockSchema,
+  StepsBlockSchema,
 ]);
 
 /**
@@ -240,6 +268,14 @@ const RICH_FENCE_RE =
 
 /** Matches the *start* of a rich-ui fence, closed or not (streaming). */
 const RICH_FENCE_START_RE = /```\s*(?:rich-ui|richui|rich_ui)\b/i;
+
+/**
+ * Trailing ```json fence fallback: models sometimes emit a single block as a
+ * plain ```json code fence instead of the rich-ui envelope. Only a fence at
+ * the END of the response is considered, and only its content must validate
+ * as a block payload — everything else stays a normal code block.
+ */
+const TRAILING_JSON_FENCE_RE = /```\s*json\s*\n([\s\S]*?)\n?\s*```\s*$/i;
 
 function asArr(v: unknown): unknown[] {
   return Array.isArray(v) ? v : [];
@@ -326,6 +362,12 @@ function preTrimBlock(raw: unknown): unknown {
     case "details":
       sliceStr("content", 8000);
       break;
+    case "callout":
+      sliceStr("content", 800);
+      break;
+    case "steps":
+      sliceArr("steps", 12);
+      break;
     default:
       break;
   }
@@ -366,6 +408,237 @@ function looksLikeRichPayload(raw: unknown): boolean {
   if (!raw || typeof raw !== "object") return false;
   const r = raw as Record<string, unknown>;
   return "blocks" in r || "block" in r || "type" in r;
+}
+
+// ------------------------------------------------- markdown table fallback
+//
+// Models often answer multi-record questions with a wide Markdown table even
+// when a rich visual is warranted. Rather than depend on prompt compliance,
+// a qualifying table (3+ data rows, 3+ columns) is converted deterministically
+// into a comparison block — a faithful 1:1 transform of the model's own
+// content, so nothing is fabricated. Narrow tables (2 rows, 2 columns) and
+// partially streamed tables stay ordinary Markdown.
+
+const COMPARISON_MAX_COLUMNS = 6;
+const COMPARISON_MAX_ROWS = 16;
+const COMPARISON_CELL_MAX = 240;
+const WIDE_TABLE_MIN_ROWS = 3;
+const WIDE_TABLE_MIN_COLUMNS = 3;
+
+function cleanTableCell(cell: string): string {
+  return cell
+    .replace(/<br\s*\/?>/gi, " • ")
+    .replace(/\*\*([^*]*)\*\*/g, "$1")
+    .replace(/`([^`]*)`/g, "$1")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, COMPARISON_CELL_MAX);
+}
+
+interface ParsedMarkdownTable {
+  header: string[];
+  rows: string[][];
+  /** Raw table lines (start/end offsets in the source text). */
+  raw: string;
+}
+
+function isTableDivider(line: string): boolean {
+  return /^\s*\|?\s*:?-{2,}[-:|\s]*$/.test(line);
+}
+
+function splitTableRow(line: string): string[] {
+  const stripped = line.trim().replace(/^\|/, "").replace(/\|\s*$/, "");
+  return stripped.split("|").map((c) => c.trim());
+}
+
+export function findWideMarkdownTable(text: string): ParsedMarkdownTable | null {
+  const lines = text.split("\n");
+  for (let i = 0; i < lines.length - 2; i++) {
+    if (!lines[i].includes("|")) continue;
+    const header = splitTableRow(lines[i]);
+    if (header.length < WIDE_TABLE_MIN_COLUMNS) continue;
+    if (!isTableDivider(lines[i + 1])) continue;
+    const rows: string[][] = [];
+    let j = i + 2;
+    while (j < lines.length && lines[j].includes("|") && lines[j].trim() !== "") {
+      // Require a closed row: a table still streaming mid-line must not
+      // convert (the text view would lose visible content).
+      if (!/\|\s*$/.test(lines[j])) break;
+      const cells = splitTableRow(lines[j]);
+      rows.push(cells);
+      j += 1;
+    }
+    if (rows.length >= WIDE_TABLE_MIN_ROWS) {
+      return {
+        header,
+        rows,
+        raw: lines.slice(i, j).join("\n"),
+      };
+    }
+    i = j;
+  }
+  return null;
+}
+
+function tableTitleFor(text: string, tableStart: number): string | null {
+  const before = text.slice(0, tableStart).split("\n").filter((l) => l.trim());
+  const last = before.at(-1)?.trim() ?? "";
+  const heading = /^#{1,6}\s+(.{1,80})$/.exec(last);
+  if (heading) return heading[1].trim();
+  const bold = /^\*\*(.{1,80})\*\*:?$/.exec(last);
+  if (bold) return bold[1].trim();
+  return null;
+}
+
+/**
+ * Convert the first wide Markdown table into a comparison block. Returns the
+ * remaining text and the block, or null when no qualifying table exists.
+ */
+export function convertWideMarkdownTable(content: string): {
+  text: string;
+  block: ComparisonBlock;
+} | null {
+  const table = findWideMarkdownTable(content);
+  if (!table) return null;
+  const start = content.indexOf(table.raw);
+  const columns = table.header.slice(0, COMPARISON_MAX_COLUMNS).map(cleanTableCell);
+  const valueCount = columns.length - 1;
+  const rows = table.rows.slice(0, COMPARISON_MAX_ROWS).map((cells) => {
+    const label = cleanTableCell(cells[0] ?? "").slice(0, 80) || "Record";
+    const values = cells
+      .slice(1, 1 + valueCount)
+      .map((c) => cleanTableCell(c))
+      .filter((v) => v.length > 0);
+    return { label, values: values.length > 0 ? values : ["—"] };
+  });
+  if (rows.length < WIDE_TABLE_MIN_ROWS) return null;
+  const block: ComparisonBlock = {
+    type: "comparison",
+    title: tableTitleFor(content, start) ?? undefined,
+    columns,
+    rows,
+  };
+  const parsed = ResponseBlockSchema.safeParse(block);
+  if (!parsed.success || parsed.data.type !== "comparison") return null;
+  const text = (
+    content.slice(0, start).trimEnd() +
+    "\n\n" +
+    content.slice(start + table.raw.length).trimStart()
+  ).trim();
+  return { text, block: parsed.data as ComparisonBlock };
+}
+
+// ------------------------------------------------- bullet record fallback
+//
+// Third answer shape: per-record paragraphs with attribute bullets
+// ("**Title**\n*Description*: ... \n*Tech stack*: ... \n*Highlights*: ...").
+// When the model answers a multi-record question this way instead of using
+// the rich envelope, the groups are converted into one project block per
+// record. Conservative guards (3+ groups, each with a technology/skills
+// label and 3 label:value lines) keep prose, feedback, and steps answers
+// in ordinary Markdown.
+
+const DESC_LABEL = /^(?:description|about|overview|purpose|summary|what)$/i;
+const TECH_LABEL = /^(?:tech(?:nical)?(?:\s*stack|\s*skills)?|technologies|stack|skills(?:\s*used)?)$/i;
+const HIGHLIGHT_LABEL = /^(?:highlights?|impact|outcomes?|lessons?(?:\s*learned)?|contributions?|achievements?|key(?:\s*contributions)?|built)$/i;
+const ANY_LABEL_LINE_RE = /^\s*(?:[-*•]\s*)?[*_]{0,2}(?:\*\*)?([A-Za-z][A-Za-z /&+.]{1,40}?)[*)_]{0,2}[*_]{0,2}\s*:\s?(.*)$/;
+const TITLE_LINE_RE = /^(?:#{1,6}\s+|\*\*)(.+?)(?:\*\*)?\s*$/;
+const BULLET_TITLE_LINE_RE = /^\s*[-*•]\s*\*\*(.+?)\*\*\s*:?\s*$/;
+
+function splitTechList(value: string): string[] {
+  return value
+    .split(/\s*[,;]\s*|\s+and\s+|\/(?=\s)|\s*\/\s*/i)
+    .map((t) => t.replace(/^\s*[•\-]\s*/, "").trim())
+    .filter(Boolean)
+    .map((t) => (t.length > 48 ? `${t.slice(0, 47)}…` : t))
+    .slice(0, 16);
+}
+
+export function convertBulletRecords(content: string): {
+  text: string;
+  blocks: ResponseBlock[];
+} | null {
+  // Exact segment positions (blank lines may contain spaces; never guess).
+  const segments: { text: string; start: number }[] = [];
+  const sepRe = /\n\s*\n/g;
+  let cursor = 0;
+  let sep: RegExpExecArray | null;
+  while ((sep = sepRe.exec(content)) !== null) {
+    segments.push({ text: content.slice(cursor, sep.index), start: cursor });
+    cursor = sep.index + sep[0].length;
+  }
+  segments.push({ text: content.slice(cursor), start: cursor });
+
+  type Converted = { start: number; length: number; block: ResponseBlock };
+  const convertedSegments: Converted[] = [];
+
+  for (const segment of segments) {
+    const lines = segment.text.split("\n").map((l) => l.trim()).filter(Boolean);
+    if (lines.length < 4) continue;
+    const titleMatch =
+      TITLE_LINE_RE.exec(lines[0] ?? "") ?? BULLET_TITLE_LINE_RE.exec(lines[0] ?? "");
+    const title = titleMatch ? titleMatch[1].replace(/[:：]\s*$/, "").trim() : null;
+    if (!title || title.length > MAX_SHORT) continue;
+    const labelLines = lines.slice(1);
+    const labeled = labelLines
+      .map((l) => ANY_LABEL_LINE_RE.exec(l))
+      .filter((m): m is RegExpExecArray => m !== null);
+    const unlabeled = labelLines.length - labeled.length;
+    const descIdx = labeled.findIndex((m) => DESC_LABEL.test(m[1].trim()));
+    const techIdx = labeled.findIndex((m) => TECH_LABEL.test(m[1].trim()));
+    if (labeled.length < 3 || unlabeled > 1 || descIdx < 0 || techIdx < 0) continue;
+    const highlightIdx = labeled
+      .map((m, i) => (HIGHLIGHT_LABEL.test(m[1].trim()) ? i : -1))
+      .filter((i) => i >= 0);
+    if (highlightIdx.length < 2) continue;
+    const linkIdx = labeled.findIndex((m) => /^(?:link|url|repo(?:sitory)?)$/i.test(m[1].trim()));
+    const highlights = highlightIdx
+      .map((i) => simplifyInline(labeled[i][2]))
+      .flatMap((v) => v.split(/\s*•\s*|\s*<br\s*\/?>\s*/i))
+      .map((v) => v.trim())
+      .filter((v) => v.length > 0 && v !== "—")
+      .slice(0, 8);
+    const technologies = splitTechList(simplifyInline(labeled[techIdx][2]));
+    const rawUrl = linkIdx >= 0 ? labeled[linkIdx][2].trim() : "";
+    const parsed = ResponseBlockSchema.safeParse({
+      type: "project",
+      title: title.slice(0, MAX_SHORT),
+      description: simplifyInline(labeled[descIdx][2]).slice(0, 1200) || "Documented project.",
+      technologies: technologies.length > 0 ? technologies : ["various"],
+      highlights: highlights.length > 0 ? highlights : [title.slice(0, MAX_SHORT)],
+      ...(rawUrl && /^https?:\/\/\S{1,300}$/.test(rawUrl) ? { url: rawUrl } : {}),
+    });
+    if (!parsed.success) continue;
+    convertedSegments.push({
+      start: segment.start,
+      length: segment.text.length,
+      block: parsed.data,
+    });
+  }
+  if (convertedSegments.length < 3) return null;
+
+  let text = content;
+  for (let i = convertedSegments.length - 1; i >= 0; i--) {
+    const r = convertedSegments[i];
+    text = (
+      text.slice(0, r.start).replace(/[ \t]+$/, "") +
+      text.slice(r.start + r.length).replace(/^[ \t]*\n/, "")
+    );
+  }
+  return { text: text.trim(), blocks: convertedSegments.map((r) => r.block) };
+}
+
+function simplifyInline(cell: string): string {
+  return cell
+    .replace(/<br\s*\/?>/gi, " • ")
+    .replace(/\*\*([^*]*)\*\*/g, "$1")
+    .replace(/(?<!\w)\*([^*\n]+)\*(?!\w)/g, "$1")
+    .replace(/`([^`]*)`/g, "$1")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 1200);
 }
 
 /**
@@ -485,10 +758,34 @@ export function parseRichContent(content: string): ParsedRichResponse {
     };
   }
 
-  // No fence at all: try the bare-JSON fallback before giving up, so a
-  // payload emitted without fences still renders instead of leaking (#37).
+  // No fence at all: try the trailing ```json fence, then the bare-JSON
+  // fallback, then the wide-Markdown-table fallback, before giving up, so
+  // payloads emitted without the rich-ui envelope still render instead of
+  // leaking (issue #37 variants).
+  const jsonFenced = decodeTrailingJsonFence(content);
+  if (jsonFenced) return jsonFenced;
   const bare = extractBareJsonSuffix(content);
-  if (!bare) return empty;
+  if (!bare) {
+    const tableConverted = convertWideMarkdownTable(content);
+    if (tableConverted) {
+      return {
+        text: tableConverted.text,
+        blocks: [tableConverted.block],
+        hadMalformed: false,
+        errors: [],
+      };
+    }
+    const bulletsConverted = convertBulletRecords(content);
+    if (bulletsConverted && bulletsConverted.blocks.length <= 16) {
+      return {
+        text: bulletsConverted.text,
+        blocks: bulletsConverted.blocks,
+        hadMalformed: false,
+        errors: [],
+      };
+    }
+    return empty;
+  }
   const decoded = decodeParsedPayload(bare.raw, bare.text, empty);
   // Only claim the trailing JSON when it actually validated into blocks;
   // otherwise leave the original text untouched.
@@ -496,11 +793,48 @@ export function parseRichContent(content: string): ParsedRichResponse {
   return decoded;
 }
 
+/**
+ * Trailing ```json fence handling: when the last fence is a ```json block
+ * whose content validates into blocks, render it as components and strip it
+ * from the text. Everything else (mid-answer json, non-block payloads) is
+ * untouched and rendered as an ordinary code block.
+ */
+function decodeTrailingJsonFence(content: string): ParsedRichResponse | null {
+  if (!content.includes("```json")) return null;
+  const match = TRAILING_JSON_FENCE_RE.exec(content);
+  if (!match) return null;
+  const empty: ParsedRichResponse = { text: content, blocks: [], hadMalformed: false, errors: [] };
+  const text = content.slice(0, match.index).trim();
+  let raw: unknown;
+  try {
+    raw = JSON.parse(match[1].trim());
+  } catch {
+    return null;
+  }
+  if (!looksLikeRichPayload(raw)) return null;
+  const decoded = decodeParsedPayload(raw, text, empty);
+  if (decoded.blocks.length === 0) return null;
+  return decoded;
+}
+
 /** Strip any (open or closed) rich-ui fence for the streaming text view. */
 export function stripRichFenceForDisplay(content: string): string {
   if (!RICH_FENCE_START_RE.test(content)) {
+    const jsonFenced = decodeTrailingJsonFence(content);
+    if (jsonFenced) return jsonFenced.text;
     const bare = extractBareJsonSuffix(content);
-    if (!bare) return content;
+    if (!bare) {
+      // Mirror parseRichContent: wide Markdown tables and per-record bullet
+      // groups become blocks, so the streaming text view must drop them the
+      // same way.
+      const tableConverted = convertWideMarkdownTable(content);
+      if (tableConverted) return tableConverted.text;
+      const bulletsConverted = convertBulletRecords(content);
+      if (bulletsConverted && bulletsConverted.blocks.length <= 16) {
+        return bulletsConverted.text;
+      }
+      return content;
+    }
     const decoded = decodeParsedPayload(bare.raw, bare.text, {
       text: content,
       blocks: [],

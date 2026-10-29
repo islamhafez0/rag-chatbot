@@ -4,6 +4,8 @@ import {
   sanitizeBlocks,
   dropUngroundedBlocks,
   stripRichFenceForDisplay,
+  convertWideMarkdownTable,
+  convertBulletRecords,
   ResponseBlockSchema,
 } from "../rich-response";
 import { buildSystemPrompt } from "../generate";
@@ -42,8 +44,88 @@ describe("rich-response schema validation", () => {
     expect(p.blocks[0].type).toBe("chart");
   });
 
-  it("accepts a valid project response", () => {
+  it("accepts a valid callout with default severity", () => {
     const p = parseRichContent(
+      withFence(
+        "Worth noting:",
+        JSON.stringify({
+          blocks: [{ type: "callout", content: "The **pgvector** index needs reindexing after major upgrades." }],
+        }),
+      ),
+    );
+    expect(p.blocks).toHaveLength(1);
+    expect(p.blocks[0].type).toBe("callout");
+    if (p.blocks[0].type === "callout") {
+      expect(p.blocks[0].severity).toBeUndefined();
+      expect(p.blocks[0].content).toContain("pgvector");
+    }
+  });
+
+  it("rejects callouts with unknown severity", () => {
+    const { blocks } = sanitizeBlocks([
+      { type: "callout", severity: "hurtful", content: "x" },
+    ]);
+    expect(blocks).toHaveLength(0);
+  });
+
+  it("trims oversized callout content instead of dropping", () => {
+    const { blocks } = sanitizeBlocks([
+      { type: "callout", content: "a".repeat(900) },
+    ]);
+    expect(blocks).toHaveLength(1);
+    if (blocks[0].type === "callout") expect(blocks[0].content).toHaveLength(800);
+  });
+
+  it("drops callouts without content but keeps sibling blocks", () => {
+    const { blocks, errors } = sanitizeBlocks([
+      { type: "callout", title: "Only title" },
+      { type: "steps", steps: [{ title: "A" }, { title: "B" }] },
+    ]);
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].type).toBe("steps");
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  it("accepts a valid steps response", () => {
+    const p = parseRichContent(
+      withFence(
+        "To reindex:",
+        JSON.stringify({
+          blocks: [
+            {
+              type: "steps",
+              title: "Reindex pgvector",
+              steps: [
+                { title: "Back out traffic", description: "Point the app at maintenance mode" },
+                { title: "Run REINDEX", description: "CREATE INDEX CONCURRENTLY keeps serving" },
+              ],
+            },
+          ],
+        }),
+      ),
+    );
+    expect(p.blocks).toHaveLength(1);
+    if (p.blocks[0].type === "steps") {
+      expect(p.blocks[0].steps).toHaveLength(2);
+      expect(p.blocks[0].steps[0].title).toBe("Back out traffic");
+    }
+  });
+
+  it("trims oversized step lists instead of dropping", () => {
+    const steps = Array.from({ length: 20 }, (_, i) => ({ title: `Step ${i + 1}` }));
+    const { blocks } = sanitizeBlocks([{ type: "steps", steps }]);
+    expect(blocks).toHaveLength(1);
+    if (blocks[0].type === "steps") expect(blocks[0].steps).toHaveLength(12);
+  });
+
+  it("rejects steps lists with fewer than two steps", () => {
+    const { blocks } = sanitizeBlocks([
+      { type: "steps", steps: [{ title: "The only step" }] },
+    ]);
+    expect(blocks).toHaveLength(0);
+  });
+
+  it("accepts a valid project response", () => {    const p = parseRichContent(
       withFence(
         "One of my projects:",
         JSON.stringify({
@@ -228,6 +310,22 @@ describe("rich-response schema validation", () => {
     expect(p.text).toBe("");
     expect(p.blocks).toEqual([]);
   });
+
+  it("renders a trailing json-fence payload as blocks (live model variant)", () => {
+    const raw = "Scaling notes.\n```json\n" + JSON.stringify({ type: "steps", steps: [{ title: "A" }, { title: "B" }] }) + "\n```";
+    const p = parseRichContent(raw);
+    expect(p.text).toBe("Scaling notes.");
+    expect(p.blocks).toHaveLength(1);
+    expect(p.blocks[0].type).toBe("steps");
+  });
+
+  it("leaves ordinary json code blocks untouched", () => {
+    const raw = 'Example config:\n```json\n{"scaleBy": 3}\n```';
+    const p = parseRichContent(raw);
+    expect(p.text).toContain("json");
+    expect(p.blocks).toEqual([]);
+    expect(stripRichFenceForDisplay(raw)).toBe(raw);
+  });
 });
 
 describe("rich-response grounding", () => {
@@ -313,20 +411,151 @@ describe("rich-response streaming compatibility", () => {
   });
 });
 
+describe("wide markdown table fallback", () => {
+  const wide = [
+    "**Islam's projects**",
+    "",
+    "| Project | Role | Tech stack | Highlights |",
+    "|---|---|---|---|",
+    "| **Emdad** | Odoo Developer | Python, Odoo | Custom modules <br> Role-based pricing |",
+    "| **Relief Center** | Full-stack | Odoo, OWL | 3D globe <br> OTP alerts |",
+    "| **RAG Chatbot** | Solo Developer | Next.js, pgvector | Hybrid retrieval **with RRF** |",
+  ].join("\n");
+
+  it("converts a wide table into a comparison block and strips it from text", () => {
+    const p = parseRichContent(wide);
+    expect(p.blocks).toHaveLength(1);
+    expect(p.blocks[0].type).toBe("comparison");
+    if (p.blocks[0].type === "comparison") {
+      expect(p.blocks[0].title).toBe("Islam's projects");
+      expect(p.blocks[0].columns).toEqual(["Project", "Role", "Tech stack", "Highlights"]);
+      expect(p.blocks[0].rows).toHaveLength(3);
+      expect(p.blocks[0].rows[0].label).toBe("Emdad");
+      expect(p.blocks[0].rows[0].values).toContain("Custom modules • Role-based pricing");
+    }
+    expect(p.text).not.toContain("|");
+    expect(stripRichFenceForDisplay(wide)).toBe(p.text);
+  });
+
+  it("leaves narrow tables as ordinary markdown", () => {
+    const narrow = [
+      "| Option | Pros |",
+      "|---|---|",
+      "| A | Fast |",
+      "| B | Cheap |",
+    ].join("\n");
+    const p = parseRichContent(narrow);
+    expect(p.blocks).toHaveLength(0);
+    expect(p.text).toContain("| Option | Pros |");
+  });
+
+  it("leaves partially streamed tables untouched", () => {
+    const partial = wide + "\n| **Taqat** | Frontend";
+    const p = parseRichContent(partial);
+    expect(p.blocks).toHaveLength(1); // the closed table still converts
+    expect(p.text).toContain("| **Taqat** | Frontend");
+  });
+
+  it("converts directly and cleans markdown artifacts from cells", () => {
+    const c = convertWideMarkdownTable(wide);
+    expect(c).not.toBeNull();
+    if (!c) return;
+    expect(c.block.rows[2].values[2]).toBe("Hybrid retrieval with RRF");
+    expect(c.block.rows[2].values[0]).not.toContain("**");
+  });
+});
+
+describe("bullet record fallback", () => {
+  const group = (title: string, desc: string, tech: string, a: string, b: string) =>
+    [
+      `**${title}**`,
+      `*Description*: ${desc}`,
+      `*Role*: Solo Developer`,
+      `*Tech stack*: ${tech}`,
+      `*Highlights*: ${a}`,
+      `*Impact*: ${b}`,
+    ].join("\n");
+
+  const bulletAnswer = [
+    "Here's a complete list of Islam's documented projects:",
+    "",
+    group("Emdad", "Humanitarian storefront on Odoo 17.", "Python, Odoo 17, PostgreSQL", "Custom modules", "Efficient aid distribution"),
+    "",
+    group("RAG Chatbot", "Retrieval-augmented chatbot over YAML files.", "Next.js, pgvector, TypeScript", "Hybrid retrieval with RRF", "recall@8 0.904"),
+    "",
+    group("Relief Center", "Disaster-response platform on a 3D globe.", "Odoo, OWL, JavaScript", "Live data ingestion into Odoo ORM", "Real-time disaster visibility"),
+  ].join("\n");
+
+  it("converts 3+ bullet record paragraphs into project blocks", () => {
+    const p = parseRichContent(bulletAnswer);
+    expect(p.blocks).toHaveLength(3);
+    expect(p.blocks.every((b) => b.type === "project")).toBe(true);
+    if (p.blocks[0].type === "project") {
+      expect(p.blocks[0].title).toBe("Emdad");
+      expect(p.blocks[0].technologies).toContain("Odoo 17");
+      expect(p.blocks[0].highlights).toContain("Custom modules");
+    }
+    expect(p.text).not.toContain("**Emdad**");
+    expect(p.text).toContain("Here's a complete list");
+    expect(stripRichFenceForDisplay(bulletAnswer)).toBe(p.text);
+  });
+
+  it("keeps fewer than three groups as plain markdown", () => {
+    const two = [
+      group("Emdad", "Humanitarian storefront.", "Python, Odoo", "Custom modules", "Aid distribution"),
+      "",
+      group("RAG Chatbot", "Chatbot over YAML.", "Next.js, pgvector", "Hybrid retrieval", "recall@8 0.9"),
+    ].join("\n");
+    const p = parseRichContent(two);
+    expect(p.blocks).toHaveLength(0);
+    expect(p.text).toContain("**Emdad**");
+  });
+
+  it("does not convert feedback or steps prose", () => {
+    const feedback = [
+      "**Ahmed** — Feedback:",
+      "- What a great developer!",
+      "",
+      "**Sara** — Feedback:",
+      "- Says he works well under pressure.",
+      "",
+      "**Omar** — Feedback:",
+      "- Great communicator.",
+    ].join("\n");
+    expect(convertBulletRecords(feedback)).toBeNull();
+    const p = parseRichContent(feedback);
+    expect(p.blocks).toHaveLength(0);
+  });
+});
+
 describe("adaptive system prompt", () => {
   const prompt = buildSystemPrompt("CONTEXT");
   it("instructs single-generation rich-ui output (no second LLM call)", () => {
     expect(prompt).toContain("rich-ui");
-    expect(prompt).toContain("no extra call");
+    expect(prompt).toContain("at most one rich-ui fenced block per response");
   });
-  it("maps intent to presentation and forbids decoration", () => {
-    expect(prompt).toContain("Simple factual question");
-    expect(prompt).toContain("Never decorate");
-    expect(prompt).toContain("NO rich-ui block");
+  it("maps evidence shape to presentation and forbids decoration", () => {
+    expect(prompt).toContain("Shape-driven visual selection");
+    expect(prompt).toContain("Do not emit empty, redundant, or decorative visuals");
+    expect(prompt).toContain("answer in Markdown without a visual");
+  });
+  it("maps procedures to steps and highlights to callouts", () => {
+    expect(prompt).toContain('"type":"steps"');
+    expect(prompt).toContain('"type":"callout"');
+    expect(prompt).toContain("A sequence of actions the reader would follow");
+  });
+  it("selects blocks dynamically without user rendering hints", () => {
+    expect(prompt).toContain("Users will not tell you how to render an answer");
+    expect(prompt).toContain("Never flatten 3+ attribute-bearing records into one wide Markdown table");
+    expect(prompt).toContain("A record count of 3 or more of the same kind is a strong signal");
+  });
+  it("keeps simple questions concise and grounds component data", () => {
+    expect(prompt).toContain("Simple questions receive a concise Markdown answer");
+    expect(prompt).toContain("Never invent facts, metrics, evidence, or achievements to fill a visual");
   });
   it("forbids fabricated metrics and arbitrary code", () => {
-    expect(prompt).toContain("Never invent metrics");
-    expect(prompt).toContain("never emit HTML");
+    expect(prompt).toContain("Never invent data to populate a visual");
+    expect(prompt).toContain("Never emit HTML tags");
   });
   it("contains no hostile/insult instructions", () => {
     expect(prompt.toLowerCase()).not.toContain("vulgar");
@@ -335,7 +564,7 @@ describe("adaptive system prompt", () => {
   it("preserves grounding, voice, and image rules", () => {
     expect(prompt).toContain("first person");
     expect(prompt).toContain("source of truth");
-    expect(prompt).toContain("Never invent URLs");
+    expect(prompt).toContain("Never invent, modify, or guess image URLs");
   });
   it("forbids bare JSON outside the fence", () => {
     expect(prompt).toContain("without the fence it renders");
@@ -344,7 +573,7 @@ describe("adaptive system prompt", () => {
     expect(prompt).toContain("Never append suggested follow-up questions");
   });
   it("forbids repeating block contents in prose", () => {
-    expect(prompt).toContain("Details live in the blocks; prose is only the intro.");
+    expect(prompt).toContain("do not duplicate its contents in the introduction");
   });
   it("forbids HTML tags in answers", () => {
     expect(prompt).toContain("Never emit HTML tags");

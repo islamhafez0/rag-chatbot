@@ -81,7 +81,7 @@ async function main() {
 }
 
 const DECLINE_RE =
-  /don'?t have|knowledge base|no information|not available|unable|can'?t (share|reveal|disclose|provide|comply|help)|won'?t (share|reveal|disclose)|cann?ot (share|reveal|comply|help)|not (able|allowed) to share|against my instructions|i must decline|no data|doesn'?t (have|cover)|no such/i;
+  /don'?t have|knowledge base|no information|not available|unable|can'?t (share|reveal|disclose|provide|comply|help)|won'?t (share|reveal|disclose)|cann?ot (share|reveal|comply|help)|not (able|allowed) to share|against my instructions|i must decline|no data|doesn'?t (have|cover)|no such|out of scope|outside my scope|i'?m (scoped|limited) to|only (about|answer questions about) islam/i;
 
 /** Normalize model orthography (curly quotes, narrow spaces, unicode dashes)
  *  before fact/decline matching so typography never fails a correct answer. */
@@ -91,6 +91,26 @@ function norm(s: string): string {
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u202F\u00A0]/g, " ")
     .replace(/[\u2010-\u2015\u2212]/g, "-")
+    // Soft hyphen / word-joiner style separators that models sometimes add
+    // inside brand names ("Taqa\u00ADTechno"); strip so keyFact joins match.
+    .replace(/[\u00AD\u200B\u200C\uFEFF]/g, "")
+}
+
+const alnum = (s: string): string => norm(s).replace(/[^a-z0-9]/g, "");
+
+/**
+ * Fact match with an orthography-tolerant fallback: substring on the
+ * normalized text, else substring on the alnum-squeezed form so inserted
+ * separators ("Taqa\u202FTechno", "RAG-Career Chatbot") never fail a correct
+ * answer. Facts squeezing under 6 alnum chars stay substring-only because
+ * squeezing loses discriminating power ("C#", "23").
+ */
+function factIn(answer: string, fact: string): boolean {
+  const lower = norm(answer);
+  const factLower = fact.toLowerCase();
+  if (lower.includes(factLower)) return true;
+  const squeezedFact = alnum(fact);
+  return squeezedFact.length >= 6 ? alnum(answer).includes(squeezedFact) : false;
 }
 
 function evaluateAnswer(scenario: Scenario, answer: string): { pass: boolean; detail: string } {
@@ -104,7 +124,7 @@ function evaluateAnswer(scenario: Scenario, answer: string): { pass: boolean; de
   if (scenario.conversational) {
     if (answer.trim().length > 10 && !DECLINE_RE.test(lower)) {
       const missing = (scenario.keyFacts ?? []).filter(
-        (fact) => !lower.includes(fact.toLowerCase())
+        (fact) => !factIn(answer, fact)
       );
       if (missing.length > 0) {
         return { pass: false, detail: `missing: ${missing.join(", ")}` };
@@ -115,7 +135,7 @@ function evaluateAnswer(scenario: Scenario, answer: string): { pass: boolean; de
   }
   if (scenario.emptyKnowledge) {
     const declined = DECLINE_RE.test(lower);
-    const hallucinated = scenario.keyFacts?.some((fact) => lower.includes(fact.toLowerCase())) ?? false;
+    const hallucinated = scenario.keyFacts?.some((fact) => factIn(answer, fact)) ?? false;
     if (declined && !hallucinated) return { pass: true, detail: "declined" };
     return {
       pass: false,
@@ -125,7 +145,7 @@ function evaluateAnswer(scenario: Scenario, answer: string): { pass: boolean; de
     };
   }
   const missing = (scenario.keyFacts ?? []).filter(
-    (fact) => !lower.includes(fact.toLowerCase())
+    (fact) => !factIn(answer, fact)
   );
   return missing.length === 0
     ? { pass: true, detail: `ok (${(scenario.keyFacts ?? []).length} facts)` }

@@ -34,6 +34,16 @@ const SKILLS_WORD = /\b(skills?|technologies|tech stack|proficient|speciali[sz]e
 const EDUCATION_WORD = /\b(education|educational|university|college|degree|studied|study)\b/;
 const CERT_WORD = /\b(certifications?|certificates?|certified|credentials?)\b/;
 
+const FEEDBACK_WORD =
+  /\b(feedback|testimonials?|endorsements?|recommendations?|reviews?)\b/;
+
+/** Collection-style reference about his published writing. */
+const WRITING_WORD = /\b(articles?|blogs?|publications?|published|publishes?)\b/;
+
+/** "Before / prior / previously" or role ordinals ⇒ the user wants role history. */
+const PREV_WORD = /\b(before|previous(ly)?|earlier|prior to|previously)\b/;
+const ROLE_ORDINAL = /\b(first|firts|second|secound|third|latest|most recent|last|newest) (job|role|position|internship)\b/;
+
 const EXPANDED_WORD =
   /\b(how|why|explain|compare|comparison|versus|difference|architecture|detail|process|workflow|approach|decision)\b/;
 
@@ -47,7 +57,9 @@ export function classifyIntent(query: string): QueryIntent {
     /\bfirst (job|role|position)\b/.test(q) ||
     (EXHAUSTIVE.test(q) && ROLES_WORD.test(q))
   ) {
-    return { mode: "complete", category: "roles", sources: null };
+    // roles/ was restructured into experience/; the DB category derives
+    // from the source path's first segment.
+    return { mode: "complete", category: "experience", sources: null };
   }
   if (/\bprojects\b/.test(q) || (EXHAUSTIVE.test(q) && /\bproject\b/.test(q))) {
     return { mode: "complete", category: "projects", sources: null };
@@ -60,6 +72,15 @@ export function classifyIntent(query: string): QueryIntent {
   }
   if (CERT_WORD.test(q)) {
     return { mode: "complete", category: "facts", sources: ["facts/certifications.yml"] };
+  }
+  if (FEEDBACK_WORD.test(q)) {
+    return { mode: "complete", category: "feedback", sources: ["feedback/testimonials.yml"] };
+  }
+  if (WRITING_WORD.test(q)) {
+    return { mode: "complete", category: "facts", sources: ["facts/writing.yml"] };
+  }
+  if (ROLES_WORD.test(q) && (PREV_WORD.test(q) || ROLE_ORDINAL.test(q))) {
+    return { mode: "complete", category: "experience", sources: null };
   }
 
   // ---- expanded: explanations need surrounding context ----

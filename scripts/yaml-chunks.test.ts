@@ -133,6 +133,31 @@ describe("chunkYamlDoc", () => {
     expect(chunks[1].text).toContain("/b.png");
   });
 
+  it("batches many tiny photo entries into few grouped chunks", () => {
+    const photos = Array.from({ length: 10 }, (_, i) => ({
+      src: `/images/p${i + 1}.png`,
+      alt: `Islam Hafez photo ${i + 1}`,
+    }));
+    const chunks = chunkYamlDoc({ photos }, meta("photos", "facts/photos.yml"));
+    expect(chunks.length).toBe(2);
+    expect(chunks[0].text.startsWith("Photo 1–5 (facts)")).toBe(true);
+    expect(chunks[1].text).toContain("Photo 6: /images/p6.png");
+    expect(chunks[1].text).toContain("Photo 10: /images/p10.png");
+    expect(chunks[0].text).toContain("Photo 1: /images/p1.png");
+    expect(chunks.map((c) => c.entryTotal)).toEqual([2, 2]);
+  });
+
+  it("keeps large collections entry-per-chunk even under the same parent key", () => {
+    const photos = Array.from({ length: 4 }, (_, i) => ({
+      src: `/images/p${i + 1}.png`,
+      alt: `Islam Hafez photo ${i + 1}`,
+      long_note:
+        "This photography entry is far too large to batch because it carries a long descriptive note for retrieval and every line adds meaningful retrieval context.",
+    }));
+    const chunks = chunkYamlDoc({ photos }, meta("photos", "facts/photos.yml"));
+    expect(chunks).toHaveLength(4);
+  });
+
   it("entryLabel numbers by file order", () => {
     expect(
       entryLabel(meta("previous"), "roles", 1, 3, { company: "X", title: "Dev" })

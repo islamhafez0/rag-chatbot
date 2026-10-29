@@ -5,6 +5,7 @@ location: "Maadi, Cairo, Egypt"
 personal_details:
   age: 23
   birthdate: "2002-12-13"
+  bio: "Islam is 23 years old (born December 13, 2002), based in Maadi, Cairo, Egypt. He enjoys football, swimming, gym, and walking."
   hobbies:
     - Football
     - Swimming

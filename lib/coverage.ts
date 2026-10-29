@@ -14,6 +14,8 @@ export interface CoverageInfo {
   retrievedChunks: number;
   /** Total category records in the KB, null when not a category request. */
   expectedChunks: number | null;
+  /** Distinct sources among retrieved category records, null/omitted when unknown. */
+  recordCount?: number | null;
   /** retrievedChunks / expectedChunks, null when unknown. */
   coverage: number | null;
   /** True when the char budget cut records (category or semantic). */
@@ -97,7 +99,7 @@ export function coverageFromAssembly(
   mode: ContextMode,
   requestedCategory: string | null,
   categoryTotal: number | null,
-  assembled: { text: string; includedCategory: number; truncated: boolean },
+  assembled: { text: string; includedCategory: number; truncated: boolean; sources?: string[] },
   budgetChars: number,
 ): CoverageInfo {
   const coverage =
@@ -109,6 +111,8 @@ export function coverageFromAssembly(
     requestedCategory,
     retrievedChunks: assembled.includedCategory,
     expectedChunks: categoryTotal,
+    // Number of distinct files represented: the "record count" for the note.
+    recordCount: assembled.sources && assembled.sources.length > 0 ? assembled.sources.length : null,
     coverage,
     truncated: assembled.truncated,
     budgetChars,
@@ -125,20 +129,29 @@ export function buildCoverageNote(c: CoverageInfo): string {
       `partial list as exhaustive ("all", "every", "full", "complete").`
     );
   }
-  const total = c.expectedChunks ?? c.retrievedChunks;
+  const records = c.recordCount ?? c.expectedChunks ?? c.retrievedChunks;
+  const sections = c.expectedChunks ?? c.retrievedChunks;
+  const sectionNote =
+    sections !== records
+      ? `document sections describing ${records} records`
+      : `records`;
   if (!c.truncated && c.coverage !== null && c.coverage >= 1) {
     return (
-      `Mode: complete. Category "${c.requestedCategory}": all ${total} ` +
-      `records are present in the context (${c.retrievedChunks}/${total}). ` +
-      `You may enumerate the retrieved records exhaustively. Complete ` +
-      `coverage never authorizes inventing numbers, scores, or statistics.`
+      `Mode: complete. Category "${c.requestedCategory}": all ${sections} ` +
+      `${sectionNote} are present in the context. ` +
+      `Enumerate every record once, merging a record's sections ` +
+      `(duration, tech stack, achievements, outcomes) into one entry. ` +
+      `Do not list sections as separate records and do not call grouped ` +
+      `content "duplicates". Complete coverage never authorizes inventing ` +
+      `numbers, scores, or statistics.`
     );
   }
   return (
     `Mode: complete. Category "${c.requestedCategory}": PARTIAL coverage ` +
-    `(${c.retrievedChunks}/${total} records${c.truncated ? ", context budget reached" : ""}). ` +
-    `List what is present, but do NOT claim the list is exhaustive — say ` +
-    `that only part of the records are available.`
+    `(${c.retrievedChunks}/${sections} sections${c.truncated ? ", context budget reached" : ""}; ` +
+    `several sections may belong to the same record). List every record that is ` +
+    `fully represented, but do NOT claim the list is exhaustive — say that ` +
+    `only part of the available records are present.`
   );
 }
 

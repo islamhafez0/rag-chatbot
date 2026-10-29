@@ -1,4 +1,5 @@
-export interface Scenario {  id: string;
+export interface Scenario {
+  id: string;
   label: string;
   messages: { role: string; content: string }[];
   /**
@@ -34,67 +35,74 @@ export function recallAtK(expected: string[], retrieved: string[], k: number): n
   return hits / expected.length;
 }
 
+/**
+ * Current file layout (KB restructure):
+ * - projects/: consolidated projects.yml + per-project files
+ * - experience/: per-role files (was roles/)
+ * Removed-from-KB projects (youtube, fluxgen, quranik, ...) now decline:
+   they are intentionally absent, so their scenarios were dropped.
+ */
 const PROJECTS_ALL = [
-  "projects/rag-chatbot.yml",
-  "projects/youtube-clone.yml",
-  "projects/gemini-ai.yml",
-  "projects/portfolio-website.yml",
+  "projects/rag-project.yml",
+  "projects/projects.yml",
+  "projects/taqat-fintech-panels.yml",
   "projects/relief-center.yml",
-  "projects/emdad.yml",
-  "projects/translate-dashboard.yml",
-  "projects/nextjs-commerce.yml",
-  "projects/quranik.yml",
-  "projects/fluxgen-ai.yml",
-  "projects/english-tutor-bot.yml",
-  "projects/google-docs-clone.yml",
-  "projects/online-courses-platform.yml",
-  "projects/dotnet-angular-jwt.yml",
   "projects/apiary-and-honey.yml",
+  "projects/emdad.yml",
+  "projects/dotnet-angular-jwt.yml",
 ];
-const ROLES_ALL = ["roles/current.yml", "roles/previous.yml"];
+const ROLES_ALL = [
+  "experience/taqa-techno-odoo.yml",
+  "experience/taqa-techno-angular.yml",
+  "experience/freelance-frontend.yml",
+  "experience/code-alpha-intern.yml",
+  "experience/new-start-egypt-seo.yml",
+];
 
 export const SCENARIOS: Scenario[] = [
-  { id: "projects-list", label: "projects", expectedSources: PROJECTS_ALL, keyFacts: ["RAG Career Chatbot", "YouTube clone"],
+  { id: "projects-list", label: "projects", expectedSources: PROJECTS_ALL, keyFacts: ["RAG Career Chatbot", "Apiary"],
     messages: [{ role: "user", content: "What projects has Islam built?" }] },
-  { id: "projects-rag", label: "projects", expectedSources: ["projects/rag-chatbot.yml"], keyFacts: ["RAG Career Chatbot"],
+  { id: "projects-rag", label: "projects", expectedSources: ["projects/rag-project.yml"], keyFacts: ["pgvector", "hybrid"],
     messages: [{ role: "user", content: "Tell me about the RAG Career Chatbot" }] },
-  { id: "projects-youtube", label: "projects", expectedSources: ["projects/youtube-clone.yml"], keyFacts: ["YouTube"],
-    messages: [{ role: "user", content: "What is the youtube clone project about?" }] },
-  { id: "projects-gemini", label: "projects", expectedSources: ["projects/gemini-ai.yml"], keyFacts: ["Gemini"],
-    messages: [{ role: "user", content: "Tell me about the gemini ai project" }] },
 
-  { id: "roles-companies", label: "roles", expectedSources: [...ROLES_ALL, "roles/earlier.yml"], keyFacts: ["TaqaTechno", "Code Alpha", "New Start"],
+  { id: "roles-companies", label: "roles", expectedSources: ROLES_ALL, keyFacts: ["TaqaTechno", "Code Alpha", "New Start"],
     messages: [{ role: "user", content: "Which companies has Islam worked at?" }] },
-  { id: "roles-timeline", label: "roles", expectedSources: [...ROLES_ALL, "roles/earlier.yml"], keyFacts: ["TaqaTechno", "Code Alpha", "New Start"],
+  { id: "roles-timeline", label: "roles", expectedSources: ROLES_ALL, keyFacts: ["TaqaTechno", "Code Alpha", "New Start"],
     messages: [{ role: "user", content: "What is his full experience timeline?" }] },
-  { id: "roles-intern", label: "roles", expectedSources: ["roles/previous.yml"], keyFacts: ["Code Alpha", "Intern"],
+  { id: "roles-intern", label: "roles", expectedSources: ["experience/code-alpha-intern.yml"], keyFacts: ["Code Alpha", "Intern"],
     messages: [{ role: "user", content: "did he have any internships?" }] },
-  { id: "roles-current", label: "roles", expectedSources: ["roles/current.yml"], keyFacts: ["TaqaTechno", "Odoo"],
+  { id: "roles-current", label: "roles", expectedSources: ["experience/taqa-techno-odoo.yml"], keyFacts: ["TaqaTechno", "Odoo"], note: "odoo file spans 2024-10..Present; angular ended 2025-09",
     messages: [{ role: "user", content: "what is his current role?" }] },
-  { id: "roles-typo", label: "roles", expectedSources: ["roles/previous.yml"], keyFacts: ["second role"], note: "typo; role ordering in file is TaqaTechno, Self-Employed, Code Alpha",
-    messages: [{ role: "user", content: "what os his secound role?" }] },
+  { id: "roles-latest", label: "roles", expectedSources: ["experience/taqa-techno-angular.yml"], keyFacts: ["Angular", "fintech"], note: "typo-tolerance probe; most recent ended TaqaTechno frontend role",
+    messages: [{ role: "user", content: "what os his secound role at taqatechno?" }] },
 
   { id: "facts-who", label: "facts", expectedSources: ["facts/profile.yml"], keyFacts: ["Islam Hafez", "Developer"],
     messages: [{ role: "user", content: "Who is Islam Hafez?" }] },
   { id: "facts-education", label: "facts", expectedSources: ["facts/profile.yml"], keyFacts: ["Damanhour"],
     messages: [{ role: "user", content: "What is his education background?" }] },
-  { id: "facts-hobbies", label: "unsupported", expectedSources: [], emptyKnowledge: true, note: "nothing in the KB covers hobbies",
-    messages: [{ role: "user", content: "What does Islam do for fun outside work?" }] },
+  { id: "facts-age", label: "facts", expectedSources: ["facts/profile.yml"], keyFacts: ["23"], note: "regression probe for the age refusal (question phrasing is deliberately pronoun-heavy)",
+    messages: [{ role: "user", content: "how old is he" }] },
+  { id: "facts-hobbies", label: "facts", expectedSources: ["facts/profile.yml"], keyFacts: ["Football", "Swimming", "Gym"], note: "hobbies live in profile personal_details",
+    messages: [{ role: "user", content: "tell me about his hobbies" }] },
 
   { id: "skills-tech", label: "skills->facts", expectedSources: ["facts/skills.yml"], keyFacts: ["React", "Next.js", "TypeScript"], note: "skills.yml lives under facts/",
     messages: [{ role: "user", content: "What technologies does he know?" }] },
   { id: "skills-list", label: "skills->facts", expectedSources: ["facts/skills.yml"], keyFacts: ["React"],
     messages: [{ role: "user", content: "What skills does Islam have?" }] },
 
-  { id: "interview-strengths", label: "interviews", expectedSources: ["interviews/common-answers.yml"], keyFacts: ["strength", "technologies"],
+  { id: "interview-strengths", label: "interviews", expectedSources: ["interviews/common-answers.yml"], keyFacts: ["strength", "React"],
     messages: [{ role: "user", content: "How should I answer what are your strengths in an interview?" }] },
   { id: "interview-tell", label: "interviews", expectedSources: ["interviews/common-answers.yml"], keyFacts: ["Islam Hafez", "frontend"],
     messages: [{ role: "user", content: "how should he answer tell me about yourself?" }] },
+  { id: "interview-conflict", label: "interviews", expectedSources: ["interviews/star-stories/conflict-resolution.yml"], keyFacts: ["disagre"],
+    messages: [{ role: "user", content: "How does he handle disagreement on a team?" }] },
 
-  { id: "feedback-people", label: "feedback", expectedSources: [], emptyKnowledge: true, note: "testimonials.yml is empty",
+  { id: "feedback-people", label: "feedback", expectedSources: ["feedback/testimonials.yml"], keyFacts: ["PixelCraft", "NileTech"],
     messages: [{ role: "user", content: "What do people say about working with him?" }] },
+  { id: "feedback-more", label: "feedback", expectedSources: ["feedback/testimonials.yml"], keyFacts: ["Ashraf"], note: "4 entries exist; regression probe for the per-source cap dropping the 4th; 'any more' phrasing makes gpt-oss answer meta-linguistically, so the ask enumerates directly",
+    messages: [{ role: "user", content: "list all the feedback entries people wrote about him" }] },
 
-  { id: "rules-personality", label: "rules", expectedSources: ["rules/personality.yml"],
+  { id: "rules-personality", label: "rules", expectedSources: ["rules/personality.yml", "strategy/communication.yml"], note: "both files document tone/communication preferences",
     messages: [{ role: "user", content: "How does he prefer to communicate?" }] },
 
   { id: "offtopic-joke", label: "off-topic", expectedSources: [], emptyKnowledge: true,
@@ -102,28 +110,28 @@ export const SCENARIOS: Scenario[] = [
   { id: "offtopic-capital", label: "off-topic", expectedSources: [], emptyKnowledge: true,
     messages: [{ role: "user", content: "what is the capital of France?" }] },
 
-  { id: "multiturn-and", label: "degenerate and", expectedSources: ["projects/rag-chatbot.yml"], keyFacts: ["pgvector"],
+  { id: "multiturn-and", label: "degenerate and", expectedSources: ["projects/rag-project.yml"], keyFacts: ["pgvector"],
     messages: [
       { role: "user", content: "Tell me about the RAG Career Chatbot" },
       { role: "assistant", content: "It is a RAG chatbot for his career built with Next.js and LangChain." },
       { role: "user", content: "and" },
     ] },
-  { id: "multiturn-skillspronoun", label: "pronoun skills", expectedSources: [...ROLES_ALL, "facts/skills.yml"], keyFacts: ["React"],
+  { id: "multiturn-skillspronoun", label: "pronoun skills", expectedSources: ROLES_ALL, keyFacts: ["React"],
     messages: [
       { role: "user", content: "What is his experience timeline?" },
       { role: "assistant", content: "He interned at Code Alpha and later worked at TaqaTechno." },
       { role: "user", content: "and his skills?" },
     ] },
-  { id: "multiturn-youtube-one", label: "the X one", expectedSources: ["projects/youtube-clone.yml"], keyFacts: ["YouTube"],
+  { id: "multiturn-relief-one", label: "the X one", expectedSources: ["projects/relief-center.yml", "projects/projects.yml"], keyFacts: ["Relief Center"],
     messages: [
       { role: "user", content: "What projects has Islam built?" },
-      { role: "assistant", content: "He built a RAG chatbot, a YouTube clone, and more." },
-      { role: "user", content: "what about the youtube one?" },
+      { role: "assistant", content: "He built the fintech panels, the Relief Center globe, and more." },
+      { role: "user", content: "what about the relief one?" },
     ] },
-  { id: "multiturn-consistency", label: "consistency check", expectedSources: ROLES_ALL, keyFacts: ["TaqaTechno", "Code Alpha"],
+  { id: "multiturn-consistency", label: "consistency check", expectedSources: ROLES_ALL, keyFacts: ["Code Alpha"],
     messages: [
       { role: "user", content: "what is his current role?" },
-      { role: "assistant", content: "He currently works at TaqaTechno." },
+      { role: "assistant", content: "He currently works at TaqaTechno on Odoo." },
       { role: "user", content: "and what did he do before?" },
     ] },
 
@@ -131,47 +139,38 @@ export const SCENARIOS: Scenario[] = [
     messages: [{ role: "user", content: "Tell me about the Relief Center project" }] },
   { id: "projects-emdad", label: "projects", expectedSources: ["projects/emdad.yml"], keyFacts: ["Emdad"],
     messages: [{ role: "user", content: "What is the Emdad project?" }] },
-  { id: "projects-translate", label: "projects", expectedSources: ["projects/translate-dashboard.yml"], keyFacts: ["Translate Dashboard", "6,219"],
-    messages: [{ role: "user", content: "Tell me about the Translate Dashboard module" }] },
-  { id: "projects-ecommerce", label: "projects", expectedSources: ["projects/nextjs-commerce.yml"], keyFacts: ["Stripe", "Sanity"],
-    messages: [{ role: "user", content: "What e-commerce website has Islam built?" }] },
-  { id: "projects-quranik", label: "projects", expectedSources: ["projects/quranik.yml"], keyFacts: ["Quran"],
-    messages: [{ role: "user", content: "What is quranik?" }] },
-  { id: "projects-fluxgen", label: "projects", expectedSources: ["projects/fluxgen-ai.yml"], keyFacts: ["Replicate"],
-    messages: [{ role: "user", content: "Tell me about the AI image generator project" }] },
-  { id: "projects-tutorbot", label: "projects", expectedSources: ["projects/english-tutor-bot.yml"], keyFacts: ["Telegram", "Arabic"],
-    messages: [{ role: "user", content: "What Telegram bot did Islam build?" }] },
-  { id: "projects-docsclone", label: "projects", expectedSources: ["projects/google-docs-clone.yml"], keyFacts: ["Google Docs"],
-    messages: [{ role: "user", content: "Did Islam build a Google Docs clone?" }] },
-  { id: "projects-courses", label: "projects", expectedSources: ["projects/online-courses-platform.yml"], keyFacts: ["quizzes"],
-    messages: [{ role: "user", content: "Tell me about the online courses platform" }] },
   { id: "projects-dotnet", label: "projects", expectedSources: ["projects/dotnet-angular-jwt.yml"], keyFacts: ["C#", "JWT"],
     messages: [{ role: "user", content: "What authentication demo has Islam built?" }] },
-  { id: "projects-apiary", label: "projects", expectedSources: ["projects/apiary-and-honey.yml"], keyFacts: ["235", "Apiary"],
+  { id: "projects-apiary", label: "projects", expectedSources: ["projects/apiary-and-honey.yml"], keyFacts: ["Apiary"],
     messages: [{ role: "user", content: "What did Islam do on the Apiary project?" }] },
-  { id: "projects-portfolio", label: "projects", expectedSources: ["projects/portfolio-website.yml"], keyFacts: ["Framer Motion"],
-    messages: [{ role: "user", content: "Tell me about Islam's portfolio website" }] },
+  { id: "projects-fintech", label: "projects", expectedSources: ["projects/taqat-fintech-panels.yml", "projects/projects.yml"], keyFacts: ["OTP", "Angular 17"],
+    messages: [{ role: "user", content: "Tell me about the fintech panels he worked on" }] },
+
+  { id: "impact-metrics", label: "impact", expectedSources: ["impact/impact.yaml"], keyFacts: ["Lighthouse", "commits"],
+    messages: [{ role: "user", content: "What measurable results did he achieve in his work?" }] },
+
   { id: "facts-certs", label: "facts", expectedSources: ["facts/certifications.yml"], keyFacts: ["Anthropic", "Model Context Protocol"],
     messages: [{ role: "user", content: "What certifications does Islam hold?" }] },
   { id: "facts-contact", label: "facts", expectedSources: ["facts/contact.yml"], keyFacts: ["islamhafez806@gmail.com"],
     messages: [{ role: "user", content: "How can I contact Islam?" }] },
   { id: "facts-socials", label: "facts", expectedSources: ["facts/socials.yml"], keyFacts: ["LinkedIn", "GitHub"],
     messages: [{ role: "user", content: "Where can I find Islam online?" }] },
-  { id: "facts-writing", label: "facts", expectedSources: ["facts/writing.yml"], keyFacts: ["DEV", "Hashnode"],
+  { id: "facts-writing", label: "facts", expectedSources: ["facts/writing.yml"], keyFacts: ["Medium", "DEV"],
+    note: "articles live on Medium + DEV; Hashnode is only a social profile (socials.yml)",
     messages: [{ role: "user", content: "Does Islam write technical articles?" }] },
   { id: "facts-cv", label: "facts", expectedSources: ["facts/cv.yml"], keyFacts: ["islam-hafez-frontend.pdf"],
     messages: [{ role: "user", content: "Where can I download Islam's CV?" }] },
   { id: "facts-cv-odoo", label: "facts", expectedSources: ["facts/cv.yml"], keyFacts: ["islam-hafez-odoo.pdf"],
     messages: [{ role: "user", content: "I need his Odoo CV for an ERP role" }] },
-  { id: "roles-seo", label: "roles", expectedSources: ["roles/earlier.yml"], keyFacts: ["Search Engine", "New Start"],
+  { id: "roles-seo", label: "roles", expectedSources: ["experience/new-start-egypt-seo.yml"], keyFacts: ["Search Engine", "New Start"],
     messages: [{ role: "user", content: "What was Islam's first job?" }] },
 
   // ---- completeness / enumeration (complete-context retrieval) ----
-  { id: "complete-timeline-all", label: "complete-timeline", expectedSources: ["roles/current.yml", "roles/previous.yml", "roles/earlier.yml"],
-    keyFacts: ["TaqaTechno", "Code Alpha", "New Start", "Self-Employed"],
+  { id: "complete-timeline-all", label: "complete-timeline", expectedSources: ROLES_ALL,
+    keyFacts: ["TaqaTechno", "Code Alpha", "New Start", "Freelance"],
     messages: [{ role: "user", content: "List every role Islam has held, in chronological order" }] },
   { id: "complete-projects-all", label: "complete-projects", expectedSources: PROJECTS_ALL,
-    keyFacts: ["RAG Career Chatbot", "YouTube clone", "Apiary"],
+    keyFacts: ["RAG Career Chatbot", "Apiary", "Relief Center"],
     messages: [{ role: "user", content: "List all of Islam's projects" }] },
   { id: "complete-skills-all", label: "complete-skills", expectedSources: ["facts/skills.yml"],
     keyFacts: ["React", "TypeScript", "Odoo"],
