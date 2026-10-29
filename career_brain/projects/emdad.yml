@@ -1,27 +1,23 @@
-# Emdad - Humanitarian Storefront
-# Extended Odoo's catalog model for a live humanitarian storefront.
-title: "Emdad"
+# Flagship project 6 of 7. Sources: portfolio impact section ("extended Odoo's
+# catalog model for a humanitarian storefront", Odoo 17), previous knowledge base.
+# The older one-line "multi-module solution" description was generic and was dropped.
+name: Emdad
+role: Odoo Developer at TaqaTechno
 description: >
-  A humanitarian-focused storefront that extends Odoo's catalog model to power a live storefront.
-  I implemented category flags, translatable descriptions, and hero icons that allow the team
-  to curate the homepage directly from the ERP.
+  A humanitarian storefront for which I extended Odoo 17's catalog model to power a
+  live store. I added category flags, translatable descriptions and hero icons so
+  the team curates the homepage directly from the ERP, plus role-gated pricing and
+  a B2B quote flow for humanitarian partners.
+highlights:
+  - Extended Odoo's base catalog model for role-gated pricing and a B2B quote-to-order flow
+  - Homepage curation from the ERP with category flags and hero icons
+  - Storefront frontend built with OWL
+  - Role-based access control for pricing and visibility
 tech_stack:
   - Odoo 17
   - Python
   - OWL (Odoo Web Library)
   - PostgreSQL
-architecture:
-  - "Extended Odoo's base catalog model to support role-gated pricing and a B2B quote flow."
-  - "Built a custom curation system for the homepage using category flags and hero icons managed via the ERP."
-contributions:
-  - "Designed and implemented the role-based pricing logic."
-  - "Developed the frontend storefront using OWL."
-outcomes:
-  - "Enabled efficient distribution of humanitarian aid via a structured digital storefront."
-  - "Streamlined the quote-to-order process for B2B humanitarian partners."
-lessons:
-  - "Learned how to customize Odoo's core commerce models for non-standard business flows (Humanitarian aid)."
-  - "Improved skills in developing role-based access control (RBAC) for pricing and visibility."
-link: "https://github.com/islamhafez0/emdad"
-demo: ""
-screenshot_url: ""
+links: []
+unknowns:
+  - Source code and live URL are not public.

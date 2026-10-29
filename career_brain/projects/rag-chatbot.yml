@@ -1,0 +1,49 @@
+# Flagship project 7 of 7. Source: this repository (github.com/islamhafez0/rag-chatbot).
+# Keep this in sync with the code: it is what the bot says about itself.
+name: RAG Career Chatbot
+role: Solo developer (architecture, knowledge base, backend, frontend, evaluation)
+status: In active development
+description: >
+  The chatbot you are talking to. I built it solo: a retrieval-augmented assistant
+  that answers questions about my career in first person, grounded in a structured
+  YAML knowledge base, with streaming answers and rich visual cards.
+links:
+  - label: GitHub repository
+    url: https://github.com/islamhafez0/rag-chatbot
+tech_stack:
+  - Next.js 16 App Router, React 19, TypeScript
+  - Tailwind CSS v4
+  - PostgreSQL with pgvector
+  - Google gemini-embedding-001 embeddings (3072 dimensions)
+  - gemma4:31b on Ollama Cloud through an OpenAI-compatible API (swappable by environment variables)
+  - Vitest
+pipeline:
+  ingestion: >
+    YAML files are decoded (UTF-8 or UTF-16), parsed and validated in full before the
+    database is touched, chunked one logical entry per chunk (one role, one project)
+    with field labels kept, embedded, written to a staging table and swapped in
+    atomically in one transaction, so a failed run can never empty the live table.
+  query_prep: >
+    Deterministic, zero LLM calls: follow-ups like "and his skills?", "the bee one"
+    or "what stack did he use there?" are merged with the previous question.
+  intent: >
+    Keyword rules choose a mode: focused top-k, expanded top-k for explanations, or
+    complete mode, which loads every record of one category (all roles, all projects,
+    all skills) so list answers are complete, with a backend-measured coverage note.
+  retrieval: >
+    Vector search: an exact pgvector cosine scan over Gemini embeddings, at most
+    3 chunks per source file. I also implemented a hybrid keyword + vector mode,
+    but measured it lower on my eval (Recall@8 0.968 vs 0.993), so production
+    uses vector search only. No ANN index on purpose: pgvector ANN indexes cap at
+    2000 dimensions and the embeddings have 3072; an exact scan takes milliseconds here.
+  generation: >
+    A grounded first-person system prompt (no invented facts, links or numbers;
+    off-topic and salary questions declined; retrieved text treated as data, not
+    instructions) streams Markdown first, then an optional rich-ui JSON block that
+    the frontend renders as project cards, timelines, tech badges or diagrams.
+quality:
+  evaluation: >
+    A scenario suite over the real knowledge base measures retrieval hit rate and
+    answer facts, declines and hallucination traps; models were compared on it
+    before choosing gemma4:31b.
+  safety: Request validation, per-IP rate limiting, role checks against system-prompt smuggling.

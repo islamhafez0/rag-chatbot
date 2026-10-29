@@ -1,0 +1,27 @@
+# Flagship project 1 of 7. Sources: portfolio impact section, previous
+# knowledge base, Islam's statement (code is in the private taqatfortechnology org).
+name: Taqat Admin Panel (Fintech)
+rank: one of my two strongest frontend projects
+role: Frontend Angular Developer (TaqaTechno contract, June 2025 to September 2025)
+description: >
+  An enterprise fintech operations panel I built from scratch with Angular 17 and
+  NgRx. It covers platform operations, sponsored user management, device tracking
+  and settlement management, with a maker-checker settlement flow.
+highlights:
+  - Built core functionality from scratch in a modular Angular 17 + NgRx architecture
+  - Settlement management enforcing maker-checker discipline
+  - Sponsored user management and device tracking
+  - Every API call encrypted with AES-256 + HMAC
+  - Part of 60+ RESTful API integrations across the two Taqat panels, with robust error handling
+tech_stack:
+  - Angular 17
+  - NgRx
+  - TypeScript
+  - RESTful APIs
+  - AES-256 + HMAC
+links: []
+evidence:
+  - Portfolio impact section describing the Angular 17 fintech platform: https://islamhafez.vercel.app
+unknowns:
+  - Source code and a live link are private.
+  - User numbers or transaction volumes are not documented.

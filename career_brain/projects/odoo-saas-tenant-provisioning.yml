@@ -1,0 +1,23 @@
+# Source: merged pull request and its 6 commits (checked 2026-10-29).
+name: Odoo SaaS Tenant Provisioning Module
+role: Contributor (feature author)
+date: September 2026
+description: >
+  For the msolutions_custom Odoo repository I built a SaaS tenant provisioning
+  module with a backend dashboard. It models tenants with a full provisioning and
+  drop lifecycle, provisions them on a schedule, and gives SaaS managers a
+  dedicated dashboard inside the Odoo backend.
+highlights:
+  - Tenant model with provisioning and drop lifecycle
+  - Provisioning cron job and configurable base-domain parameters
+  - SaaS Manager security group with tenant access rules
+  - Backend views, menus, module icon and a tenant dashboard client action (OWL)
+  - Merged as PR #1 after review
+tech_stack:
+  - Odoo
+  - Python
+  - OWL (Odoo Web Library)
+  - XML
+links:
+  - label: Merged pull request
+    url: https://github.com/SamehAbdelAlYoussef/msolutions_custom/pull/1

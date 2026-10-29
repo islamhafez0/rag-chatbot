@@ -1,0 +1,31 @@
+# Smaller public projects (not part of the 7 flagship projects). Sources:
+# GitHub repositories and READMEs (checked 2026-10-29).
+projects:
+  - name: Quranik
+    description: Quran streaming single-page app with surah search, a searchable accessible reciter picker, and a glassmorphism bottom player that streams audio straight from the reciter CDN.
+    tech_stack: [React 19, Vite, TypeScript, Tailwind CSS v4, Framer Motion]
+    links: [https://quranik.vercel.app, https://github.com/islamhafez0/quranik]
+  - name: Gemini AI Chat Clone
+    description: AI chat interface on Google's Generative AI API with markdown and code highlighting, RTL support and Firebase authentication.
+    tech_stack: [React, TypeScript, Google Generative AI API, Firebase]
+    links: [https://gemini-clone-three-zeta.vercel.app, https://github.com/islamhafez0/gemini-clone]
+  - name: Next.js Commerce
+    description: Full-stack e-commerce site with a Sanity CMS catalog and Stripe checkout.
+    tech_stack: [Next.js, React, TypeScript, Tailwind CSS, Sanity, Stripe]
+    links: [https://ecommerce-website-five-flax.vercel.app, https://github.com/islamhafez0/nextjs-commerce]
+  - name: YouTube Clone
+    description: Video platform on the YouTube Data API with search, playback, channel pages and related videos.
+    tech_stack: [React, TypeScript, YouTube Data API, Tailwind CSS]
+    links: [https://clone-74886.web.app, https://github.com/islamhafez0/youtube-clone]
+  - name: .NET Angular JWT Auth
+    description: Full-stack JWT authentication demo with a C# .NET backend and an Angular frontend, covering token issue, validation, route guards and protected endpoints.
+    tech_stack: [C#, .NET, Angular, TypeScript, JWT]
+    links: [https://github.com/islamhafez0/dotnet-angular-jwt]
+  - name: FluxGen AI
+    description: AI image generator that turns text prompts into images through the Replicate API.
+    tech_stack: [Next.js 16, React 19, TypeScript, Replicate API, Tailwind CSS v4]
+    links: [https://github.com/islamhafez0/flux-gen-ai]
+  - name: English Tutor Telegram Bot
+    description: Telegram bot that uses OpenAI to correct English paragraphs and explain errors.
+    tech_stack: [Python, OpenAI API, Telegram Bot API]
+    links: [https://github.com/islamhafez0/english-tutor-telegram-bot]
