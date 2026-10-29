@@ -1,132 +1,86 @@
+% Frontend / React / Next.js CV. Every claim is sourced from career_brain/
+% (the chatbot's knowledge base); keep the two in sync.
 \documentclass[10pt,a4paper]{article}
-
-\usepackage[margin=0.75in]{geometry}
-\usepackage[T1]{fontenc}
-\usepackage{fontawesome5}
-\usepackage{xcolor}
-\usepackage{titlesec}
-\usepackage{enumitem}
-\usepackage{array}
-\usepackage{hyperref}
-\usepackage[scaled=0.92]{helvet}
-\usepackage{ragged2e}
-
-\renewcommand{\familydefault}{\sfdefault}
-
-\definecolor{accent}{HTML}{1F4E79}
-\definecolor{lightrule}{HTML}{9FB6C9}
-
-\hypersetup{hidelinks, pdfauthor={Islam Hafez}}
-
-\urlstyle{same}
-
-\titleformat{\section}
-  {\color{accent}\large\bfseries}
-  {}{0em}{\MakeUppercase}
-  [{\color{lightrule}\titlerule[0.8pt]}]
-\titlespacing*{\section}{0pt}{14pt}{6pt}
-
-\setlist[itemize]{leftmargin=1.15em, itemsep=1.5pt, topsep=2pt, parsep=0pt}
-
-\pagestyle{empty}
-
-\newcommand{\job}[4]{%
-  \noindent\textbf{#1}\hfill\textbf{\color{accent}#2}\par
-  \vspace{1pt}
-  \textit{#3}\hfill\textit{#4}\par
-  \vspace{3pt}
-}
+\input{cv-style}
+\hypersetup{pdftitle={Islam Hafez - Frontend Developer CV}, pdfauthor={Islam Hafez}}
 
 \begin{document}
 
-% ============================= HEADER =============================
-\begin{center}
-  {\LARGE\bfseries\color{accent} Islam Hafez\par}
-  \vspace{2pt}
-  {\large Frontend Developer \textbar\ React, Next.js, TypeScript\par}
-  \vspace{6pt}
-  {\small
-  \faEnvelope\ islamhafez806@gmail.com \quad
-  \faGlobe\ \href{https://islamhafez.vercel.app/}{islamhafez.vercel.app} \quad
-  \faGithub\ \href{https://github.com/islamhafez0}{github.com/islamhafez0} \quad
-  \faMapMarker\ Cairo, Egypt
-  }
-\end{center}
+{\LARGE\bfseries\color{accent} Islam Hafez}\par\vspace{2pt}
+{\large Frontend Developer \textbar\ React, Next.js, TypeScript, Angular}\par\vspace{4pt}
+{\small Cairo, Egypt \textbar\ \href{mailto:islamhafez806@gmail.com}{islamhafez806@gmail.com} \textbar\ +20 109 742 3297 \textbar\ \href{https://islamhafez.vercel.app}{islamhafez.vercel.app} \textbar\ \href{https://github.com/islamhafez0}{github.com/islamhafez0} \textbar\ \href{https://www.linkedin.com/in/islamhafez0}{linkedin.com/in/islamhafez0}}
 
-\vspace{2pt}
-{\color{lightrule}\hrule height 1pt}
+\section*{Summary}
+Frontend developer with 2+ years of professional experience building fast, pixel-perfect web apps with
+\textbf{React}, \textbf{Next.js} and \textbf{TypeScript}. Built two enterprise \textbf{Angular 17 + NgRx}
+fintech panels from scratch (60+ REST APIs, AES-256 + HMAC encrypted calls), shipped a paid app on the
+Odoo Apps store, and built a RAG chatbot end to end. Comfortable owning a feature from data
+model to polished, accessible UI.
 
-% ============================= SUMMARY =============================
-\section*{Professional Summary}
-Frontend Developer with \textbf{2+ years of experience} building high-performance,
-pixel-perfect web applications with \textbf{React.js}, \textbf{Next.js}, and
-\textbf{TypeScript}. Proven track record delivering responsive UI/UX from Figma
-designs, integrating 60+ RESTful and GraphQL APIs, and optimizing web performance.
-Open to new opportunities.
+\section*{Skills}
+\skillline{Frontend}{React, Next.js (App Router), TypeScript, JavaScript, Angular 17, NgRx, HTML5, CSS3, SCSS, Tailwind CSS, Framer Motion, shadcn/ui}
+\skillline{Data \& APIs}{REST APIs, GraphQL, PostgreSQL, pgvector, Firebase, Node.js}
+\skillline{AI}{RAG pipelines, embeddings (Gemini), LLM integration via OpenAI-compatible APIs, retrieval evaluation}
+\skillline{Quality}{Core Web Vitals (LCP, CLS), accessibility, responsive design, Vitest, Git \& GitHub, Docker, Vercel, Figma}
 
-% ============================= SKILLS =============================
-\section*{Core Skills}
-\renewcommand{\arraystretch}{1.25}
-\begin{tabular}{@{}>{\bfseries}p{\dimexpr0.22\textwidth-6pt}p{\dimexpr0.78\textwidth-6pt}@{}}
-Frontend & React.js (Expert), Next.js (Expert), TypeScript (Advanced), JavaScript (Advanced), HTML5 \& CSS3, Tailwind CSS, Framer Motion, Shadcn UI \\
-Backend & Node.js, Firebase, GraphQL, RESTful APIs, PostgreSQL \\
-Tools & Git \& GitHub, Vercel, Docker, VS Code \\
-Soft & UI/UX Implementation, Web Performance Optimization, Responsive Web Design, Problem Solving, Technical Communication \\
-\end{tabular}
-
-% ============================= EXPERIENCE =============================
-\section*{Professional Experience}
-
-\job{Frontend Odoo Developer}{TaqaTechno}{Full-time}{Oct 2024 -- Present}
+\section*{Experience}
+\role{Frontend Angular Developer}{TaqaTechno}{Contract, alongside the Odoo role}{Jun 2025 -- Sep 2025}
 \begin{itemize}
-  \item Building full-stack web solutions on the Odoo ERP, bridging frontend design with backend logic.
-  \item Translating Figma designs into pixel-perfect Odoo themes and fully custom websites.
-  \item Integrating dynamic, server-rendered data into the frontend with OWL (Odoo Web Library).
+  \item Built two enterprise fintech applications from scratch in \textbf{Angular 17} with \textbf{NgRx}: the Admin Panel
+        (operations, sponsored users, device tracking, settlements) and the Merchant Panel (wallets, top-ups, payouts,
+        SMS payments with OTP verification).
+  \item Integrated \textbf{60+ RESTful APIs} with robust error handling; encrypted every API call with \textbf{AES-256 + HMAC}.
+  \item Enforced \textbf{maker-checker} discipline in the settlement flow.
 \end{itemize}
 
-\job{Frontend Angular Developer}{TaqaTechno}{Contract -- Fintech}{Jun 2024 -- Sep 2024}
+\role{Odoo Frontend Developer}{TaqaTechno}{Full-time, Cairo}{Oct 2024 -- Present}
 \begin{itemize}
-  \item Developed core features for two enterprise fintech applications: sponsored user management, device tracking, wallets and top-ups, and SMS-based payments with OTP verification.
-  \item Built and maintained modular Angular 17 apps with NgRx, integrating 60+ RESTful APIs with robust error handling.
+  \item Turn Figma designs into pixel-perfect Odoo themes and fully custom websites, with \textbf{OWL} frontends over server-rendered data.
+  \item Ran a phased performance and accessibility program on a Shopify storefront: image \textbf{LCP/CLS} optimization, SEO
+        and heading-hierarchy fixes, plus a bundle picker and cart upsell that auto-upgrades two 1-packs to a 2-pack.
+  \item Built company websites with multi-level menus, RTL carousels, Arabic translations, and WebP lazy-loaded imagery.
+  \item 439 commits across 7 client and product repositories (GitHub contribution data).
 \end{itemize}
 
-\job{Frontend Developer (Freelance)}{Self-Employed}{Freelance}{Aug 2024 -- Present}
+\role{Frontend Developer}{Self-Employed}{Freelance}{Aug 2024 -- Present}
 \begin{itemize}
-  \item Built advanced full-stack React applications and custom WordPress themes from scratch.
-  \item Delivered a secure quiz app with OTP-protected access and session validation.
-  \item Shipped e-commerce frontends, personal portfolios, and UI-heavy apps using React, Next.js, and Firebase.
+  \item Deliver React and Next.js applications, e-commerce frontends, portfolios and custom WordPress themes built from scratch.
+  \item Built a secure quiz app with OTP-protected access and session validation.
 \end{itemize}
 
-\job{Frontend React Developer Intern}{Code Alpha}{Internship}{Apr 2024 -- Aug 2024}
+\role{Frontend React Developer Intern}{Code Alpha}{Internship}{Apr 2024 -- Aug 2024}
 \begin{itemize}
-  \item Turned wireframes into clean, interactive components with React, HTML, and CSS.
-  \item Integrated RESTful and GraphQL APIs with a focus on performance, reusability, and accessibility.
+  \item Turned wireframes into clean, accessible, reusable React components and integrated REST and GraphQL APIs.
 \end{itemize}
 
-% ============================= PROJECTS =============================
 \section*{Selected Projects}
-
-\job{RAG Career Chatbot}{Solo Project}{Next.js \textbar\ LangChain \textbar\ Astra DB \textbar\ Groq}{Present}
+\project{RAG Career Chatbot}{Next.js 16, React 19, TypeScript, PostgreSQL + pgvector, Gemini embeddings}{github.com/islamhafez0/rag-chatbot}{https://github.com/islamhafez0/rag-chatbot}
 \begin{itemize}
-  \item Personal AI assistant answering career questions via Retrieval-Augmented Generation with vector search and streaming responses.
+  \item Solo-built AI portfolio assistant that answers in first person with streaming Markdown and rich project cards, timelines and diagrams.
+  \item Validated, atomic ingestion; deterministic follow-up handling; complete-category retrieval; a 49-scenario evaluation suite
+        (\textbf{Recall@8 0.993} on retrieval) used to choose the search mode and the LLM.
 \end{itemize}
 
-\job{Gemini AI Chat Clone}{Solo Project}{React \textbar\ TypeScript \textbar\ Google GenAI \textbar\ Firebase}{}
+\project{Translate Dashboard}{Odoo 19, OWL 2, Python, PostgreSQL}{Odoo Apps store}{https://apps.odoo.com/apps/modules/19.0/translate_dashboard}
 \begin{itemize}
-  \item AI chat interface with markdown + code highlighting, RTL support, and secure Firebase authentication.
+  \item Paid app I build and sell: scan any module, translate inline with keyboard shortcuts, apply to database, website and .po in one click.
+  \item Tested on 6,219 terms (scan in 11 s); batched UPSERTs cut applying 6,375 terms from 3.94 s to 0.58 s.
 \end{itemize}
 
-\job{YouTube Clone}{Solo Project}{React \textbar\ YouTube Data API \textbar\ Tailwind CSS}{}
+\project{Quranik}{React 19, Vite, TypeScript, Tailwind CSS v4, Framer Motion}{quranik.vercel.app}{https://quranik.vercel.app}
 \begin{itemize}
-  \item Video streaming platform with search, playback, channel pages, and responsive UI.
+  \item Quran streaming SPA with surah search, an accessible searchable reciter picker and a glassmorphism player streaming from a CDN.
 \end{itemize}
 
-% ============================= EDUCATION =============================
-\section*{Education}
-\textbf{Damanhour University}\hfill\textit{Graduate}
+\textbf{Open source:} \href{https://github.com/vercel/next.js/pull/96268}{Next.js PR \#96268} (open) fixing the
+\texttt{no-html-link-for-pages} ESLint rule for custom \texttt{pageExtensions}.
 
-% ============================= LANGUAGES =============================
+\section*{Education \& Certifications}
+\textbf{Damanhour University}, Graduate\par\vspace{2pt}
+Anthropic (Mar 2026): Introduction to Model Context Protocol; Introduction to Agent Skills; Building with the Claude API; Claude Code in Action.
+Meta: Programming with JavaScript (Jan 2024). Coursera: Web Design for Everybody Specialization (Mar 2023).
+
 \section*{Languages}
-English (Professional) \textbullet\ Arabic (Native)
+Arabic (native), English (professional)
 
 \end{document}
