@@ -1,27 +1,28 @@
-# Relief Center - Disaster Response Platform
-# High-impact Odoo project integrating live global data.
-title: "Relief Center"
+# Flagship project 5 of 7. Sources: portfolio project section (Odoo 19,
+# MapTiler SDK, reliefcenter.com), previous knowledge base.
+name: Relief Center
+role: Odoo / full-stack developer at TaqaTechno
 description: >
-  A disaster-response platform built on Odoo. I built a 3D interactive globe that
-  pulls live data from NASA, USGS, and GDACS so users can see global emergencies
-  happening in real-time.
-tech_stack:
-  - Odoo (Python)
-  - OWL (Odoo Web Library)
-  - NASA/USGS/GDACS APIs
-  - PostgreSQL
-  - JavaScript
-architecture:
-  - "I hooked live external data streams into Odoo's ORM so disaster tracking updates automatically"
-  - "I built the 3D visualization layer with OWL to map geospatial coordinates to the globe"
-  - "I added OTP-secured alerts so field coordinators could get verified notifications during crises"
-contributions:
-  - "Developed the 3D globe engine"
-  - "Set up the data pipelines for NASA and USGS"
-  - "Built the CRM flow to coordinate response teams"
-outcomes:
-  - "The team can now see global disasters in real-time on a map instead of reading lists of coordinates"
-  - "Field alerts are now secure and verified via OTP"
+  A live disaster-response platform built on Odoo 19. It pulls real-time
+  emergencies from NASA, USGS and GDACS into Odoo's ORM and renders them on an
+  interactive 3D globe, with OTP-secured alerts for field coordinators.
+highlights:
+  - Live NASA, USGS and GDACS data streams hooked into Odoo's ORM so tracking updates automatically
+  - 3D globe and geospatial layer built with OWL and the MapTiler SDK
+  - OTP-secured, verified alerts for field coordinators
+  - CRM flow to coordinate response teams
 lessons:
-  - "I learned how to handle high-frequency geospatial data without slowing down Odoo's monolithic architecture"
-  - "I figured out how to integrate complex third-party APIs into Odoo's server-rendered flow"
+  - Handling high-frequency geospatial data without slowing down Odoo's monolithic architecture
+  - Integrating complex third-party APIs into Odoo's server-rendered flow
+tech_stack:
+  - Odoo 19
+  - Python
+  - OWL (Odoo Web Library)
+  - MapTiler SDK
+  - PostgreSQL
+  - SCSS
+links:
+  - label: Live site
+    url: https://reliefcenter.com
+unknowns:
+  - Source code is private.

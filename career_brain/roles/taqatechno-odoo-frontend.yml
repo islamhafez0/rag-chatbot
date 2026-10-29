@@ -1,0 +1,54 @@
+# Current full-time role. Sources: both CVs, portfolio experience section,
+# GitHub contributors API (checked 2026-10-29).
+company: TaqaTechno
+title: Odoo Frontend Developer
+employment_type: Full-time
+start_date: October 2024
+end_date: Present
+status: current role
+description: >
+  I build full-stack web solutions on the Odoo ERP at TaqaTechno. I develop custom
+  Odoo modules and APIs in Python and integrate them into the frontend with OWL
+  (Odoo Web Library), focusing on dynamic server-rendered data and performance.
+  I turn Figma designs into pixel-perfect Odoo themes and fully custom websites,
+  and I bridge frontend design with backend logic inside the Odoo ecosystem.
+responsibilities:
+  - Custom Odoo modules and APIs in Python
+  - OWL frontend integration with server-rendered data
+  - Figma designs to pixel-perfect Odoo themes and custom websites
+  - Odoo eCommerce and website work for client projects
+notable_work:
+  - Apiary and Honey, an Odoo 17 ERP for apiary management (see projects)
+  - Relief Center, a live disaster-response platform on Odoo 19 (see projects)
+  - Emdad, a humanitarian storefront on Odoo 17 (see projects)
+  - Translate Dashboard, a paid Odoo 19 app on the Odoo Apps store (see projects)
+  - PearlPixels company website on Odoo, a website service module with multi-level menus (removing Odoo's two-level menu cap), RTL carousel, Arabic translations, WebP and lazy-loaded images (61 commits, Sep to Oct 2025)
+  - Taqat property rental website for Qatar on Odoo, page refactors, routes guarded by website domain, sitemap fixes (35 commits, Dec 2025 to Feb 2026)
+  - Herbal Gardens Shopify store, phased accessibility, SEO and Core Web Vitals work (image CLS/LCP), a bundle picker and cart upsell banners that auto-upgrade two 1-packs to a 2-pack (36 commits, Dec 2025 to Apr 2026)
+  - Soqya, phone-number OTP authentication with portal user registration for Odoo, plus fixes for critical security issues in the OTP flow (28 commits, Jan to Feb 2026)
+  - website_locked_snippets Odoo module and a clean rebuild of a textile factory ERP with convention checks and git hooks
+tech_stack:
+  - Odoo 17 and 19
+  - Python
+  - OWL (Odoo Web Library)
+  - JavaScript
+  - QWeb
+  - PostgreSQL
+  - SCSS
+  - Figma
+  - Shopify Liquid
+github_evidence:
+  checked: 2026-10-29
+  organization: taqat-techno on GitHub (private repositories; counts verified with the GitHub API by the account owner)
+  commits_by_islamhafez0:
+    - Apiary-and-Honey, 268 of 275 commits
+    - pearlpixels company site, 61 commits
+    - herbalgardens Shopify store, 36 commits
+    - taqat-prop company website, 35 commits
+    - soqya, 28 commits across all branches
+    - multi-theming-17 Odoo website themes, 5 commits
+    - website_locked_snippets, 5 commits
+  total_commits_listed: 439
+  note: Counts include non-default branches where available.
+unknowns:
+  - Team size and reporting line are not documented.

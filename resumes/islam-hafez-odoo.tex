@@ -1,132 +1,83 @@
+% Odoo / ERP CV. Every claim is sourced from career_brain/ (the chatbot's
+% knowledge base); keep the two in sync.
 \documentclass[10pt,a4paper]{article}
-
-\usepackage[margin=0.75in]{geometry}
-\usepackage[T1]{fontenc}
-\usepackage{fontawesome5}
-\usepackage{xcolor}
-\usepackage{titlesec}
-\usepackage{enumitem}
-\usepackage{array}
-\usepackage{hyperref}
-\usepackage[scaled=0.92]{helvet}
-
-\renewcommand{\familydefault}{\sfdefault}
-
-\definecolor{accent}{HTML}{0E7C4A}
-\definecolor{lightrule}{HTML}{8FC7AB}
-
-\hypersetup{hidelinks, pdfauthor={Islam Hafez}}
-
-\urlstyle{same}
-
-\titleformat{\section}
-  {\color{accent}\large\bfseries}
-  {}{0em}{\MakeUppercase}
-  [{\color{lightrule}\titlerule[0.8pt]}]
-\titlespacing*{\section}{0pt}{14pt}{6pt}
-
-\setlist[itemize]{leftmargin=1.15em, itemsep=1.5pt, topsep=2pt, parsep=0pt}
-
-\pagestyle{empty}
-
-\newcommand{\job}[4]{%
-  \noindent\textbf{#1}\hfill\textbf{\color{accent}#2}\par
-  \vspace{1pt}
-  \textit{#3}\hfill\textit{#4}\par
-  \vspace{3pt}
-}
+\input{cv-style}
+\hypersetup{pdftitle={Islam Hafez - Odoo Developer CV}, pdfauthor={Islam Hafez}}
 
 \begin{document}
 
-% ============================= HEADER =============================
-\begin{center}
-  {\LARGE\bfseries\color{accent} Islam Hafez\par}
-  \vspace{2pt}
-  {\large Odoo Developer \textbar\ ERP Customization \textbar\ Python \& OWL\par}
-  \vspace{6pt}
-  {\small
-  \faEnvelope\ islamhafez806@gmail.com \quad
-  \faGlobe\ \href{https://islamhafez.vercel.app/}{islamhafez.vercel.app} \quad
-  \faGithub\ \href{https://github.com/islamhafez0}{github.com/islamhafez0} \quad
-  \faMapMarker\ Cairo, Egypt
-  }
-\end{center}
+{\LARGE\bfseries\color{accent} Islam Hafez}\par\vspace{2pt}
+{\large Odoo Developer \textbar\ Python, OWL, Odoo 17 \& 19}\par\vspace{4pt}
+{\small Cairo, Egypt \textbar\ \href{mailto:islamhafez806@gmail.com}{islamhafez806@gmail.com} \textbar\ +20 109 742 3297 \textbar\ \href{https://islamhafez.vercel.app}{islamhafez.vercel.app} \textbar\ \href{https://github.com/islamhafez0}{github.com/islamhafez0} \textbar\ \href{https://www.linkedin.com/in/islamhafez0}{linkedin.com/in/islamhafez0}}
 
-\vspace{2pt}
-{\color{lightrule}\hrule height 1pt}
+\section*{Summary}
+Odoo developer who builds complete ERP solutions on \textbf{Odoo 17 and 19}: custom modules and APIs in
+\textbf{Python}, \textbf{OWL} frontends, QWeb reports, security and access rules, and pixel-perfect websites
+from Figma. Solo-built an end-to-end apiary ERP (268 commits, trilingual field app), a live disaster-response
+platform, and a paid translation app published on the Odoo Apps store. Backed by 2+ years of frontend work
+with React, Next.js and Angular.
 
-% ============================= SUMMARY =============================
-\section*{Professional Summary}
-Odoo Frontend Developer specializing in \textbf{Odoo ERP customization} and
-full-stack web solutions. Combines \textbf{Python} module and API development with
-frontend integration using \textbf{OWL (Odoo Web Library)}, turning Figma designs
-into production-ready Odoo themes and custom websites that fit naturally into the
-Odoo ecosystem. Backed by 2+ years of professional frontend experience with React
-and Next.js.
+\section*{Skills}
+\skillline{Odoo}{Odoo 17 \& 19, custom modules, ORM and data models, OWL 2, QWeb / PDF reports, website \& eCommerce, security groups and access rules, scheduled actions (cron), multi-language (Arabic RTL)}
+\skillline{Backend}{Python, PostgreSQL (batched UPSERTs), REST APIs, XML, third-party API integration (NASA, USGS, GDACS)}
+\skillline{Frontend}{JavaScript, TypeScript, OWL, SCSS, HTML5, CSS3, React, Next.js, Angular 17, Shopify Liquid, Figma}
+\skillline{Engineering}{Automated testing, Git \& GitHub pull-request workflow (dev, stage, main), Docker, technical documentation}
 
-% ============================= SKILLS =============================
-\section*{Core Skills}
-\renewcommand{\arraystretch}{1.25}
-\begin{tabular}{@{}>{\bfseries}p{\dimexpr0.22\textwidth-6pt}p{\dimexpr0.78\textwidth-6pt}@{}}
-Odoo ERP & Customization, OWL (Odoo Web Library), Custom Themes, Websites, Module Development \\
-Backend & Python, RESTful APIs, PostgreSQL, Node.js \\
-Frontend & JavaScript, HTML5 \& CSS3, Tailwind CSS, Figma, React.js, Next.js \\
-Tools & Git \& GitHub, Docker, VS Code \\
-Soft & Client Communication, UI/UX Implementation, Problem Solving, Web Performance \\
-\end{tabular}
-
-% ============================= EXPERIENCE =============================
-\section*{Professional Experience}
-
-\job{Odoo Frontend Developer}{TaqaTechno}{Full-time}{Oct 2024 -- Present}
+\section*{Experience}
+\role{Odoo Frontend Developer}{TaqaTechno}{Full-time, Cairo}{Oct 2024 -- Present}
 \begin{itemize}
-  \item Building full-stack web solutions tailored to business needs using the Odoo ERP system.
-  \item Developing custom modules and APIs with Python and integrating them into the frontend with OWL, focusing on dynamic server-rendered data and performance.
-  \item Turning Figma designs into pixel-perfect Odoo themes and building fully custom websites within the Odoo ecosystem.
-  \item Bridging frontend design and backend logic to deliver a smooth user experience.
+  \item \textbf{Apiary and Honey (Odoo 17):} solo-built an end-to-end apiary ERP covering colonies, seasons, inspections, treatments,
+        harvests, movements and permits, mortality and cost accounting; authored 268 of the repository's 275 commits.
+  \item Delivered it as 31 merged work packages through a dev, stage and main pull-request flow, with a 572-test automated suite,
+        security-review fixes, a field app in English, Arabic and Russian, role-based access, and season dashboards.
+  \item \textbf{Relief Center (Odoo 19):} hooked live NASA, USGS and GDACS feeds into Odoo's ORM and built a 3D globe with OWL and the
+        MapTiler SDK, plus OTP-secured alerts for field coordinators.
+  \item \textbf{Emdad (Odoo 17):} extended Odoo's catalog model for a humanitarian storefront with role-gated pricing, a B2B
+        quote-to-order flow and homepage curation from the ERP.
+  \item Built phone-number OTP authentication with portal user registration, and fixed critical security issues in the OTP flow.
+  \item Turn Figma designs into pixel-perfect Odoo themes and websites, including a module that removes Odoo's two-level menu limit.
 \end{itemize}
 
-\job{Frontend Angular Developer}{TaqaTechno}{Contract -- Fintech}{Jun 2024 -- Sep 2024}
+\role{Frontend Angular Developer}{TaqaTechno}{Contract, alongside the Odoo role}{Jun 2025 -- Sep 2025}
 \begin{itemize}
-  \item Built features for two enterprise fintech applications including sponsored user management, device tracking, wallets and top-ups, and SMS-based payments with OTP verification.
-  \item Integrated 60+ RESTful APIs into modular Angular 17 applications with NgRx state management.
+  \item Built two enterprise fintech panels from scratch in Angular 17 + NgRx: 60+ REST APIs, AES-256 + HMAC encrypted calls,
+        maker-checker settlements, wallets and SMS payments with OTP.
 \end{itemize}
 
-\job{Frontend Developer (Freelance)}{Self-Employed}{Freelance}{Aug 2024 -- Present}
+\role{Frontend Developer}{Self-Employed}{Freelance}{Aug 2024 -- Present}
 \begin{itemize}
-  \item Delivered full-stack React applications, custom WordPress themes, and e-commerce frontends for diverse clients.
-  \item Built a secure quiz app with OTP-protected access and session validation.
+  \item React and Next.js applications, e-commerce frontends and custom WordPress themes; a secure quiz app with OTP access.
 \end{itemize}
 
-\job{Frontend React Developer Intern}{Code Alpha}{Internship}{Apr 2024 -- Aug 2024}
+\role{Frontend React Developer Intern}{Code Alpha}{Internship}{Apr 2024 -- Aug 2024}
 \begin{itemize}
-  \item Converted wireframes into clean, interactive, accessible components and integrated RESTful and GraphQL APIs.
+  \item Built accessible React components from wireframes and integrated REST and GraphQL APIs.
 \end{itemize}
 
-% ============================= PROJECTS =============================
 \section*{Selected Projects}
-
-\job{RAG Career Chatbot}{Solo Project}{Next.js \textbar\ LangChain \textbar\ Astra DB \textbar\ Groq}{Present}
+\project{Translate Dashboard}{Odoo 19, OWL 2, Python, PostgreSQL}{Odoo Apps store}{https://apps.odoo.com/apps/modules/19.0/translate_dashboard}
 \begin{itemize}
-  \item AI assistant answering career questions via Retrieval-Augmented Generation with vector search and streaming responses -- demonstrates full-stack and AI integration skills.
+  \item Paid module I build and sell (OPL-1): scan any module or theme, translate inline, then apply to database, website and .po in one click.
+  \item Tested on 6,219 terms (scan in 11 s); batched UPSERTs cut applying 6,375 terms from 3.94 s to 0.58 s; 28-case test suite.
 \end{itemize}
 
-\job{Gemini AI Chat Clone}{Solo Project}{React \textbar\ TypeScript \textbar\ Google GenAI \textbar\ Firebase}{}
+\project{Odoo SaaS Tenant Provisioning}{Odoo, Python, OWL}{Merged PR \#1}{https://github.com/SamehAbdelAlYoussef/msolutions_custom/pull/1}
 \begin{itemize}
-  \item AI chat interface with markdown/code highlighting, RTL support, and secure Firebase authentication.
+  \item Tenant model with provisioning and drop lifecycle, a provisioning cron, base-domain settings, a SaaS manager group with
+        access rules, and a backend dashboard.
 \end{itemize}
 
-\job{YouTube Clone}{Solo Project}{React \textbar\ YouTube Data API \textbar\ Tailwind CSS}{}
+\project{RAG Career Chatbot}{Next.js, PostgreSQL + pgvector, Gemini embeddings}{github.com/islamhafez0/rag-chatbot}{https://github.com/islamhafez0/rag-chatbot}
 \begin{itemize}
-  \item Video streaming platform with search, playback, channel pages, and fully responsive UI.
+  \item AI assistant that answers questions about my career from a structured knowledge base, evaluated on a 49-scenario suite.
 \end{itemize}
 
-% ============================= EDUCATION =============================
-\section*{Education}
-\textbf{Damanhour University}\hfill\textit{Graduate}
+\section*{Education \& Certifications}
+\textbf{Damanhour University}, Graduate\par\vspace{2pt}
+Anthropic (Mar 2026): Introduction to Model Context Protocol; Introduction to Agent Skills; Building with the Claude API; Claude Code in Action.
+Meta: Programming with JavaScript (Jan 2024). Coursera: Web Design for Everybody Specialization (Mar 2023).
 
-% ============================= LANGUAGES =============================
 \section*{Languages}
-English (Professional) \textbullet\ Arabic (Native)
+Arabic (native), English (professional)
 
 \end{document}

@@ -2,6 +2,8 @@
 
 import { memo, useMemo } from "react";
 import { parseRichContent, type ResponseBlock } from "@/lib/rich-response";
+import { cn } from "@/lib/utils";
+import { BlockSkeleton } from "./BlockSkeleton";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { ResponseBlockRenderer } from "./ResponseBlockRenderer";
 
@@ -10,10 +12,9 @@ type BlockGroup =
   | { kind: "projects"; blocks: ResponseBlock[]; key: string };
 
 /**
- * Groups consecutive project blocks so a multi-project answer renders as a
- * responsive grid instead of a tall stack. A lone project stays full-width.
- * Blocks have no stable ids; index keys are correct because the list only
- * ever grows/shrinks as a whole per message update and is never reordered.
+ * Consecutive project blocks become a responsive grid; a lone project stays
+ * full width. Index keys are stable: blocks only appear once the payload is
+ * complete and are never reordered.
  */
 function groupBlocks(blocks: ResponseBlock[]): BlockGroup[] {
   const groups: BlockGroup[] = [];
@@ -36,53 +37,58 @@ function groupBlocks(blocks: ResponseBlock[]): BlockGroup[] {
   return groups;
 }
 
+/**
+ * RichAnswer — prose first (always rendered, streamed live with a caret),
+ * then the optional visual: a typed skeleton while its fence is open, the
+ * validated blocks (staggered in) once complete. A broken visual simply
+ * renders nothing; the prose answer always stands.
+ */
 export const RichAnswer = memo(function RichAnswer({
   content,
+  streaming = false,
 }: {
   content: string;
+  streaming?: boolean;
 }) {
   const parsed = useMemo(() => parseRichContent(content), [content]);
-  const { text, blocks } = parsed;
+  const { text, blocks, pending } = parsed;
   const groups = useMemo(() => groupBlocks(blocks), [blocks]);
+  const showCaret = streaming && !pending;
 
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-4">
       {text.trim() ? (
-        <div className="markdown text-sm leading-relaxed">
-          <MarkdownRenderer content={text} />
-        </div>
-      ) : blocks.length > 0 ? null : (
-        <p className="text-sm text-muted-foreground">…</p>
+        <MarkdownRenderer content={text} className={cn(showCaret && "is-streaming")} />
+      ) : (
+        showCaret && <div className="prose prose-chat is-streaming" aria-hidden />
       )}
-      {groups.map((g) =>
-        g.kind === "projects" ? (
-          <div
-            key={g.key}
-            role="list"
-            aria-label="Projects"
-            className="grid min-w-0 auto-rows-fr grid-cols-1 gap-3 sm:grid-cols-2"
-          >
-            {g.blocks.map((b, j) => (
-              <div key={`${g.key}-${j}`} role="listitem" className="min-w-0">
-                <ResponseBlockRenderer block={b} />
+
+      {pending && streaming && <BlockSkeleton pending={pending} />}
+
+      {groups.length > 0 && (
+        <div className="flex min-w-0 flex-col gap-3 stagger">
+          {groups.map((g, gi) =>
+            g.kind === "projects" ? (
+              <ul
+                key={g.key}
+                aria-label="Projects"
+                className="grid min-w-0 grid-cols-1 gap-3 stagger sm:grid-cols-2"
+                style={{ "--i": gi } as React.CSSProperties}
+              >
+                {g.blocks.map((b, j) => (
+                  <li key={`${g.key}-${j}`} className="min-w-0" style={{ "--i": j } as React.CSSProperties}>
+                    <ResponseBlockRenderer block={b} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div key={g.key} className="min-w-0" style={{ "--i": gi } as React.CSSProperties}>
+                <ResponseBlockRenderer block={g.block} />
               </div>
-            ))}
-          </div>
-        ) : (
-          <ResponseBlockRenderer key={g.key} block={g.block} />
-        ),
+            ),
+          )}
+        </div>
       )}
     </div>
   );
 });
-
-/** Loading skeleton shown while the first tokens stream in. */
-export function RichAnswerSkeleton() {
-  return (
-    <div className="flex w-full flex-col gap-2" aria-label="Loading answer">
-      <div className="h-3.5 w-11/12 animate-pulse rounded bg-muted" />
-      <div className="h-3.5 w-4/5 animate-pulse rounded bg-muted" />
-      <div className="h-3.5 w-3/5 animate-pulse rounded bg-muted" />
-    </div>
-  );
-}

@@ -1,0 +1,17 @@
+# Sources: both CVs, portfolio experience section.
+company: Code Alpha
+title: Frontend React Developer Intern
+employment_type: Internship
+start_date: April 2024
+end_date: August 2024
+description: >
+  During my internship at Code Alpha I built responsive, user-friendly web
+  applications with React.js, HTML and CSS. I worked closely with UI/UX designers
+  to turn wireframes into clean, interactive components, focused on performance,
+  code reusability and accessibility, and integrated RESTful and GraphQL APIs.
+tech_stack:
+  - React.js
+  - HTML5
+  - CSS3
+  - GraphQL
+  - RESTful APIs

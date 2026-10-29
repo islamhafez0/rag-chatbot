@@ -138,148 +138,38 @@ export function entryLabel(
   return name ? `${kind} ${index + 1}: ${name}` : `${kind} ${index + 1}`;
 }
 
-/** Build labeled entry chunks for one YAML file. Skips empty entries.
- *
- *  Tiny collection entries (photos, small links) are batched into grouped
- *  chunks instead of one chunk each: ten near-identical "Photo N" chunks
- *  otherwise crowd top-K results and push genuinely relevant records out of
- *  the context window on every other question.
- */
-const TINY_ENTRY_CHARS = 160;
-const GROUP_MAX_CHARS = 500;
-/** Asset-reference lists (images) carry no per-entry question identity of
- *  their own; their tiny entries may batch. Names lists (roles, projects,
- *  testimonials) always stay entry-per-chunk so "Role 2" keeps its records. */
-const PACKABLE_PARENT_KEYS = new Set(["photos", "images", "assets", "gallery", "media"]);
-
+/** Build labeled entry chunks for one YAML file. Skips empty entries. */
 export function chunkYamlDoc(
   content: unknown,
   meta: YamlDocMeta
 ): EntryChunk[] {
   const { entries, parentKey } = splitYamlEntries(content);
   const chunks: EntryChunk[] = [];
-  // Collections (arrays, or a named list under one key) keep entry-level
-  // chunks. Single-entity objects take the topical path below.
-  const isCollection = Array.isArray(content) || parentKey !== undefined;
-
-  if (isCollection) {
-    // Pre-render each entry; keep per-entry labels for individual identity.
-    type Rendered = { label: string; text: string };
-    const rendered: Rendered[] = [];
-    entries.forEach((entry, index) => {
-      if (isEmptyEntry(entry)) return;
-      const lines = flattenEntry(entry);
-      if (lines.length === 0) return;
-      const base =
-        parentKey !== undefined
-          ? entryLabel(meta, parentKey, index, entries.length, entry)
-          : humanizeKey(meta.title);
-      const label = `${base} (${meta.category})`;
-      rendered.push({ label, text: lines.join("\n") });
+  entries.forEach((entry, index) => {
+    if (isEmptyEntry(entry)) return;
+    const lines = flattenEntry(entry);
+    if (lines.length === 0) return;
+    // Indexed labels ("Role 2: ...") only for collection files; single
+    // entities are labeled by their own name/title/company when they have
+    // one ("Frontend Angular Developer — TaqaTechno"), else by file title,
+    // so the label carries meaning into the embedding. Numbering follows file order so
+    // "second role" keeps matching the source order. The category tag keeps
+    // broad listing queries ("what projects...") matched to the right files.
+    const base =
+      parentKey !== undefined
+        ? entryLabel(meta, parentKey, index, entries.length, entry)
+        : entryName(entry) || humanizeKey(meta.title);
+    const label = `${base} (${meta.category})`;
+    chunks.push({
+      text: `${label}\n${lines.join("\n")}`,
+      source: meta.source,
+      category: meta.category,
+      type: meta.type,
+      title: meta.title,
+      entryIndex: chunks.length,
+      entryTotal: 0, // filled below
     });
-
-    const tiny =
-      parentKey !== undefined &&
-      PACKABLE_PARENT_KEYS.has(parentKey) &&
-      rendered.length > 2 &&
-      rendered.every((r) => r.text.length <= TINY_ENTRY_CHARS);
-
-    if (tiny) {
-      // Batch consecutive tiny entries until the group budget is exhausted.
-      let group: Rendered[] = [];
-      const flush = () => {
-        if (group.length === 0) return;
-        const first = group[0].label.match(/^(.*?)(\d+)(:.*)?$/);
-        const last = group[group.length - 1].label.match(/^(.*?)(\d+)(:.*)?$/);
-        const kind = first?.[1] ?? humanizeKey(meta.title);
-        const start = Number(first?.[2] ?? 1);
-        const end = Number(last?.[2] ?? start);
-        const label =
-          start !== end ? `${kind}${start}–${end} (${meta.category})` : group[0].label;
-        chunks.push({
-          text: `${label}\n${group.map((r) => `${r.label}\n${r.text}`).join("\n\n")}`,
-          source: meta.source,
-          category: meta.category,
-          type: meta.type,
-          title: meta.title,
-          entryIndex: chunks.length,
-          entryTotal: 0, // filled below
-        });
-        group = [];
-      };
-      let budget = 0;
-      for (const r of rendered) {
-        if (
-          group.length > 0 &&
-          (budget + r.text.length > GROUP_MAX_CHARS || group.length >= 5)
-        ) {
-          flush();
-          budget = 0;
-        }
-        group.push(r);
-        budget += r.text.length;
-      }
-      flush();
-    } else {
-      rendered.forEach((r) => {
-        chunks.push({
-          text: `${r.label}\n${r.text}`,
-          source: meta.source,
-          category: meta.category,
-          type: meta.type,
-          title: meta.title,
-          entryIndex: chunks.length,
-          entryTotal: 0, // filled below
-        });
-      });
-    }
-  } else if (content && typeof content === "object" && !Array.isArray(content)) {
-    // Multi-topic single-entity file: split so each top-level sub-object /
-    // sub-list becomes its own short, semantically concentrated chunk
-    // ("Profile Personal details" with only age/birthdate/hobbies), while
-    // flat scalar fields (name, title, summary, ...) group into one base
-    // chunk. A one-blob chunk dilutes embedding similarity for questions
-    // about any single sub-topic; topical chunks fix that for ANY phrasing,
-    // no keyword routing needed.
-    const obj = content as Record<string, unknown>;
-    const topicKeys = Object.entries(obj)
-      .filter(([, v]) => typeof v === "object" && v !== null && !isEmptyEntry(v))
-      .map(([k]) => k);
-    for (const key of topicKeys) {
-      const value = obj[key];
-      const lines = flattenEntry(value);
-      if (lines.length === 0) continue;
-      const topicLabel = `${humanizeKey(meta.title)} ${humanizeKey(key)} (${meta.category})`;
-      chunks.push({
-        text: `${topicLabel}\n${lines.join("\n")}`,
-        source: meta.source,
-        category: meta.category,
-        type: meta.type,
-        title: meta.title,
-        entryIndex: chunks.length,
-        entryTotal: 0,
-      });
-    }
-    const parts: string[] = [];
-    for (const [key, value] of Object.entries(obj)) {
-      if (topicKeys.includes(key)) continue;
-      if (value === null || value === undefined || value === "") continue;
-      parts.push(...flattenEntry({ [key]: value }));
-    }
-    if (parts.length > 0) {
-      const baseLabel = `${humanizeKey(meta.title)} (${meta.category})`;
-      chunks.push({
-        text: `${baseLabel}\n${parts.join("\n")}`,
-        source: meta.source,
-        category: meta.category,
-        type: meta.type,
-        title: meta.title,
-        entryIndex: chunks.length,
-        entryTotal: 0,
-      });
-    }
-  }
-
+  });
   for (const chunk of chunks) chunk.entryTotal = chunks.length;
   return chunks;
 }

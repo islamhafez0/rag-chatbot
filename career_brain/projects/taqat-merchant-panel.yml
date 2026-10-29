@@ -1,0 +1,25 @@
+# Flagship project 2 of 7. Sources: portfolio impact section, previous
+# knowledge base, Islam's statement (code is in the private taqatfortechnology org).
+name: Taqat Merchant Panel (Fintech)
+rank: one of my two strongest frontend projects
+role: Frontend Angular Developer (TaqaTechno contract, June 2025 to September 2025)
+description: >
+  The merchant-facing fintech app I built with Angular 17 and NgRx: wallets and
+  top-ups, wallet funding, payouts and SMS-based payments with OTP verification.
+highlights:
+  - Wallets, top-ups and wallet funding flows
+  - SMS-based payments secured with OTP verification
+  - Encrypted API layer (AES-256 + HMAC on every call)
+  - Shares the 60+ RESTful API integration work with the Admin Panel
+tech_stack:
+  - Angular 17
+  - NgRx
+  - TypeScript
+  - RESTful APIs
+  - AES-256 + HMAC
+links: []
+evidence:
+  - Portfolio impact section (KYC, SMS payments, payouts, wallet funding, AES-256 + HMAC, maker-checker): https://islamhafez.vercel.app
+unknowns:
+  - Which of KYC and payouts lives in which panel is not documented; both are part of the platform.
+  - Source code and a live link are private.

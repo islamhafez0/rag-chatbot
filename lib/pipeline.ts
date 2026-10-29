@@ -4,13 +4,7 @@ import { getContext } from "../database/pgvector";
 import type { CoverageInfo } from "./coverage";
 import { envOptionalNumber } from "./env";
 
-/**
- * Expanded mode widens retrieval for explanations and multi-part questions.
- * 14 (up from 12) is sized for the corpus' worst crowding case: a purely
- * pronoun-heavy question ("how old is he?") where 3 grouped photo chunks and
- * 8 role/personality chunks still leave the marginal profile record in play.
- */
-const EXPANDED_LIMIT = envOptionalNumber("RETRIEVAL_LIMIT_EXPANDED", 14);
+const EXPANDED_LIMIT = envOptionalNumber("RETRIEVAL_LIMIT_EXPANDED", 12);
 
 export interface PipelineResult {
   query: string;

@@ -45,42 +45,32 @@ const CONTINUATION_PREFIX_RE =
 const REFERENTIAL_RE =
   /^(?:the|what about the) .+\b(one|app|project|site|thing|role|company|job|skill)s?\b[?.!]*$/i;
 
-/**
- * Helper-only words: a short follow-up ("have more?", "any more?", "what else
- * do you have?") whose words are ALL from this set carries no topical content
- * of its own and must drag the previous topic back into the retrieval query.
- */
-const HELPER_WORDS = new Set([
-  "have", "has", "got", "get", "any", "anything", "something",
-  "do", "you", "more", "of", "else", "one", "than", "there",
-  "is", "are", "another", "others", "other", "also", "too",
-  "what", "which", "tell", "me", "it", "the", "a",
-]);
-const SHORT_QUERY_MAX_WORDS = 5;
+// Deictic follow-ups ("what stack did he use there?", "is it live?") point
+// back at the previous topic with a pronoun instead of naming it. Only short
+// questions qualify, and "this chatbot / this site" names a topic of its own.
+const DEICTIC_RE = /\b(there|it|its|that|those|these|them|this one|that one)\b/i;
+const SELF_REFERENCE_RE = /\bthis (chatbot|bot|assistant|site|website|app|portfolio|chat)\b/i;
+const DEICTIC_MAX_WORDS = 12;
 
-export type FollowUpKind = "bare" | "continuation" | "referential" | null;
+export type FollowUpKind = "bare" | "continuation" | "referential" | "deictic" | null;
 
+/** Classify a user message. Standalone short questions return null. */
 export function followUpKind(content: string): FollowUpKind {
   const trimmed = content.trim();
   if (!trimmed) return null;
   const lower = trimmed.toLowerCase();
   if (BARE_FOLLOW_UPS.has(lower)) return "bare";
-  // Short "more" asks ("have more?", "any more?") without any topical noun
-  // count as bare follow-ups — otherwise the retrieval query is just the
-  // helper words and the topic is lost.
-  const words = lower.replace(/[?!.]+$/, "").split(/\s+/).filter(Boolean);
-  const contentWords = words.filter((w) => !HELPER_WORDS.has(w));
-  if (
-    words.length <= SHORT_QUERY_MAX_WORDS &&
-    (contentWords.length === 0 ||
-      (contentWords.length === 1 && contentWords[0] === "more"))
-  ) {
-    return "bare";
-  }
   // Referential first: "what about the X one" also opens with a
   // continuation word, but the specific pattern wins.
   if (REFERENTIAL_RE.test(lower)) return "referential";
   if (CONTINUATION_PREFIX_RE.test(trimmed)) return "continuation";
+  if (
+    DEICTIC_RE.test(trimmed) &&
+    !SELF_REFERENCE_RE.test(trimmed) &&
+    trimmed.split(/\s+/).length <= DEICTIC_MAX_WORDS
+  ) {
+    return "deictic";
+  }
   return null;
 }
 

@@ -9,7 +9,14 @@ validateEnv();
 const collectionName = envString("ASTRA_DB_COLLECTION");
 assertValidIdentifier("table name (ASTRA_DB_COLLECTION)", collectionName);
 const defaultLimit = envNumber("RETRIEVAL_LIMIT");
-const contextBudget = envOptionalNumber("CONTEXT_BUDGET_CHARS", 12000);
+// One switch for production and eval, so the eval measures what ships.
+// Vector-only is the default: on the 40 KB-backed eval scenarios it scored
+// R@8 0.993 vs 0.968 for hybrid (which also missed one scenario entirely).
+const defaultSearch: "hybrid" | "vector" =
+  process.env.RETRIEVAL_SEARCH === "hybrid" ? "hybrid" : "vector";
+// Complete mode puts every record of a category in context (13 project
+// chunks ~ 14k chars); 24k chars is ~6k tokens, well inside the model window.
+const contextBudget = envOptionalNumber("CONTEXT_BUDGET_CHARS", 24000);
 
 const pool = new Pool({ connectionString: envString("DATABASE_URL") });
 
@@ -151,7 +158,7 @@ export async function getContext(
     sources,
     limit = defaultLimit,
     vector,
-    search = "vector",
+    search = defaultSearch,
     mode = "focused",
     budgetChars = contextBudget,
   } = options;
@@ -165,32 +172,19 @@ export async function getContext(
   // and keep at most MAX_PER_SOURCE chunks per source, preserving rank
   // order. Measured on the 23-scenario eval: mean R@8 0.804 -> 0.904 and
   // every KB-backed scenario retrieves >= 1 relevant doc (issue #10).
-  // Refill: when fewer relevant sources exist than the limit (e.g. a 4-entry
-  // testimonials file matched by "any more feedback"), capped-out candidates
-  // backfill empty slots in rank order instead of wasting them — the cap
-  // protects diversity, never cost.
-  const MAX_PER_SOURCE = 4;
+  const MAX_PER_SOURCE = 3;
   const fetchLimit = limit * 3;
 
   const applyCap = (candidates: StoredDoc[]): StoredDoc[] => {
     const perSource = new Map<string, number>();
     const picked: StoredDoc[] = [];
-    const skip = new Set<number>();
-    for (let i = 0; i < candidates.length; i++) {
-      const doc = candidates[i];
+    for (const doc of candidates) {
       if (picked.length >= limit) break;
       const key = doc.source ?? "";
       const used = perSource.get(key) ?? 0;
-      if (used >= MAX_PER_SOURCE) {
-        skip.add(i);
-        continue;
-      }
+      if (used >= MAX_PER_SOURCE) continue;
       perSource.set(key, used + 1);
       picked.push(doc);
-    }
-    for (const i of skip) {
-      if (picked.length >= limit) break;
-      picked.push(candidates[i]);
     }
     return picked;
   };
@@ -217,26 +211,17 @@ export async function getContext(
       // row per document (no UNION ALL duplication, no score inflation);
       // the id tiebreak keeps ordering deterministic.
       //
-      // Lexical leg is OR-based with prefix matching: plainto_tsquery
-      // ANDs every query lexeme, so conversational sentences (which span
-      // 4+ unrelated words and never co-occur verbatim in one chunk)
-      // matched NOTHING — ts_rank_cd == 0 for every row, the ORDER BY
-      // degenerated to plan order, and that noise outranked excellent
-      // vector matches after fusion. Per-lexeme OR ('panel:*' matches
-      // panels/panel) restores a meaningful ranking; docs matching more
-      // lexemes rank higher, ties break by position. The COALESCE keeps
-      // the SQL valid when every lexeme is a stopword ('zzz:*' matches
-      // nothing — vector-only ordering prevails).
+      // Lexical leg: plainto_tsquery ANDs every word, so a natural question
+      // ("What did Islam do on the Apiary project?") matched 0 of 45 chunks
+      // and the leg fed 16 arbitrary zero-score rows into RRF at full weight.
+      // Terms are now OR-ed (rank_cd still rewards chunks matching more of
+      // them) and only rows that actually match get lexical credit.
       params.push(query);
       const tsIdx = params.length;
+      const tsQuery = `replace(plainto_tsquery('english', $${tsIdx})::text, '&', '|')::tsquery`;
+      const lexicalWhere = where ? `${where} AND lexical @@ q.tsq` : `WHERE lexical @@ q.tsq`;
       sql = `
-      WITH query_lexemes AS (
-        SELECT COALESCE(
-          (SELECT string_agg(lexeme || ':*', ' | ')
-           FROM unnest(tsvector_to_array(to_tsvector('english', $${tsIdx}))) AS lexeme),
-          'zzz:*'
-        ) AS or_query
-      ),
+      WITH q AS (SELECT ${tsQuery} AS tsq),
       vector_rank AS (
         SELECT id, (1.0 / (60 + row_number() OVER (ORDER BY embedding <=> $1::vector))) AS rrf
         FROM ${collectionName}
@@ -245,10 +230,10 @@ export async function getContext(
         LIMIT $2
       ),
       lexical_rank AS (
-        SELECT id, (1.0 / (60 + row_number() OVER (ORDER BY ts_rank_cd(lexical, to_tsquery('english', (SELECT or_query FROM query_lexemes))) DESC))) AS rrf
-        FROM ${collectionName}
-        ${where}
-        ORDER BY ts_rank_cd(lexical, to_tsquery('english', (SELECT or_query FROM query_lexemes))) DESC
+        SELECT id, (1.0 / (60 + row_number() OVER (ORDER BY ts_rank_cd(lexical, q.tsq) DESC, id ASC))) AS rrf
+        FROM ${collectionName}, q
+        ${lexicalWhere}
+        ORDER BY ts_rank_cd(lexical, q.tsq) DESC, id ASC
         LIMIT $2
       ),
       combined AS (

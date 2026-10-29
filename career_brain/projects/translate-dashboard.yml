@@ -1,0 +1,29 @@
+# Flagship project 3 of 7. Sources: Odoo Apps store listing (fetched 2026-10-29),
+# module README and commit history of the private odoo_trans_sync repository.
+name: Translate Dashboard
+role: Solo developer and vendor
+description: >
+  A paid Odoo 19 module I built and sell on the Odoo Apps store. It replaces manual
+  .po editing: scan any module or theme, translate inline with keyboard shortcuts,
+  then apply to the database, the website and the .po file in one click.
+highlights:
+  - Published on the Odoo Apps store under my name, price $70.72, OPL-1 license
+  - Tested with 6,219 terms from Odoo's base module, which it scans in 11 seconds
+  - Server-side pagination that handles 6,000+ terms without browser lag
+  - Conflict detection between database and .po values with one-click resolution
+  - Refreshes stale theme view copies so website translations show immediately
+  - Cut apply time for 6,375 terms from 3.94s to 0.58s by batching UPSERTs into a single SQL VALUES statement
+  - 28-case automated test suite
+  - 3,110 lines of code, no external dependencies; built from MVP to App Store listing in March 2026 (31 commits)
+tech_stack:
+  - Odoo 19
+  - OWL 2
+  - Python
+  - PostgreSQL
+links:
+  - label: Odoo Apps store
+    url: https://apps.odoo.com/apps/modules/19.0/translate_dashboard
+evidence:
+  - https://apps.odoo.com/apps/modules/19.0/translate_dashboard
+unknowns:
+  - Number of sales is not public.

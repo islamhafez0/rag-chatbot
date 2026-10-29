@@ -1,55 +1,36 @@
-summary: >
-  Frontend Developer and Odoo Specialist experienced in building modern web
-  applications, customizing ERP systems, and developing AI-powered applications.
-  Works with React, Next.js, TypeScript, Odoo, Python, and RAG. Also explores
-  quantized LLM inference using llama.cpp and NVIDIA GPUs.
-
+# Levels are self-assessed (from the CVs). Evidence points at knowledge-base
+# files, so every skill can be traced to real work.
+summary: My skills span expert React and Next.js, advanced TypeScript, enterprise Angular 17 with NgRx, and Odoo 17/19 customization with Python and OWL, plus AI/RAG engineering.
 categories:
-  - name: Frontend Development
+  - name: Frontend
     skills:
-      - React.js
-      - Next.js
-      - TypeScript
-      - JavaScript
-      - Angular
-      - Tailwind CSS
-      - Web Performance Optimization
-  - name: Odoo Development
+      - "React.js: Expert. Evidence: roles/freelance-frontend.yml, projects/other-projects.yml (Quranik, Gemini clone)"
+      - "Next.js: Expert. Evidence: projects/rag-chatbot.yml, projects/other-projects.yml (Next.js Commerce, FluxGen AI)"
+      - "TypeScript: Advanced. Evidence: projects/taqat-admin-panel.yml, projects/rag-chatbot.yml"
+      - "JavaScript: Advanced. Evidence: roles/taqatechno-odoo-frontend.yml"
+      - "Angular 17 with NgRx: Intermediate. Evidence: projects/taqat-admin-panel.yml, projects/taqat-merchant-panel.yml"
+      - "HTML5, CSS3, SCSS, Tailwind CSS: Advanced. Evidence: projects/rag-chatbot.yml, projects/other-projects.yml"
+      - "Framer Motion, shadcn/ui: used in Quranik and portfolio work"
+  - name: Odoo and backend
     skills:
-      - Odoo 17,18,19
-      - Custom Addon Development
-      - OWL
-      - Python
-      - ERP Customization
-      - Business Workflow Implementation
-      - Cost Management Modules
-      - PostgreSQL
-
-  - name: AI Engineering
+      - "Odoo ERP customization (17, 19): Expert. Evidence: projects/apiary-and-honey.yml, projects/translate-dashboard.yml, projects/relief-center.yml"
+      - "OWL (Odoo Web Library), QWeb: Advanced. Evidence: projects/translate-dashboard.yml, projects/emdad.yml"
+      - "Python: Advanced. Evidence: projects/apiary-and-honey.yml, projects/odoo-saas-tenant-provisioning.yml"
+      - "PostgreSQL: Intermediate. Evidence: projects/translate-dashboard.yml (batched UPSERT), projects/rag-chatbot.yml (pgvector)"
+      - "REST and GraphQL APIs, Node.js: Advanced. Evidence: roles/taqatechno-angular-fintech.yml (60+ REST APIs), roles/code-alpha-intern.yml"
+      - "Shopify Liquid: Intermediate. Evidence: roles/taqatechno-odoo-frontend.yml (Herbal Gardens)"
+  - name: AI engineering
     skills:
-      - Retrieval-Augmented Generation (RAG)
-      - LLM API Integration
-      - Embeddings and Vector Search
-      - llama.cpp
-      - Quantized LLM Inference
-      - Embeddings
-      - CUDA-Based Inference
-      
-  - name: Backend and Data
+      - "RAG pipelines (pgvector, embeddings, hybrid retrieval, evaluation): Evidence: projects/rag-chatbot.yml"
+      - "LLM integration (OpenAI-compatible APIs, Gemini, Claude API): Evidence: projects/rag-chatbot.yml, facts/certifications.yml"
+  - name: Tools and platforms
     skills:
-      - Python
-      - Node.js
-      - Next.js API Routes
-      - RESTful APIs
-      - GraphQL
-      - MongoDB
-      - Firebase
-
-  - name: Tools and Infrastructure
+      - "Git and GitHub: Expert. Evidence: facts/github-activity.yml"
+      - "Docker: Intermediate"
+      - "Firebase: Intermediate. Evidence: roles/freelance-frontend.yml"
+      - "Vercel, VS Code, Figma"
+  - name: Professional
     skills:
-      - Git
-      - Azure DevOps
-      - Linux
-      - Shell Scripting
-      - Docker
-      - NVIDIA GPUs
+      - "UI/UX implementation from Figma: Expert"
+      - "Web performance (Core Web Vitals, LCP/CLS): Advanced. Evidence: roles/taqatechno-odoo-frontend.yml (Herbal Gardens)"
+      - "Accessibility, technical writing (facts/writing.yml), client communication"

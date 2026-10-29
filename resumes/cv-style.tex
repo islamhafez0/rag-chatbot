@@ -1,0 +1,47 @@
+% Shared, ATS-friendly CV style: single column, real selectable text, standard
+% section names, no icon fonts, no tables or text boxes for layout.
+% Compile with pdflatex (TeX Live / MiKTeX) or tectonic.
+\usepackage[a4paper,top=0.55in,bottom=0.55in,left=0.6in,right=0.6in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[scaled=0.95]{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+% Map glyphs to Unicode so ATS parsers extract clean text (pdflatex only).
+\ifdefined\pdfgentounicode
+  \input{glyphtounicode}
+  \pdfgentounicode=1
+\fi
+
+\definecolor{accent}{HTML}{1F4E79}
+\definecolor{muted}{HTML}{4A5560}
+\urlstyle{same}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\linespread{1.04}
+
+\titleformat{\section}{\color{accent}\large\bfseries}{}{0em}{\MakeUppercase}[\vspace{-6pt}{\color{accent!35}\rule{\linewidth}{0.7pt}}]
+\titlespacing*{\section}{0pt}{9pt}{4pt}
+
+\setlist[itemize]{leftmargin=1.1em, itemsep=1.2pt, topsep=1.5pt, parsep=0pt, label=\textbullet}
+
+% \role{Title}{Company}{Type, Location}{Dates}
+\newcommand{\role}[4]{%
+  \textbf{#1} \textbar\ \textbf{\color{accent}#2}\hfill\textbf{#4}\par
+  {\small\color{muted}#3}\par\vspace{1pt}}
+
+% \project{Name}{Stack}{Link text}{URL}
+\newcommand{\project}[4]{%
+  \textbf{#1} \textbar\ {\small #2}\hfill{\small\href{#4}{#3}}\par\vspace{1pt}}
+
+% \projectnolink{Name}{Stack}{Note}
+\newcommand{\projectnolink}[3]{%
+  \textbf{#1} \textbar\ {\small #2}\hfill{\small\color{muted}#3}\par\vspace{1pt}}
+
+% \skillline{Label}{Items}
+\newcommand{\skillline}[2]{\textbf{#1:} #2\par\vspace{1pt}}

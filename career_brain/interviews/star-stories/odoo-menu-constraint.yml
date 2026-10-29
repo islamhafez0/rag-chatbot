@@ -1,8 +1,0 @@
-title: "Breaking Odoo's Menu Nesting Limit"
-competency: "Technical Problem Solving & Framework Modification"
-situation: "While building a complex corporate website in Odoo, I hit a hardcoded limitation where the frontend menu only supported a 2-level hierarchy. The client required a deeper, multi-layered navigation structure for their product catalog."
-task: "My goal was to enable unlimited frontend menu nesting without breaking Odoo's core website module or compromising the responsive design."
-action: "I analyzed the Odoo source code for the `website.menu` model and found the hardcoded limit in the rendering logic. I rewrote the recursive function responsible for generating the menu HTML and updated the corresponding XML templates to support an arbitrary number of nested levels."
-result: "The client was able to implement a complex, multi-level navigation menu. This removed a significant blocker for several other projects that had the same requirement."
-reflection: "I learned that the most effective way to solve framework limitations is to dive into the core source code rather than trying to 'hack' a solution using only the frontend."
-related_experience: "experience/taqa-techno-odoo"

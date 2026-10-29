@@ -1,56 +1,29 @@
-# Technical Writing & Thought Leadership
-# List of published articles used as evidence of technical depth and communication skills.
+# Sources: DEV Community profile (checked 2026-10-29). Profile: https://dev.to/islamhafez0
+profile: https://dev.to/islamhafez0
 articles:
-  - title: "JavaScript ES2026 Is Not a Feature Drop. It’s a 30-Year Debt Payment"
-    topic: "JavaScript / Web Dev"
-    url: "https://medium.com/@islamhafez0/javascript-es2026-is-not-a-feature-drop-its-a-30-year-debt-payment-826a4713b486"
-    key_takeaway: "TC39 didn’t ship new features. They fixed embarrassments. Here’s what broke, why it stayed broken, and what finally changed."
-    evidence_for: ["JavaScript", "ES2026"]
-
-  - title: "Next.js 16.3 Makes Server Apps Feel Like SPAs — and It’s Kind of a Big Deal"
-    topic: "Next.js"
-    url: "https://medium.com/@islamhafez0/next-js-16-3-makes-server-apps-feel-like-spas-and-its-kind-of-a-big-deal-86543c16e021"
-    key_takeaway: "Instant Navigations is the feature Next.js developers have been asking for since the Server Components era began. Here’s exactly what changed, and why it matters."
-    evidence_for: ["Next.js", "Web Performance"]
-
-  - title: "Arrays and Stacks: Two Data Structures That Will Rewire Your Brain"
-    topic: "Computer Science"
-    url: "https://medium.com/@islamhafez0/arrays-and-stacks-two-data-structures-that-will-rewire-your-brain-7eaf668dd6a3"
-    key_takeaway: "You probably think arrays are simple. You’re right. You also think you understand them. You’re wrong."
-    evidence_for: ["Problem Solving", "Data Structures"]
-
-  - title: "You Don't Use Linked Lists. But They're Running Half Your Software"
-    topic: "Computer Science"
-    url: "https://dev.to/islamhafez0/you-dont-use-linked-lists-but-theyre-running-half-your-software-4b37"
-    key_takeaway: "The data structure everyone learns for interviews and forgets by Monday — and why that's exactly backwards."
-    evidence_for: ["Computer Science Fundamentals", "Data Structures"]
-
-  - title: "The React Compiler Just Made Your Memoization Knowledge Obsolete. Here’s What to Learn Instead."
-    topic: "React / Web Dev"
-    url: "https://medium.com/@islamhafez0/the-react-compiler-just-made-your-memoization-knowledge-obsolete-heres-what-to-learn-instead-def4b0578da0"
-    key_takeaway: "React Compiler v1.0 didn’t just automate a task. It deprecated a decade of hard-won React expertise — and replaced it with a different set of questions entirely."
-    evidence_for: ["React", "Web Performance", "JavaScript"]
-
   - title: "POST /search Is a Lie. HTTP Finally Admits It"
-    topic: "API Design"
-    url: "https://dev.to/islamhafez0/post-search-is-a-lie-http-finally-admits-it-7jn"
-    key_takeaway: "Critique of REST patterns and the movement towards more semantic HTTP usage."
-    evidence_for: ["http", "api", "webdev", "rfc10008"]
-
-  - title: "Monolithic vs Microservices"
-    topic: "Architecture"
-    url: "https://dev.to/islamhafez0/monolithic-vs-microservices-1g3p"
-    key_takeaway: "Comparative analysis of system architecture patterns."
-    evidence_for: ["Microservices", "systemdesign", "architecture", "backenddevelopment"]
-
+    topic: API design
+    url: https://dev.to/islamhafez0/post-search-is-a-lie-http-finally-admits-it-7jn
+    key_takeaway: A critique of REST patterns and the move towards more semantic HTTP.
+  - title: "You Don't Use Linked Lists. But They're Running Half Your Software"
+    topic: Computer science
+    url: https://dev.to/islamhafez0/you-dont-use-linked-lists-but-theyre-running-half-your-software-4b37
+    key_takeaway: The hidden ubiquity of linked lists in modern software.
+  - title: Monolithic vs Microservices
+    topic: Architecture
+    url: https://dev.to/islamhafez0/monolithic-vs-microservices-1g3p
+    key_takeaway: A comparison of the two architecture styles.
   - title: "TOON: Token-Oriented Object Notation – A Complete Guide for LLM Data Efficiency"
-    topic: "AI / LLMs"
-    url: "https://dev.to/islamhafez0/toon-token-oriented-object-notation-a-complete-guide-for-llm-data-efficiency-1ng4"
-    key_takeaway: "Proposed a new notation for optimizing data passed to Large Language Models."
-    evidence_for: ["data", "performance", "ai", "llm"]
-
-  - title: "You’re Not Writing Code Anymore. You’re Reviewing It. Are You Any Good at That?"
-    topic: "Vibe Coding"
-    url: "https://medium.com/@islamhafez0/youre-not-writing-code-anymore-you-re-reviewing-it-are-you-any-good-at-that-21666c2fb6f3"
-    key_takeaway: "AI flipped the ratio overnight. Most developers are now spending more time reviewing than writing — using skills they never trained for, on code they didn’t write, that looks correct until it isn’t."
-    evidence_for: ["code review", "vibe coding", "ai", "software engineering"]
+    topic: AI / LLMs
+    date: December 11, 2025
+    url: https://dev.to/islamhafez0/toon-token-oriented-object-notation-a-complete-guide-for-llm-data-efficiency-1ng4
+    key_takeaway: A guide to TOON, a compact notation for passing structured data to LLMs with fewer tokens.
+  - title: "JavaScript ES2026 Is Not a Feature Drop. It's a 30-Year Debt Payment"
+    topic: JavaScript
+    url_status: not found on the DEV profile listing; link unverified
+  - title: "Next.js 16.3 Makes Server Apps Feel Like SPAs"
+    topic: Next.js
+    url_status: not found on the DEV profile listing; link unverified
+  - title: "Arrays and Stacks: Two Data Structures That Will Rewire Your Brain"
+    topic: Computer science
+    url_status: not found on the DEV profile listing; link unverified

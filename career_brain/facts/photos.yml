@@ -1,34 +1,14 @@
-# Photos of Islam Hafez.
-# src: public URL or a path under /public.
-# alt: descriptive text used for retrieval and image alt text.
-
-photos:
-  - src: "/images/professionalme.png"
-    alt: "Islam Hafez professional profile photo"
-
-  - src: "/images/casualme.png"
-    alt: "Islam Hafez casual photo"
-
-  - src: "/images/casualme-2.jpg"
-    alt: "Islam Hafez casual photo 2"
-
-  - src: "/images/casualme-3.jpeg"
-    alt: "Islam Hafez casual photo 3"
-
-  - src: "/images/image-1.png"
-    alt: "Islam Hafez personal photo 1"
-
-  - src: "/images/image-2.png"
-    alt: "Islam Hafez personal photo 2"
-
-  - src: "/images/image-3.png"
-    alt: "Islam Hafez personal photo 3"
-
-  - src: "/images/image-4.jpeg"
-    alt: "Islam Hafez personal photo 4"
-
-  - src: "/images/image-5.jpeg"
-    alt: "Islam Hafez personal photo 5"
-
-  - src: "/images/image-6.webp"
-    alt: "Islam Hafez personal photo 6"
+# One chunk for all photos (six tiny per-photo chunks used to crowd out real
+# answers for any "who is Islam" style question).
+description: Photos of Islam Hafez. Only show them when someone asks for a photo, picture or image.
+gallery:
+  - "/images/professionalme.png: professional profile photo"
+  - "/images/casualme.png: casual photo"
+  - "/images/casualme-2.jpg: casual photo 2"
+  - "/images/casualme-3.jpeg: casual photo 3"
+  - "/images/image-1.png: personal photo 1"
+  - "/images/image-2.png: personal photo 2"
+  - "/images/image-3.png: personal photo 3"
+  - "/images/image-4.jpeg: personal photo 4"
+  - "/images/image-5.jpeg: personal photo 5"
+  - "/images/image-6.webp: personal photo 6"

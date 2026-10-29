@@ -3,13 +3,11 @@
 import { memo } from "react";
 import type { ResponseBlock } from "@/lib/rich-response";
 import { ChartRenderer } from "./ChartRenderer";
-import { Callout } from "./Callout";
 import { CodeBlock, EvidencePanel } from "./Interactive";
 import { DiagramRenderer } from "./DiagramRenderer";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 import { MetricGrid } from "./MetricCard";
 import { ComparisonTable, ProjectCard, Timeline } from "./Showcase";
-import { StepsList } from "./Steps";
 import { TechnologyBadgeGroup } from "./TechnologyBadge";
 
 /**
@@ -39,27 +37,24 @@ export const ResponseBlockRenderer = memo(function ResponseBlockRenderer({
       return <DiagramRenderer block={block} />;
     case "tech":
       return (
-        <div className="rounded-xl border border-border bg-card p-3.5 shadow-sm">
+        <section
+          aria-label={block.title ?? "Technologies"}
+          className="rounded-2xl border border-border bg-card p-4 shadow-soft"
+        >
           {block.title && (
-            <h4 className="mb-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+            <h3 className="mb-2.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
               {block.title}
-            </h4>
+            </h3>
           )}
-          <TechnologyBadgeGroup technologies={block.technologies} />
-        </div>
+          <TechnologyBadgeGroup technologies={block.technologies} label={block.title ?? undefined} />
+        </section>
       );
     case "details":
       return (
         <EvidencePanel title={block.title}>
-          <div className="markdown text-sm leading-relaxed">
-            <MarkdownRenderer content={block.content} />
-          </div>
+          <MarkdownRenderer content={block.content} />
         </EvidencePanel>
       );
-    case "callout":
-      return <Callout block={block} />;
-    case "steps":
-      return <StepsList block={block} />;
     default:
       return null;
   }

@@ -1,39 +1,34 @@
-name: "Islam Hafez"
-title: "Frontend Developer | React, Next.js, Odoo Specialist"
-location: "Maadi, Cairo, Egypt"
-
+# Sources: both CVs, portfolio, GitHub profile (checked 2026-10-29).
+name: Islam Hafez
+title: Frontend Developer (React, Next.js, TypeScript) and Odoo Specialist
+location: Cairo (Maadi), Egypt
 personal_details:
-  age: 23
   birthdate: "2002-12-13"
-  bio: "Islam is 23 years old (born December 13, 2002), based in Maadi, Cairo, Egypt. He enjoys football, swimming, gym, and walking."
+  age: 23 (as of October 2026)
   hobbies:
     - Football
     - Swimming
     - Gym
     - Walking
-    - Enjoying life
-
-years_of_experience: 2
-
+years_of_experience: 2+ years of professional development experience (since April 2024), after a first role in SEO in 2023
+current_role: Odoo Frontend Developer at TaqaTechno (October 2024 to present), plus freelance frontend work
 education:
-  institution: "Faculty of Arts, English Department, Damanhour University"
-  degree: "B.A. in English Language, Translation, and Literature"
-  field_of_study: "English Language and Literature"
-  start_date: "2021-10"
-  end_date: "2025-10"
-
+  institution: Damanhour University
+  status: Graduate
+  unknowns: Degree title and graduation year are not documented in the knowledge base.
 languages_spoken:
-  - "English (Professional)"
-  - "Arabic (Native)"
-
+  - English (Professional)
+  - Arabic (Native)
 summary: >
-  Frontend Developer and Odoo Specialist with 2 years of professional
-  experience building web applications and custom ERP solutions. Skilled in
-  React, Next.js, TypeScript, Python, JavaScript, and OWL, with experience
-  developing custom Odoo addons, frontend components, and business workflows.
-
+  I'm a frontend developer and Odoo specialist. I build fast, pixel-perfect web apps
+  with React, Next.js and TypeScript, enterprise Angular 17 + NgRx fintech panels,
+  and custom Odoo 17/19 modules, themes and websites with Python and OWL. I also ship
+  AI features: this RAG chatbot and a paid Odoo app on the Odoo Apps store.
+focus_areas:
+  - Frontend engineering with React, Next.js and TypeScript (see the Frontend CV)
+  - Odoo ERP customization with Python and OWL (see the Odoo CV)
 about_this_chatbot: >
-  Islam Hafez designed and built this RAG Career Chatbot to demonstrate his
-  skills in retrieval-augmented generation and AI application development.
-  If asked who created the chatbot, identify Islam Hafez as its creator and
-  refer to the projects knowledge files for technical details.
+  This chatbot was designed and built entirely by me, Islam Hafez. If you ask who
+  built it or how it works, the details are in the RAG Career Chatbot project
+  (projects/rag-chatbot.yml): Next.js, PostgreSQL + pgvector, Gemini embeddings and
+  gemma4:31b on Ollama Cloud.

@@ -63,22 +63,10 @@ describe("coverage notes", () => {
     budgetChars: 12000,
     contextChars: 4000,
   };
-  it("authorizes exhaustive language only on full coverage (sections distinct from records)", () => {
-    const note = buildCoverageNote({
-      ...full,
-      recordCount: 3, // 6 sections across 3 source files
-    });
-    expect(note).toContain("all 6 document sections describing 3 records");
-    expect(note).toContain("Enumerate every record once, merging a record's sections");
-    expect(note).toContain("do not call grouped content \"duplicates\"");
-  });
-  it("reports records directly when sections and records match 1:1", () => {
-    const note = buildCoverageNote({ ...full, recordCount: 6 });
-    expect(note).toContain("all 6 records are present in the context");
-  });
-  it("falls back to chunk totals for the record count", () => {
-    const note = buildCoverageNote(full); // no recordCount passed
-    expect(note).toContain("all 6 records are present in the context");
+  it("authorizes exhaustive language only on full coverage", () => {
+    const note = buildCoverageNote(full);
+    expect(note).toContain("all 6 records");
+    expect(note).toContain("You may enumerate the retrieved records exhaustively");
   });
   it("forbids completeness claims on partial coverage", () => {
     const note = buildCoverageNote({ ...full, retrievedChunks: 4, coverage: 4 / 6 });

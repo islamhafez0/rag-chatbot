@@ -2,87 +2,50 @@
 
 import { memo, useEffect, useState } from "react";
 
+/** After this long with no first token, say so honestly (free-tier model). */
+export const SLOW_AFTER_MS = 9000;
+
+export function loaderLabel(slow: boolean): string {
+  return slow ? "Still thinking — the model is warming up" : "Thinking";
+}
+
 /**
- * Pipeline beats narrated while the assistant response streams, ordered by
- * typical cost (prep <1ms, embedding ~380ms, search ~2ms, LLM first token
- * 1–3s+). The loader advances by elapsed time so the text tracks what the
- * server is most likely doing behind the scenes.
+ * Pre-first-token state: a CSS-animated orb + shimmering label. One timer
+ * total (the "slow" hint) instead of a 16ms re-render loop, honest copy
+ * instead of fake pipeline stages, full-contrast text.
  */
-export const THINKING_STAGES = [
-  "Understanding your question",
-  "Searching the knowledge base",
-  "Gathering the right context",
-  "Writing the answer",
-] as const;
-
-/** Elapsed-time thresholds (ms) at which the loader advances one stage. */
-const STAGE_AT_MS = [0, 1500, 4500, 10000];
-
-export function stageForElapsed(ms: number): number {
-  let stage = 0;
-  for (let i = 0; i < STAGE_AT_MS.length; i++) {
-    if (ms >= STAGE_AT_MS[i]) stage = i;
-  }
-  return Math.min(stage, THINKING_STAGES.length - 1);
-}
-
-/** Elapsed time (ms) at which the given stage begins. */
-export function stageStartMs(stage: number): number {
-  const clamped = Math.min(Math.max(stage, 0), STAGE_AT_MS.length - 1);
-  return STAGE_AT_MS[clamped];
-}
-
-const TYPE_MS = 16; // per-character typing speed
-const HOLD_MS = 1100; // pause on the final stage before looping the beat
-
 export const ThinkingLoader = memo(function ThinkingLoader() {
-  const [ticks, setTicks] = useState(0);
-  const [reducedMotion] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true,
-  );
-
+  const [slow, setSlow] = useState(false);
   useEffect(() => {
-    if (reducedMotion) return;
-    const t = window.setInterval(() => setTicks((n) => n + 1), TYPE_MS);
-    return () => window.clearInterval(t);
-  }, [reducedMotion]);
-
-  // Everything below derives from the tick clock: no cascading setState,
-  // and the text retypes from zero whenever the stage advances.
-  const elapsed = ticks * TYPE_MS;
-  const stage = stageForElapsed(elapsed);
-  const full = THINKING_STAGES[stage];
-  const chars = reducedMotion
-    ? full.length
-    : Math.min(
-        full.length,
-        Math.max(0, Math.floor((elapsed - stageStartMs(stage)) / TYPE_MS)),
-      );
-  const done = chars >= full.length;
-
-  // On the final stage the beat loops so long generations never go static.
-  useEffect(() => {
-    if (stage !== THINKING_STAGES.length - 1 || !done || reducedMotion) return;
-    const t = window.setTimeout(() => setTicks(0), HOLD_MS);
+    const t = window.setTimeout(() => setSlow(true), SLOW_AFTER_MS);
     return () => window.clearTimeout(t);
-  }, [stage, done, reducedMotion]);
+  }, []);
 
   return (
-    <span
-      className="inline-flex min-w-0 items-center text-sm text-[#aaaaaa9e]"
-      aria-live="polite"
-      aria-label="Working on your answer"
-    >
-      <span className="truncate">
-        {full.slice(0, chars)}
-        {done ? "…" : ""}
+    <div className="inline-flex items-center gap-3 py-1">
+      <span aria-hidden className="relative flex h-5 w-5 items-center justify-center">
+        <span
+          className="absolute inset-0 animate-orbit rounded-full"
+          style={{
+            background: "conic-gradient(from 0deg, var(--brand-1), var(--brand-2), var(--brand-3), var(--brand-1))",
+            mask: "radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px))",
+            WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px))",
+          }}
+        />
+        <span className="h-1.5 w-1.5 animate-breathe rounded-full bg-primary" />
       </span>
-      <span
-        aria-hidden
-        className="ml-1 inline-block h-4 w-[2px] shrink-0 animate-pulse bg-primary/50"
-      />
-    </span>
+      <span className="text-sm font-medium text-muted-foreground">
+        {loaderLabel(slow)}
+        <span aria-hidden className="inline-flex w-5 gap-0.5 pl-0.5">
+          {[0, 1, 2].map((i) => (
+            <span
+              key={i}
+              className="inline-block h-1 w-1 translate-y-[-1px] animate-breathe rounded-full bg-current"
+              style={{ animationDelay: `${i * 160}ms` }}
+            />
+          ))}
+        </span>
+      </span>
+    </div>
   );
 });

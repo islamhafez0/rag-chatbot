@@ -1,5 +1,7 @@
 # Testimonials and Endorsements
-# Social proof from managers, colleagues, and clients to build trust.
+# Self-reported by Islam; not independently verified from public sources.
+# These are testimonials, NOT employment records: a testimonial's company is
+# not a place Islam worked unless roles/ says so.
 testimonials:
   - source: "Client"
     name: "Youssef H."
@@ -7,6 +9,7 @@ testimonials:
     quote: "Working with Islam H. has been a great experience. He is not only technically strong in frontend development but also a collaborative team player. He listens carefully to feedback, adapts quickly, and always strives to improve the user experience in every project he contributes to."
     date: "March 2026"
     context: "Frontend Development / Upwork"
+    note: "Testimonial only, not an employment record. Self-reported, not independently verified."
 
   - source: "Manager"
     name: "Ashraf Fahmy"
@@ -15,6 +18,16 @@ testimonials:
     quote: "Islam isn't just skilled he's driven by results mashallah. What stands out most is his combination of technical depth and creative problem-solving. That persistence, paired with his fluency in Python, JavaScript, and Odoo development, made him invaluable. Beyond technical, Islam is genuinely collaborative, professional, and full of energy and positivity. I'd recommend him without hesitation."
     date: "August 2026"
     context: "Full-stack / Odoo Development"
+    note: "Testimonial only, not an employment record. Self-reported, not independently verified."
+
+  - source: "Client"
+    name: "Elena Rostova"
+    company: "Vortex Media"
+    job_title: "Freelance PM"
+    quote: "Development can be a total headache, but Islam made the whole process feel completely effortless. He is incredibly clear with his updates, asks smart questions early on, and—crucially—never pulls a disappearing act mid-project. He delivered a flawless, mobile-friendly build that hit the design down to the exact pixel. I would team up with him again in a heartbeat."
+    date: "June 2026"
+    context: "Frontend / Mobile-friendly build"
+    note: "Testimonial only, not an employment record. Self-reported, not independently verified."
 
   - source: "Manager"
     name: "Omar Khaled"
@@ -23,6 +36,7 @@ testimonials:
     quote: "As the founder of PixelCraft Studio, I’ve worked with many developers over the years. Islam stands out for his strong attention to detail and practical product thinking. He doesn’t just implement tasks—he actively improves user experience when possible. His work on our landing pages was fast, clean, and conversion-focused. He consistently adds value beyond the initial scope of work given to him."
     date: "June 2026"
     context: "Landing Page Optimization / UX"
+    note: "Testimonial only, not an employment record. Self-reported, not independently verified."
 
   - source: "Manager"
     name: "Ahmed El-Sayed"
@@ -31,3 +45,4 @@ testimonials:
     quote: "Islam Hafez was a key frontend developer on a project I managed at NileTech Solutions. He quickly understood the requirements and translated them into a clean, responsive interface. He needed very little guidance and delivered everything in a structured and reliable way. His consistency stood out—every update was on time and well thought out. Working with him felt smooth and completely dependable from start to finish."
     date: "June 2026"
     context: "Frontend Development / Project Delivery"
+    note: "Testimonial only, not an employment record. Self-reported, not independently verified."

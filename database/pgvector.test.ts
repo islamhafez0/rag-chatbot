@@ -216,7 +216,6 @@ describe("per-source diversity cap", () => {
           { text: "p2", source: "photos.yml" },
           { text: "p3", source: "photos.yml" },
           { text: "p4", source: "photos.yml" },
-          { text: "p5", source: "photos.yml" },
           { text: "role", source: "roles/previous.yml" },
           { text: "skill", source: "facts/skills.yml" },
         ],
@@ -224,10 +223,10 @@ describe("per-source diversity cap", () => {
     });
 
     const { getContext } = await loadPgvector();
-    const result = await getContext("query", { limit: 5, vector: [0.1, 0.2, 0.3] });
+    const result = await getContext("query", { limit: 4, vector: [0.1, 0.2, 0.3] });
 
-    // 4 photo chunks max, 5th slot backfilled with the roles chunk.
-    expect(result.text).toBe("p1\n\np2\n\np3\n\np4\n\nrole");
+    // 3 photo chunks max, 4th slot backfilled with the roles chunk.
+    expect(result.text).toBe("p1\n\np2\n\np3\n\nrole");
     expect(result.sources).toEqual(["photos.yml", "roles/previous.yml"]);
   });
 

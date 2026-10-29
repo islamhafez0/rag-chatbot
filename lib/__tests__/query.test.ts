@@ -41,20 +41,6 @@ describe("isDegenerateFollowUp", () => {
     expect(isDegenerateFollowUp("the tech stack one")).toBe(true);
   });
 
-  it("flags short helper-only 'more' asks as bare follow-ups", () => {
-    expect(isDegenerateFollowUp("have more?")).toBe(true);
-    expect(isDegenerateFollowUp("any more?")).toBe(true);
-    expect(isDegenerateFollowUp("more?")).toBe(true);
-    expect(isDegenerateFollowUp("what else do you have?")).toBe(true);
-    expect(isDegenerateFollowUp("got anything else?")).toBe(true);
-  });
-
-  it("still treats topic-bearing short questions as standalone", () => {
-    expect(isDegenerateFollowUp("more feedback?")).toBe(false);
-    expect(isDegenerateFollowUp("any more feedback entries?")).toBe(false);
-    expect(isDegenerateFollowUp("what more do you have about projects?")).toBe(false);
-  });
-
   it("does not flag self-contained questions", () => {
     expect(isDegenerateFollowUp("What is his full experience timeline?")).toBe(false);
     expect(isDegenerateFollowUp("does he has any internships?")).toBe(false);
@@ -125,5 +111,26 @@ describe("buildRetrievalQuery", () => {
 
   it("returns empty when there is no user message", () => {
     expect(buildRetrievalQuery([{ role: "assistant", content: "hi" }]).query).toBe("");
+  });
+});
+
+describe("deictic follow-ups", () => {
+  const prev = { role: "user", content: "Tell me about the Emdad project" };
+  const asst = { role: "assistant", content: "Emdad is an Odoo storefront." };
+
+  it("merges a short pronoun follow-up with the previous question", () => {
+    const out = buildRetrievalQuery([prev, asst, { role: "user", content: "what stack did he use there?" }]);
+    expect(out.merged).toBe(true);
+    expect(out.query).toContain("Emdad");
+  });
+
+  it("leaves 'this chatbot' questions standalone", () => {
+    const out = buildRetrievalQuery([prev, asst, { role: "user", content: "How is this chatbot built?" }]);
+    expect(out.merged).toBe(false);
+  });
+
+  it("leaves long self-contained questions standalone", () => {
+    const q = "Can you walk me through the architecture of the Relief Center platform and how it handles live data?";
+    expect(buildRetrievalQuery([prev, asst, { role: "user", content: q }]).merged).toBe(false);
   });
 });

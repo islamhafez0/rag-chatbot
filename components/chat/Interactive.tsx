@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, Code2, Copy, Check, FileCode2 } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export function EvidencePanel({
@@ -14,20 +14,33 @@ export function EvidencePanel({
   defaultOpen?: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const id = useId();
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-card/50">
+    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="flex w-full items-center justify-between gap-2 px-3.5 py-2.5 text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase transition-colors hover:text-foreground"
+        aria-controls={id}
+        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-semibold text-foreground transition-colors hover:bg-muted/60"
       >
         <span className="truncate">{title}</span>
         <ChevronDown
-          className={cn("h-4 w-4 shrink-0 transition-transform", open && "rotate-180")}
+          aria-hidden
+          className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300", open && "rotate-180")}
         />
       </button>
-      {open && <div className="border-t border-border px-3.5 py-3">{children}</div>}
+      <div
+        id={id}
+        className={cn(
+          "grid transition-[grid-template-rows] duration-300 ease-out-expo",
+          open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        )}
+      >
+        <div className="min-h-0 overflow-hidden" inert={!open}>
+          <div className="border-t border-border px-4 py-3">{children}</div>
+        </div>
+      </div>
     </div>
   );
 }

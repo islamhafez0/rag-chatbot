@@ -5,16 +5,16 @@ describe("classifyIntent", () => {
   it("routes enumeration questions to complete mode with a category", () => {
     expect(classifyIntent("What is his full experience timeline?")).toEqual({
       mode: "complete",
-      category: "experience",
+      category: "roles",
       sources: null,
     });
     expect(classifyIntent("Which companies has Islam worked at?")).toMatchObject({
       mode: "complete",
-      category: "experience",
+      category: "roles",
     });
     expect(classifyIntent("List every role Islam has held")).toMatchObject({
       mode: "complete",
-      category: "experience",
+      category: "roles",
     });
     expect(classifyIntent("What projects has Islam built?")).toEqual({
       mode: "complete",
@@ -46,41 +46,20 @@ describe("classifyIntent", () => {
   it("treats first-job questions as complete enumeration", () => {
     expect(classifyIntent("What was Islam's first job?")).toMatchObject({
       mode: "complete",
-      category: "experience",
+      category: "roles",
     });
   });
 
-  it("routes feedback/testimonial questions to the testimonials subset", () => {
-    expect(classifyIntent("any more feedback entries?")).toMatchObject({
-      mode: "complete",
-      category: "feedback",
-      sources: ["feedback/testimonials.yml"],
-    });
-  });
-
-  it("routes article questions to the writing subset", () => {
-    expect(classifyIntent("Does Islam write technical articles?")).toMatchObject({
-      mode: "complete",
-      category: "facts",
-      sources: ["facts/writing.yml"],
-    });
-  });
-
-  it("routes role-history questions (before/previously) to complete experience", () => {
-    expect(classifyIntent("which role did he hold before his current one?")).toMatchObject({
-      mode: "complete",
-      category: "experience",
-    });
-    expect(classifyIntent("what roles did he have previously?")).toMatchObject({
-      mode: "complete",
-      category: "experience",
-    });
+  it("pulls every role record for current/previous role questions", () => {
+    // Only a handful of role records exist; retrieving them all makes
+    // "current role" answerable every time (top-k used to miss it).
+    for (const q of ["what is his current role?", "where does he work?", "what was his first job?"]) {
+      expect(classifyIntent(q)).toMatchObject({ mode: "complete", category: "roles" });
+    }
   });
 
   it("keeps specific questions focused (today's behavior)", () => {
-    expect(classifyIntent("what is his current role?").mode).toBe("focused");
-    // Ordinal role references need role history to disambiguate.
-    expect(classifyIntent("what os his secound role?").mode).toBe("complete");
+    expect(classifyIntent("what os his secound role?").mode).toBe("focused");
     expect(classifyIntent("Tell me about the RAG Career Chatbot").mode).toBe("focused");
     expect(classifyIntent("What is the youtube clone project about?").mode).toBe("focused");
     expect(classifyIntent("Who is Islam Hafez?").mode).toBe("focused");

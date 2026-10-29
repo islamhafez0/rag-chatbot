@@ -1,0 +1,25 @@
+# Source: GitHub pull request search for author islamhafez0 (checked 2026-10-29).
+# Status is reported exactly as GitHub shows it; nothing here was merged upstream
+# unless it says merged.
+summary: I contribute fixes upstream to tools I use, including Next.js.
+pull_requests:
+  - repository: vercel/next.js
+    title: "fix: account for custom pageExtensions in no-html-link-for-pages ESLint rule"
+    status: open (under review)
+    date: July 2026
+    url: https://github.com/vercel/next.js/pull/96268
+  - repository: vercel/next.js
+    title: Skip polyfill-module when browserslist targets support polyfilled APIs natively
+    status: closed without merge
+    date: July 2026
+    url: https://github.com/vercel/next.js/pull/95726
+  - repository: google/zx
+    title: "docs: fix tmpfile example comment"
+    status: closed without merge
+    date: August 2026
+    url: https://github.com/google/zx/pull/1498
+  - repository: SamehAbdelAlYoussef/msolutions_custom
+    title: "feat(saas): tenant provisioning module with backend dashboard"
+    status: merged
+    date: September 2026
+    url: https://github.com/SamehAbdelAlYoussef/msolutions_custom/pull/1

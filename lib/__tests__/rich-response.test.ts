@@ -4,9 +4,11 @@ import {
   sanitizeBlocks,
   dropUngroundedBlocks,
   stripRichFenceForDisplay,
-  convertWideMarkdownTable,
-  convertBulletRecords,
   ResponseBlockSchema,
+  isSafeUrl,
+  toHistoryContent,
+  summarizeBlocks,
+  toRequestMessages,
 } from "../rich-response";
 import { buildSystemPrompt } from "../generate";
 
@@ -44,88 +46,8 @@ describe("rich-response schema validation", () => {
     expect(p.blocks[0].type).toBe("chart");
   });
 
-  it("accepts a valid callout with default severity", () => {
+  it("accepts a valid project response", () => {
     const p = parseRichContent(
-      withFence(
-        "Worth noting:",
-        JSON.stringify({
-          blocks: [{ type: "callout", content: "The **pgvector** index needs reindexing after major upgrades." }],
-        }),
-      ),
-    );
-    expect(p.blocks).toHaveLength(1);
-    expect(p.blocks[0].type).toBe("callout");
-    if (p.blocks[0].type === "callout") {
-      expect(p.blocks[0].severity).toBeUndefined();
-      expect(p.blocks[0].content).toContain("pgvector");
-    }
-  });
-
-  it("rejects callouts with unknown severity", () => {
-    const { blocks } = sanitizeBlocks([
-      { type: "callout", severity: "hurtful", content: "x" },
-    ]);
-    expect(blocks).toHaveLength(0);
-  });
-
-  it("trims oversized callout content instead of dropping", () => {
-    const { blocks } = sanitizeBlocks([
-      { type: "callout", content: "a".repeat(900) },
-    ]);
-    expect(blocks).toHaveLength(1);
-    if (blocks[0].type === "callout") expect(blocks[0].content).toHaveLength(800);
-  });
-
-  it("drops callouts without content but keeps sibling blocks", () => {
-    const { blocks, errors } = sanitizeBlocks([
-      { type: "callout", title: "Only title" },
-      { type: "steps", steps: [{ title: "A" }, { title: "B" }] },
-    ]);
-    expect(blocks).toHaveLength(1);
-    expect(blocks[0].type).toBe("steps");
-    expect(errors.length).toBeGreaterThan(0);
-  });
-
-  it("accepts a valid steps response", () => {
-    const p = parseRichContent(
-      withFence(
-        "To reindex:",
-        JSON.stringify({
-          blocks: [
-            {
-              type: "steps",
-              title: "Reindex pgvector",
-              steps: [
-                { title: "Back out traffic", description: "Point the app at maintenance mode" },
-                { title: "Run REINDEX", description: "CREATE INDEX CONCURRENTLY keeps serving" },
-              ],
-            },
-          ],
-        }),
-      ),
-    );
-    expect(p.blocks).toHaveLength(1);
-    if (p.blocks[0].type === "steps") {
-      expect(p.blocks[0].steps).toHaveLength(2);
-      expect(p.blocks[0].steps[0].title).toBe("Back out traffic");
-    }
-  });
-
-  it("trims oversized step lists instead of dropping", () => {
-    const steps = Array.from({ length: 20 }, (_, i) => ({ title: `Step ${i + 1}` }));
-    const { blocks } = sanitizeBlocks([{ type: "steps", steps }]);
-    expect(blocks).toHaveLength(1);
-    if (blocks[0].type === "steps") expect(blocks[0].steps).toHaveLength(12);
-  });
-
-  it("rejects steps lists with fewer than two steps", () => {
-    const { blocks } = sanitizeBlocks([
-      { type: "steps", steps: [{ title: "The only step" }] },
-    ]);
-    expect(blocks).toHaveLength(0);
-  });
-
-  it("accepts a valid project response", () => {    const p = parseRichContent(
       withFence(
         "One of my projects:",
         JSON.stringify({
@@ -310,22 +232,6 @@ describe("rich-response schema validation", () => {
     expect(p.text).toBe("");
     expect(p.blocks).toEqual([]);
   });
-
-  it("renders a trailing json-fence payload as blocks (live model variant)", () => {
-    const raw = "Scaling notes.\n```json\n" + JSON.stringify({ type: "steps", steps: [{ title: "A" }, { title: "B" }] }) + "\n```";
-    const p = parseRichContent(raw);
-    expect(p.text).toBe("Scaling notes.");
-    expect(p.blocks).toHaveLength(1);
-    expect(p.blocks[0].type).toBe("steps");
-  });
-
-  it("leaves ordinary json code blocks untouched", () => {
-    const raw = 'Example config:\n```json\n{"scaleBy": 3}\n```';
-    const p = parseRichContent(raw);
-    expect(p.text).toContain("json");
-    expect(p.blocks).toEqual([]);
-    expect(stripRichFenceForDisplay(raw)).toBe(raw);
-  });
 });
 
 describe("rich-response grounding", () => {
@@ -411,151 +317,15 @@ describe("rich-response streaming compatibility", () => {
   });
 });
 
-describe("wide markdown table fallback", () => {
-  const wide = [
-    "**Islam's projects**",
-    "",
-    "| Project | Role | Tech stack | Highlights |",
-    "|---|---|---|---|",
-    "| **Emdad** | Odoo Developer | Python, Odoo | Custom modules <br> Role-based pricing |",
-    "| **Relief Center** | Full-stack | Odoo, OWL | 3D globe <br> OTP alerts |",
-    "| **RAG Chatbot** | Solo Developer | Next.js, pgvector | Hybrid retrieval **with RRF** |",
-  ].join("\n");
-
-  it("converts a wide table into a comparison block and strips it from text", () => {
-    const p = parseRichContent(wide);
-    expect(p.blocks).toHaveLength(1);
-    expect(p.blocks[0].type).toBe("comparison");
-    if (p.blocks[0].type === "comparison") {
-      expect(p.blocks[0].title).toBe("Islam's projects");
-      expect(p.blocks[0].columns).toEqual(["Project", "Role", "Tech stack", "Highlights"]);
-      expect(p.blocks[0].rows).toHaveLength(3);
-      expect(p.blocks[0].rows[0].label).toBe("Emdad");
-      expect(p.blocks[0].rows[0].values).toContain("Custom modules • Role-based pricing");
-    }
-    expect(p.text).not.toContain("|");
-    expect(stripRichFenceForDisplay(wide)).toBe(p.text);
-  });
-
-  it("leaves narrow tables as ordinary markdown", () => {
-    const narrow = [
-      "| Option | Pros |",
-      "|---|---|",
-      "| A | Fast |",
-      "| B | Cheap |",
-    ].join("\n");
-    const p = parseRichContent(narrow);
-    expect(p.blocks).toHaveLength(0);
-    expect(p.text).toContain("| Option | Pros |");
-  });
-
-  it("leaves partially streamed tables untouched", () => {
-    const partial = wide + "\n| **Taqat** | Frontend";
-    const p = parseRichContent(partial);
-    expect(p.blocks).toHaveLength(1); // the closed table still converts
-    expect(p.text).toContain("| **Taqat** | Frontend");
-  });
-
-  it("converts directly and cleans markdown artifacts from cells", () => {
-    const c = convertWideMarkdownTable(wide);
-    expect(c).not.toBeNull();
-    if (!c) return;
-    expect(c.block.rows[2].values[2]).toBe("Hybrid retrieval with RRF");
-    expect(c.block.rows[2].values[0]).not.toContain("**");
-  });
-});
-
-describe("bullet record fallback", () => {
-  const group = (title: string, desc: string, tech: string, a: string, b: string) =>
-    [
-      `**${title}**`,
-      `*Description*: ${desc}`,
-      `*Role*: Solo Developer`,
-      `*Tech stack*: ${tech}`,
-      `*Highlights*: ${a}`,
-      `*Impact*: ${b}`,
-    ].join("\n");
-
-  const bulletAnswer = [
-    "Here's a complete list of Islam's documented projects:",
-    "",
-    group("Emdad", "Humanitarian storefront on Odoo 17.", "Python, Odoo 17, PostgreSQL", "Custom modules", "Efficient aid distribution"),
-    "",
-    group("RAG Chatbot", "Retrieval-augmented chatbot over YAML files.", "Next.js, pgvector, TypeScript", "Hybrid retrieval with RRF", "recall@8 0.904"),
-    "",
-    group("Relief Center", "Disaster-response platform on a 3D globe.", "Odoo, OWL, JavaScript", "Live data ingestion into Odoo ORM", "Real-time disaster visibility"),
-  ].join("\n");
-
-  it("converts 3+ bullet record paragraphs into project blocks", () => {
-    const p = parseRichContent(bulletAnswer);
-    expect(p.blocks).toHaveLength(3);
-    expect(p.blocks.every((b) => b.type === "project")).toBe(true);
-    if (p.blocks[0].type === "project") {
-      expect(p.blocks[0].title).toBe("Emdad");
-      expect(p.blocks[0].technologies).toContain("Odoo 17");
-      expect(p.blocks[0].highlights).toContain("Custom modules");
-    }
-    expect(p.text).not.toContain("**Emdad**");
-    expect(p.text).toContain("Here's a complete list");
-    expect(stripRichFenceForDisplay(bulletAnswer)).toBe(p.text);
-  });
-
-  it("keeps fewer than three groups as plain markdown", () => {
-    const two = [
-      group("Emdad", "Humanitarian storefront.", "Python, Odoo", "Custom modules", "Aid distribution"),
-      "",
-      group("RAG Chatbot", "Chatbot over YAML.", "Next.js, pgvector", "Hybrid retrieval", "recall@8 0.9"),
-    ].join("\n");
-    const p = parseRichContent(two);
-    expect(p.blocks).toHaveLength(0);
-    expect(p.text).toContain("**Emdad**");
-  });
-
-  it("does not convert feedback or steps prose", () => {
-    const feedback = [
-      "**Ahmed** — Feedback:",
-      "- What a great developer!",
-      "",
-      "**Sara** — Feedback:",
-      "- Says he works well under pressure.",
-      "",
-      "**Omar** — Feedback:",
-      "- Great communicator.",
-    ].join("\n");
-    expect(convertBulletRecords(feedback)).toBeNull();
-    const p = parseRichContent(feedback);
-    expect(p.blocks).toHaveLength(0);
-  });
-});
-
 describe("adaptive system prompt", () => {
   const prompt = buildSystemPrompt("CONTEXT");
   it("instructs single-generation rich-ui output (no second LLM call)", () => {
     expect(prompt).toContain("rich-ui");
-    expect(prompt).toContain("at most one rich-ui fenced block per response");
-  });
-  it("maps evidence shape to presentation and forbids decoration", () => {
-    expect(prompt).toContain("Shape-driven visual selection");
-    expect(prompt).toContain("Do not emit empty, redundant, or decorative visuals");
-    expect(prompt).toContain("answer in Markdown without a visual");
-  });
-  it("maps procedures to steps and highlights to callouts", () => {
-    expect(prompt).toContain('"type":"steps"');
-    expect(prompt).toContain('"type":"callout"');
-    expect(prompt).toContain("A sequence of actions the reader would follow");
-  });
-  it("selects blocks dynamically without user rendering hints", () => {
-    expect(prompt).toContain("Users will not tell you how to render an answer");
-    expect(prompt).toContain("Never flatten 3+ attribute-bearing records into one wide Markdown table");
-    expect(prompt).toContain("A record count of 3 or more of the same kind is a strong signal");
-  });
-  it("keeps simple questions concise and grounds component data", () => {
-    expect(prompt).toContain("Simple questions receive a concise Markdown answer");
-    expect(prompt).toContain("Never invent facts, metrics, evidence, or achievements to fill a visual");
+    expect(prompt).toContain("no extra call");
   });
   it("forbids fabricated metrics and arbitrary code", () => {
-    expect(prompt).toContain("Never invent data to populate a visual");
-    expect(prompt).toContain("Never emit HTML tags");
+    expect(prompt).toContain("Never invent metrics");
+    expect(prompt).toContain("never emit HTML");
   });
   it("contains no hostile/insult instructions", () => {
     expect(prompt.toLowerCase()).not.toContain("vulgar");
@@ -564,19 +334,7 @@ describe("adaptive system prompt", () => {
   it("preserves grounding, voice, and image rules", () => {
     expect(prompt).toContain("first person");
     expect(prompt).toContain("source of truth");
-    expect(prompt).toContain("Never invent, modify, or guess image URLs");
-  });
-  it("forbids bare JSON outside the fence", () => {
-    expect(prompt).toContain("without the fence it renders");
-  });
-  it("forbids suggested follow-up questions", () => {
-    expect(prompt).toContain("Never append suggested follow-up questions");
-  });
-  it("forbids repeating block contents in prose", () => {
-    expect(prompt).toContain("do not duplicate its contents in the introduction");
-  });
-  it("forbids HTML tags in answers", () => {
-    expect(prompt).toContain("Never emit HTML tags");
+    expect(prompt).toContain("Never invent URLs");
   });
 });
 
@@ -626,5 +384,215 @@ describe("bare-JSON fallback (issue #37)", () => {
 
   it("strips bare payloads in the display helper too", () => {
     expect(stripRichFenceForDisplay(`Intro.\n\n${projectPayload}`)).toBe("Intro.");
+  });
+});
+
+const proj = (extra: Record<string, unknown> = {}) => ({
+  type: "project",
+  title: "RAG Chatbot",
+  description: "A RAG chatbot over my career knowledge base.",
+  technologies: ["Next.js", "pgvector"],
+  highlights: ["Hybrid retrieval"],
+  ...extra,
+});
+const payload = (...blocks: unknown[]) => JSON.stringify({ blocks });
+
+describe("wire tolerance (json fences, double fences, bare payloads)", () => {
+  it("accepts a ```json fence carrying a blocks payload", () => {
+    const p = parseRichContent(`I built this.\n\n\`\`\`json\n${payload(proj())}\n\`\`\``);
+    expect(p.text).toBe("I built this.");
+    expect(p.blocks).toHaveLength(1);
+    expect(p.text).not.toContain("{");
+  });
+
+  it("leaves an ordinary ```json code sample in the prose", () => {
+    const md = 'Config:\n```json\n{"port": 3000}\n```';
+    const p = parseRichContent(md);
+    expect(p.text).toBe(md);
+    expect(p.blocks).toEqual([]);
+  });
+
+  it("merges two fences and dedupes a repeated block", () => {
+    const tech = { type: "tech", technologies: ["React"] };
+    const md = `Answer.\n\`\`\`rich-ui\n${payload(proj(), tech)}\n\`\`\`\n\`\`\`json\n${payload(tech)}\n\`\`\``;
+    const p = parseRichContent(md);
+    expect(p.text).toBe("Answer.");
+    expect(p.blocks.map((b) => b.type)).toEqual(["project", "tech"]);
+  });
+
+  it("keeps prose written after the fence", () => {
+    const p = parseRichContent(`Before.\n\`\`\`rich-ui\n${payload(proj())}\n\`\`\`\nAfter.`);
+    expect(p.text).toBe("Before.\n\nAfter.");
+  });
+
+  it("tolerates trailing commas in the payload", () => {
+    const p = parseRichContent('Hi.\n```rich-ui\n{"blocks":[{"type":"tech","technologies":["React",],},]}\n```');
+    expect(p.blocks).toHaveLength(1);
+  });
+
+  it("never returns raw blocks JSON as prose, even when invalid", () => {
+    const md = 'Hi.\n```json\n{"blocks":[{"type":"nope"}]}\n```';
+    const p = parseRichContent(md);
+    expect(p.text).toBe("Hi.");
+    expect(p.blocks).toEqual([]);
+  });
+});
+
+describe("streaming prefixes", () => {
+  const full = `I shipped these.\n\n\`\`\`rich-ui\n${payload(proj(), proj({ title: "Other" }))}\n\`\`\``;
+
+  it("never shows backticks or JSON at any cut point", () => {
+    for (let i = 1; i <= full.length; i++) {
+      const p = parseRichContent(full.slice(0, i));
+      expect(p.text).not.toMatch(/`|\{"|"blocks"/);
+    }
+  });
+
+  it("reports a pending visual with its block type while the fence is open", () => {
+    const cut = full.slice(0, full.indexOf("Hybrid"));
+    const p = parseRichContent(cut);
+    expect(p.text).toBe("I shipped these.");
+    expect(p.pending).toEqual({ type: "project", count: 1 });
+    expect(parseRichContent(full).pending).toBeNull();
+  });
+
+  it("hides a ```json opener mid-stream", () => {
+    expect(parseRichContent("Answer.\n```js").text).toBe("Answer.");
+    expect(parseRichContent("Answer.\n```json\n{\"bl").text).toBe("Answer.");
+    expect(parseRichContent("Answer.\n``").text).toBe("Answer.");
+  });
+
+  it("hides an unfenced payload while it streams", () => {
+    const p = parseRichContent('Answer.\n\n{"blocks":[{"type":"timeline","events":[');
+    expect(p.text).toBe("Answer.");
+    expect(p.pending?.type).toBe("timeline");
+    expect(parseRichContent('Answer.\n\n{"bl').text).toBe("Answer.");
+  });
+
+  it("does not swallow a normal code block being streamed", () => {
+    const p = parseRichContent("Run:\n```bash\nnpm install");
+    expect(p.text).toContain("npm install");
+    expect(p.pending).toBeNull();
+  });
+});
+
+describe("per-field validation", () => {
+  it("drops a bad url but keeps the project", () => {
+    const { blocks } = sanitizeBlocks([proj({ url: "github.com/x" })]);
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0].type === "project" && blocks[0].url).toBeFalsy();
+  });
+
+  it("drops a bad link item but keeps the good ones", () => {
+    const { blocks } = sanitizeBlocks([
+      proj({
+        links: [
+          { label: "GitHub", url: "https://github.com/islamhafez0/x" },
+          { label: "Bad", url: "javascript:alert(1)" },
+          { label: "CV", url: "/files/cv.pdf" },
+        ],
+      }),
+    ]);
+    const b = blocks[0];
+    expect(b.type === "project" && b.links?.map((l) => l.label)).toEqual(["GitHub", "CV"]);
+  });
+
+  it("drops one bad timeline event, not the timeline", () => {
+    const { blocks } = sanitizeBlocks([
+      { type: "timeline", events: [{ date: "2024", title: "" }, { date: "2023", title: "Odoo" }] },
+    ]);
+    expect(blocks[0].type === "timeline" && blocks[0].events).toHaveLength(1);
+  });
+
+  it("truncates over-long strings and wraps a lone string into an array", () => {
+    const { blocks } = sanitizeBlocks([
+      proj({ title: "T".repeat(300), highlights: "Single highlight" }),
+    ]);
+    const b = blocks[0];
+    expect(b.type === "project" && b.title.length).toBe(120);
+    expect(b.type === "project" && b.highlights).toEqual(["Single highlight"]);
+  });
+
+  it("pads short comparison rows instead of dropping the table", () => {
+    const ok = sanitizeBlocks([
+      { type: "comparison", columns: ["Aspect", "A", "B"], rows: [{ label: "X", values: ["1"] }] },
+    ]);
+    expect(ok.blocks[0].type === "comparison" && ok.blocks[0].rows[0].values).toEqual(["1", "—"]);
+  });
+
+  it("drops dangling diagram edges but keeps the diagram", () => {
+    const { blocks } = sanitizeBlocks([
+      {
+        type: "diagram",
+        nodes: [{ id: "a", label: "A" }, { id: "b", label: "B" }],
+        edges: [{ from: "a", to: "b" }, { from: "a", to: "ghost" }],
+      },
+    ]);
+    expect(blocks[0].type === "diagram" && blocks[0].edges).toHaveLength(1);
+  });
+});
+
+describe("link safety", () => {
+  it("allows https and site-relative only", () => {
+    expect(isSafeUrl("https://github.com/islamhafez0")).toBe(true);
+    expect(isSafeUrl("/files/islam-hafez-frontend.pdf")).toBe(true);
+    expect(isSafeUrl("http://example.com")).toBe(false);
+    expect(isSafeUrl("github.com/x")).toBe(false);
+    expect(isSafeUrl("javascript:alert(1)")).toBe(false);
+    expect(isSafeUrl("//evil.com/x")).toBe(false);
+    expect(isSafeUrl("https://localhost")).toBe(false);
+  });
+});
+
+describe("history stripping", () => {
+  it("sends prose plus a short visual note, never the fence", () => {
+    const md = `I built two things.\n\`\`\`rich-ui\n${payload(proj(), proj({ title: "B" }), { type: "timeline", events: [{ title: "X" }] })}\n\`\`\``;
+    const h = toHistoryContent(md);
+    expect(h).toBe("I built two things.\n\n[visual: 2 project cards, 1 timeline]");
+    expect(h).not.toContain("```");
+  });
+
+  it("caps long answers under the server limit", () => {
+    const long = "word ".repeat(1000) + `\n\`\`\`rich-ui\n${payload(proj())}\n\`\`\``;
+    const h = toHistoryContent(long);
+    expect(h.length).toBeLessThanOrEqual(1800);
+    expect(h).toContain("[visual: 1 project card]");
+  });
+
+  it("leaves plain answers alone", () => {
+    expect(toHistoryContent("Just prose.")).toBe("Just prose.");
+    expect(summarizeBlocks([])).toBe("");
+  });
+});
+
+describe("request payload", () => {
+  it("strips visuals from assistant turns and drops empty ones", () => {
+    const fence = `\n\`\`\`rich-ui\n${payload(proj())}\n\`\`\``;
+    const out = toRequestMessages([
+      { role: "user", content: "Projects?" },
+      { role: "assistant", content: `Here.${fence}` },
+      { role: "user", content: "More?" },
+      { role: "assistant", content: "" },
+      { role: "user", content: "Again" },
+    ]);
+    expect(out).toEqual([
+      { role: "user", content: "Projects?" },
+      { role: "assistant", content: "Here.\n\n[visual: 1 project card]" },
+      { role: "user", content: "More?" },
+      { role: "user", content: "Again" },
+    ]);
+    expect(out.every((m) => m.content.length <= 2000)).toBe(true);
+  });
+
+  it("trims the oldest turns to fit count and size caps, opening on a user turn", () => {
+    const msgs = Array.from({ length: 40 }, (_, i) => ({
+      role: i % 2 ? "assistant" : "user",
+      content: `${i} ${"x".repeat(900)}`,
+    }));
+    const out = toRequestMessages(msgs);
+    expect(out.length).toBeLessThanOrEqual(24);
+    expect(out.reduce((n, m) => n + m.content.length, 0)).toBeLessThanOrEqual(11000);
+    expect(out[0].role).toBe("user");
+    expect(out[out.length - 1].content.startsWith("39")).toBe(true);
   });
 });

@@ -1,15 +1,29 @@
+# Flagship project 4 of 7. Sources: previous knowledge base, GitHub
+# contributors API and commit history (268 of 275 commits, private taqat-techno repository).
 name: Apiary and Honey
-description: Solo-built Odoo 17 ERP for end-to-end apiary management covering sites, colonies, batches, seasons, inspections, feeding, treatments, extractions, harvests, colony movements/permits, mortality tracking, cost accounting, and field data capture. Designed for traceability, compliance, and bilingual (Arabic/English) operations with role-based access control and custom reporting.
-role: Odoo Developer
-tech_stack:
-  - Python
-  - Odoo
-  - JavaScript
-  - HTML
-  - CSS
-  - SCSS
-link: null
+role: Odoo Developer (solo build at TaqaTechno)
+description: >
+  A solo-built Odoo 17 ERP for end-to-end apiary management: sites, colonies,
+  batches, seasons, inspections, feeding, treatments, extractions, harvests,
+  colony movements and permits, mortality tracking, cost accounting and field data
+  capture. Designed for traceability, compliance and bilingual Arabic/English operations.
 highlights:
-  - Full traceability: colony lifecycle, events, inspections, treatments, feeding, extractions, harvests, movements/permits, and mortality
-  - Costing and field operations: apiary cost accounting, field capture workflows, and site/season management
-  - Bilingual UX (Arabic/English), custom QWeb/PDF reports, security/permissions, data models, and onboarding docs
+  - 268 of the repository's 275 commits are mine (August to October 2026)
+  - Delivered as 31 merged work packages (colonies, placements, seasons, dashboards, honey sales, ACL, thresholds) into an R1 integration trunk, promoted dev to stage to main through pull requests
+  - Field app for workers in English, Arabic and Russian
+  - Large automated test suite (572 tests at one point) plus static checks for defects tests cannot reach; a manual walkthrough still found five defects, which I fixed
+  - Security review fixes shipped through a reviewed PR
+  - Season dashboards with charts and money, and role-based access for four user roles
+  - Full colony traceability from inspection to harvest, movements, permits and mortality
+  - Apiary cost accounting, field capture workflows and site/season management
+  - Bilingual Arabic/English UX, custom QWeb/PDF reports, role-based access control
+  - Arabic user guide, client data sheet and an end-to-end walkthrough for the implementation team
+tech_stack:
+  - Odoo 17
+  - Python
+  - JavaScript
+  - QWeb
+  - SCSS
+links: []
+unknowns:
+  - The repository is private; no public demo.
