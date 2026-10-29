@@ -35,3 +35,43 @@ describe("buildSystemPrompt", () => {
     expect(prompt).toContain("Company: TaqaTechno");
   });
 });
+
+describe("visual answer contract", () => {
+  const prompt = buildSystemPrompt("CTX");
+
+  it("puts complete prose first and makes the visual optional", () => {
+    expect(prompt).toContain("The Markdown answer ALWAYS comes first and must be complete");
+    expect(prompt).toContain("tagged rich-ui (never json)");
+    expect(prompt).toContain("Exactly one fence");
+  });
+
+  it("only offers block types the renderer supports", () => {
+    for (const t of ["project", "timeline", "tech", "comparison", "diagram", "details"]) {
+      expect(prompt).toContain(`"type":"${t}"`);
+    }
+    expect(prompt).not.toContain('"type":"metrics"');
+    expect(prompt).not.toContain('"type":"chart"');
+  });
+
+  it("orders timelines chronologically and keeps edge labels short", () => {
+    expect(prompt).toContain("ordered chronologically from oldest to newest");
+    expect(prompt).toContain("edge labels at most 30 characters");
+  });
+});
+
+describe("grounding rules added for the rebuilt knowledge base", () => {
+  const prompt = buildSystemPrompt("CTX");
+
+  it("never treats testimonials as employment", () => {
+    expect(prompt).toContain("Testimonials, clients, organizations and open-source repositories are NOT employers");
+  });
+
+  it("declines off-topic questions instead of answering them", () => {
+    expect(prompt).toContain("Never answer the off-topic question itself");
+  });
+
+  it("respects documented unknowns and PR status", () => {
+    expect(prompt).toContain("never present a closed pull request as merged");
+  });
+});
+
