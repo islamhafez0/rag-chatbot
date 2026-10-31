@@ -36,6 +36,15 @@ export function Hero({
           className="flex items-center animate-rise font-display text-5xl leading-[1.05] tracking-tight text-foreground sm:text-6xl"
         >
           <span>{PROFILE.name}</span>
+          <span className="sr-only">
+            {" "}
+            — Odoo ERP systems builder & frontend developer
+          </span>
+          <span className="sr-only">
+            {" "}
+            I build ERP systems on Odoo and fast frontends with React and Next.js. Ask the assistant
+            — it answers from my real CV, projects and code.
+          </span>
         </h1>
         <p
           className="mt-4 animate-rise text-sm text-muted-foreground"

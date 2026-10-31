@@ -1,7 +1,7 @@
 {
-  "name": "Islam Hafez — Portfolio",
+  "name": "Chat with Islam Hafez — Odoo ERP & Frontend",
   "short_name": "Islam Hafez",
-  "description": "A RAG assistant grounded in my CV, projects, and code.",
+  "description": "A RAG assistant grounded in Islam Hafez's real CV, Odoo ERP systems, projects and code.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#080D18",
@@ -10,8 +10,7 @@
     {
       "src": "/icon.svg",
       "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "type": "image/svg+xml"
     }
   ]
 }

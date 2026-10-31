@@ -2,13 +2,13 @@
 # answers for any "who is Islam" style question).
 description: Photos of Islam Hafez. Only show them when someone asks for a photo, picture or image.
 gallery:
-  - "/images/professionalme.png: professional profile photo"
-  - "/images/casualme.png: casual photo"
-  - "/images/casualme-2.jpg: casual photo 2"
-  - "/images/casualme-3.jpeg: casual photo 3"
-  - "/images/image-1.png: personal photo 1"
-  - "/images/image-2.png: personal photo 2"
-  - "/images/image-3.png: personal photo 3"
-  - "/images/image-4.jpeg: personal photo 4"
-  - "/images/image-5.jpeg: personal photo 5"
-  - "/images/image-6.webp: personal photo 6"
+  - "/images/islam-hafez-professional.png: professional profile photo in a dark suit"
+  - "/images/islam-hafez-headshot.webp: studio headshot on a plain background"
+  - "/images/islam-hafez-studio-portrait.jpeg: studio portrait in a dark jacket"
+  - "/images/islam-hafez-graduation.png: graduation photo in academic cap and gown with English Department sash"
+  - "/images/islam-hafez-denim-jacket.png: portrait outdoors wearing a denim jacket"
+  - "/images/islam-hafez-at-desk.jpg: photo at office desk wearing a cap"
+  - "/images/islam-hafez-campus.jpeg: casual photo outdoors on university campus"
+  - "/images/islam-hafez-gym-selfie.png: mirror selfie in gym athletic wear"
+  - "/images/islam-hafez-mirror-selfie.png: casual mirror selfie"
+  - "/images/islam-hafez-portrait-art.jpeg: stylised artistic portrait with red circular background"

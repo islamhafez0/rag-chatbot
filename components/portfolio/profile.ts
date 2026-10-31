@@ -3,11 +3,11 @@ export const PROFILE = {
   name: "Islam Hafez",
   firstName: "Islam",
   lastName: "Hafez",
-  role: "Frontend Developer (React, Next.js) & Odoo Specialist",
+  role: "Odoo ERP Systems Builder & Frontend Developer (React, Next.js)",
   pitch:
-    "I build fast, pixel-perfect web apps with React, Next.js and TypeScript, and custom Odoo modules, themes and websites with Python and OWL. This assistant answers from my real CV, projects and code. Ask it anything.",
+    "I build ERP systems on Odoo (custom modules, themes and websites with Python and OWL) and fast, pixel-perfect web apps with React, Next.js and TypeScript. This assistant answers from my real CV, projects and code. Ask it anything.",
   location: "Cairo, Egypt",
-  avatar: "/images/professionalme.png",
+  avatar: "/images/islam-hafez-professional.png",
   cvs: [
     { label: "Frontend CV", href: "/files/islam-hafez-frontend.pdf" },
     { label: "Odoo CV", href: "/files/islam-hafez-odoo.pdf" },

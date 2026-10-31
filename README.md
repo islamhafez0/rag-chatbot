@@ -17,7 +17,7 @@ A personal intelligence engine that turns your portfolio and experience into an 
 
 The application follows a RAG (Retrieval-Augmented Generation) pipeline:
 
-![RAG System Architecture](./public/images/rag_architecture.svg)
+![RAG System Architecture](./public/images/rag-pipeline-architecture.svg)
 
 Top lane: safe ingestion (YAML → validate everything → entry chunks → Gemini 3072-d → staging table → atomic swap).
 Bottom lane: request path (UI → guard → deterministic query prep → intent mode → query embedding → vector retrieval → grounded LLM stream → Markdown + optional rich visual).
@@ -96,6 +96,27 @@ npm run build / start           # production build / serve
 ```
 
 Questions worth asking the bot are listed in `questions.txt`.
+
+## SEO & Google Search Console
+
+The production site is `https://ai-islamhafez.vercel.app`.
+
+What is wired up for crawlers:
+
+- `app/robots.ts` — serves `/robots.txt`: everything allowed except `/api/`, plus the sitemap link.
+- `app/sitemap.ts` — serves `/sitemap.xml`: the home page and both CV PDFs.
+- `app/layout.tsx` — full metadata: canonical URL, OpenGraph (`type: profile`), `summary_large_image` Twitter card, `max-image-preview: large` for the GoogleBot, and `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` emitted as the Google site-verification meta tag when set (Next.js `metadata.verification`).
+- `app/opengraph-image.tsx` — the 1200×630 share card, generated at build from `next/og`.
+- `lib/site.ts` — Person + WebSite + ProfilePage JSON-LD graph (sameAs over all public profiles, knowsAbout, address).
+- `lib/faq.ts` — the visible FAQ in `components/portfolio/SEOContent.tsx` mirrored as FAQPage JSON-LD.
+- `components/portfolio/SEOContent.tsx` — a full server-rendered content section below the chat viewport (ERP/Odoo project records, Translate Dashboard product section, frontend work, experience timeline, skills, writing, certifications, FAQ, contact), written from `career_brain/` and cross-checked against live sources (Odoo Apps store, GitHub, DEV Community). Chat stays the first viewport; scrolling reveals the indexed content.
+
+To verify ownership in Google Search Console:
+
+1. Add a **URL prefix** property: `https://ai-islamhafez.vercel.app/`.
+2. Pick the **HTML tag** method; copy the `content` value into `.env` as `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=...` and redeploy. The meta tag then appears in every rendered head.
+3. Back on Search Console, complete verification, then submit the sitemap: `https://ai-islamhafez.vercel.app/sitemap.xml`.
+4. Use **URL Inspection → Request indexing** on `https://ai-islamhafez.vercel.app/` after deploying.
 
 ## CVs
 

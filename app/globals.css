@@ -401,3 +401,8 @@
     scroll-behavior: auto !important;
   }
 }
+
+.no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
