@@ -2,7 +2,7 @@
 
 import { memo, useEffect, useState } from "react";
 
-/** After this long with no first token, say so honestly (free-tier model). */
+/** After this long with no first token, say so honestly. */
 export const SLOW_AFTER_MS = 9000;
 
 export function loaderLabel(slow: boolean): string {
@@ -10,9 +10,8 @@ export function loaderLabel(slow: boolean): string {
 }
 
 /**
- * Pre-first-token state: a CSS-animated orb + shimmering label. One timer
- * total (the "slow" hint) instead of a 16ms re-render loop, honest copy
- * instead of fake pipeline stages, full-contrast text.
+ * Three gently pulsing dots that stagger in a wave, with a "Thinking" label.
+ * Pure CSS — no JS animation loop, monochrome, reduced-motion safe.
  */
 export const ThinkingLoader = memo(function ThinkingLoader() {
   const [slow, setSlow] = useState(false);
@@ -23,29 +22,36 @@ export const ThinkingLoader = memo(function ThinkingLoader() {
 
   return (
     <div className="inline-flex items-center gap-3 py-1">
-      <span aria-hidden className="relative flex h-5 w-5 items-center justify-center">
-        <span
-          className="absolute inset-0 animate-orbit rounded-full"
-          style={{
-            background: "conic-gradient(from 0deg, var(--brand-1), var(--brand-2), var(--brand-3), var(--brand-1))",
-            mask: "radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px))",
-            WebkitMask: "radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px))",
-          }}
-        />
-        <span className="h-1.5 w-1.5 animate-breathe rounded-full bg-primary" />
+      {/* Pulsing dots */}
+      <span aria-hidden className="inline-flex items-center gap-[5px]">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="block h-[5px] w-[5px] rounded-full bg-muted-foreground"
+            style={{
+              animation: "dotPulse 1.4s ease-in-out infinite",
+              animationDelay: `${i * 180}ms`,
+            }}
+          />
+        ))}
       </span>
       <span className="text-sm font-medium text-muted-foreground">
         {loaderLabel(slow)}
-        <span aria-hidden className="inline-flex w-5 gap-0.5 pl-0.5">
-          {[0, 1, 2].map((i) => (
-            <span
-              key={i}
-              className="inline-block h-1 w-1 translate-y-[-1px] animate-breathe rounded-full bg-current"
-              style={{ animationDelay: `${i * 160}ms` }}
-            />
-          ))}
-        </span>
       </span>
+
+      {/* Scoped keyframes — no global CSS needed */}
+      <style>{`
+        @keyframes dotPulse {
+          0%, 80%, 100% {
+            opacity: 0.25;
+            transform: scale(0.75);
+          }
+          40% {
+            opacity: 1;
+            transform: scale(1.1);
+          }
+        }
+      `}</style>
     </div>
   );
 });

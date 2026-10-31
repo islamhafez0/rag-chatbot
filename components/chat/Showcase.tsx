@@ -3,7 +3,6 @@
 import { memo, useId, useState } from "react";
 import {
   ArrowUpRight,
-  Briefcase,
   ChevronDown,
   FileText,
   Github,
@@ -30,17 +29,17 @@ function LinkButton({ link, primary }: { link: CardLink; primary: boolean }) {
       href={link.url}
       {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
       className={cn(
-        "group/link inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-[background-color,scale,box-shadow] duration-200 active:scale-95",
+        "group/link inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-[background-color,scale] duration-200 active:scale-95",
         primary
-          ? "bg-foreground text-background shadow-soft hover:shadow-lift"
-          : "border border-border bg-background/60 text-foreground hover:bg-accent",
+          ? "bg-foreground text-background hover:opacity-85"
+          : "border border-border bg-transparent text-foreground hover:bg-accent",
       )}
     >
       <Icon className="h-3.5 w-3.5" aria-hidden />
       <span className="max-w-[10rem] truncate">{link.label}</span>
       {external && (
         <ArrowUpRight
-          className="h-3 w-3 opacity-60 transition-transform duration-200 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
+          className="h-3 w-3 opacity-50 transition-transform duration-200 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5"
           aria-hidden
         />
       )}
@@ -51,25 +50,12 @@ function LinkButton({ link, primary }: { link: CardLink; primary: boolean }) {
 
 // ------------------------------------------------------------ project card
 
-const HUES = [
-  ["var(--brand-1)", "var(--brand-2)"],
-  ["var(--brand-2)", "var(--brand-3)"],
-  ["var(--brand-3)", "var(--brand-1)"],
-] as const;
-
-function hueFor(title: string) {
-  let h = 0;
-  for (const c of title) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-  return HUES[h % HUES.length];
-}
-
 const MAX_TECHS = 8;
 const SHOWN_HIGHLIGHTS = 3;
 
 export const ProjectCard = memo(function ProjectCard({ block }: { block: ProjectBlock }) {
   const [open, setOpen] = useState(false);
   const regionId = useId();
-  const [c1, c2] = hueFor(block.title);
   const links = projectLinks(block);
   const techs = [...new Set(block.technologies)];
   const extraTechs = techs.length - MAX_TECHS;
@@ -85,19 +71,13 @@ export const ProjectCard = memo(function ProjectCard({ block }: { block: Project
   return (
     <article
       aria-label={block.title}
-      className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-soft transition-[translate,scale,box-shadow,border-color] duration-300 ease-out-expo hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lift"
+      className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card transition-[border-color] duration-200 hover:border-foreground/20"
     >
-      <span
-        aria-hidden
-        className="absolute inset-x-0 top-0 h-[3px] opacity-80 transition-opacity group-hover:opacity-100"
-        style={{ background: `linear-gradient(90deg, ${c1}, ${c2})` }}
-      />
       <div className="flex flex-1 flex-col gap-3.5 p-4 sm:p-5">
         <header className="flex items-start gap-3">
           <span
             aria-hidden
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white shadow-soft"
-            style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-sm font-bold text-muted-foreground"
           >
             {initials || <Sparkle className="h-4 w-4" />}
           </span>
@@ -133,14 +113,13 @@ export const ProjectCard = memo(function ProjectCard({ block }: { block: Project
               <li
                 key={`${i}-${h.slice(0, 24)}`}
                 className={cn(
-                  "flex items-start gap-2 text-[0.8125rem] leading-relaxed text-foreground/90",
+                  "flex items-start gap-2 text-[0.8125rem] leading-relaxed text-foreground/80",
                   i >= SHOWN_HIGHLIGHTS && "animate-rise",
                 )}
               >
                 <span
                   aria-hidden
-                  className="mt-[0.55em] h-1.5 w-1.5 shrink-0 rounded-full"
-                  style={{ background: `linear-gradient(135deg, ${c1}, ${c2})` }}
+                  className="mt-[0.6em] h-1 w-1 shrink-0 rounded-full bg-muted-foreground/50"
                 />
                 <span className="min-w-0">
                   <AutolinkedText text={h} />
@@ -163,7 +142,7 @@ export const ProjectCard = memo(function ProjectCard({ block }: { block: Project
                 onClick={() => setOpen((v) => !v)}
                 aria-expanded={open}
                 aria-controls={regionId}
-                className="ml-auto inline-flex h-8 items-center gap-1 rounded-full px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="ml-auto inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
                 {open
                   ? "Show less"
@@ -189,50 +168,50 @@ export const Timeline = memo(function Timeline({ block }: { block: TimelineBlock
   return (
     <section
       aria-label={block.title ?? "Timeline"}
-      className="w-full rounded-2xl border border-border bg-card p-4 shadow-soft sm:p-5"
+      className="w-full rounded-xl border border-border bg-card p-4 sm:p-5"
     >
       {block.title && <h3 className="mb-4 text-sm font-semibold text-foreground">{block.title}</h3>}
       <div className="relative">
-      <span
-        aria-hidden
-        className="absolute top-2 bottom-2 left-[5px] w-px"
-        style={{ background: "linear-gradient(var(--brand-1), var(--brand-2), transparent)" }}
-      />
-      <ol className="space-y-5 stagger">
-        {block.events.map((e, i) => (
-          <li
-            key={`${i}-${e.title}`}
-            className="relative pl-7"
-            style={{ "--i": Math.min(i, 10) } as React.CSSProperties}
-          >
-            <span
-              aria-hidden
-              className={cn(
-                "absolute top-[0.35rem] left-0 h-[11px] w-[11px] rounded-full border-2 border-card",
-                i === 0 ? "bg-primary ring-4 ring-primary/15" : "bg-muted-foreground/60",
+        {/* Vertical rule */}
+        <span
+          aria-hidden
+          className="absolute top-2 bottom-2 left-[5px] w-px bg-border"
+        />
+        <ol className="space-y-5 stagger">
+          {block.events.map((e, i) => (
+            <li
+              key={`${i}-${e.title}`}
+              className="relative pl-7"
+              style={{ "--i": Math.min(i, 10) } as React.CSSProperties}
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "absolute top-[0.35rem] left-0 h-[11px] w-[11px] rounded-full border-2 border-card",
+                  i === 0 ? "bg-foreground" : "bg-border",
+                )}
+              />
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <p className="text-sm font-semibold text-foreground">{e.title}</p>
+                {e.date && (
+                  <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] font-medium text-muted-foreground">
+                    {e.date}
+                  </span>
+                )}
+                {e.tag && (
+                  <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+                    {e.tag}
+                  </span>
+                )}
+              </div>
+              {e.description && (
+                <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted-foreground">
+                  <AutolinkedText text={e.description} />
+                </p>
               )}
-            />
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <p className="text-sm font-semibold text-foreground">{e.title}</p>
-              {e.date && (
-                <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-[11px] font-medium text-muted-foreground">
-                  {e.date}
-                </span>
-              )}
-              {e.tag && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                  <Briefcase className="h-3 w-3" aria-hidden /> {e.tag}
-                </span>
-              )}
-            </div>
-            {e.description && (
-              <p className="mt-1 text-[0.8125rem] leading-relaxed text-muted-foreground">
-                <AutolinkedText text={e.description} />
-              </p>
-            )}
-          </li>
-        ))}
-      </ol>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );
@@ -244,7 +223,7 @@ export const ComparisonTable = memo(function ComparisonTable({ block }: { block:
   return (
     <section
       aria-label={block.title ?? "Comparison"}
-      className="w-full overflow-hidden rounded-2xl border border-border bg-card shadow-soft"
+      className="w-full overflow-hidden rounded-xl border border-border bg-card"
     >
       {block.title && (
         <h3 className="border-b border-border px-4 py-2.5 text-sm font-semibold text-foreground">
@@ -260,8 +239,8 @@ export const ComparisonTable = memo(function ComparisonTable({ block }: { block:
                   key={`${i}-${c}`}
                   scope="col"
                   className={cn(
-                    "border-b border-border bg-muted/60 px-3.5 py-2.5 text-left text-xs font-semibold tracking-wide text-muted-foreground",
-                    i === 0 && "sticky left-0 z-10 bg-muted",
+                    "border-b border-border bg-muted px-3.5 py-2.5 text-left text-xs font-semibold tracking-wide text-muted-foreground",
+                    i === 0 && "sticky left-0 z-10",
                   )}
                 >
                   {c}
@@ -271,7 +250,7 @@ export const ComparisonTable = memo(function ComparisonTable({ block }: { block:
           </thead>
           <tbody>
             {block.rows.map((r, ri) => (
-              <tr key={`${ri}-${r.label}`} className="transition-colors hover:bg-accent/40">
+              <tr key={`${ri}-${r.label}`} className="transition-colors hover:bg-accent">
                 <th
                   scope="row"
                   className="sticky left-0 z-10 min-w-[7rem] border-b border-border bg-card px-3.5 py-2.5 text-left align-top font-medium text-foreground"

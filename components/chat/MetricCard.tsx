@@ -5,21 +5,22 @@ import { Activity, AlertTriangle, CheckCircle2, Info, Sparkles } from "lucide-re
 import type { MetricItem, MetricStatus } from "@/lib/rich-response";
 import { cn } from "@/lib/utils";
 
-const STATUS_STYLE: Record<MetricStatus, { icon: typeof Info; classes: string }> = {
-  neutral: { icon: Activity, classes: "text-muted-foreground" },
-  info: { icon: Info, classes: "text-sky-600 dark:text-sky-300" },
-  success: { icon: CheckCircle2, classes: "text-emerald-600 dark:text-emerald-300" },
-  warning: { icon: AlertTriangle, classes: "text-amber-600 dark:text-amber-300" },
-  highlight: { icon: Sparkles, classes: "text-violet-600 dark:text-violet-300" },
+// All statuses use neutral muted-foreground — no semantic colors.
+const STATUS_STYLE: Record<MetricStatus, { icon: typeof Info }> = {
+  neutral:   { icon: Activity },
+  info:      { icon: Info },
+  success:   { icon: CheckCircle2 },
+  warning:   { icon: AlertTriangle },
+  highlight: { icon: Sparkles },
 };
 
 export const MetricCard = memo(function MetricCard({ item }: { item: MetricItem }) {
   const status: MetricStatus = item.status ?? "neutral";
-  const { icon: Icon, classes } = STATUS_STYLE[status];
+  const { icon: Icon } = STATUS_STYLE[status];
   return (
-    <div className="rounded-xl border border-border bg-card p-3.5 shadow-sm transition-colors hover:border-muted-foreground/30">
+    <div className="rounded-xl border border-border bg-card p-3.5 transition-colors hover:border-foreground/20">
       <div className="flex items-center gap-1.5">
-        <Icon className={cn("h-3.5 w-3.5", classes)} aria-hidden />
+        <Icon className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
         <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
           {item.label}
         </p>
