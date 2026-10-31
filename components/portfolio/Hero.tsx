@@ -46,7 +46,7 @@ export function Hero({
 
         {/* Infinite scrolling question suggestions row */}
         <div
-          className="relative mt-8 w-full max-w-3xl overflow-hidden py-1 animate-rise [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]"
+          className="relative mt-8 w-full max-w-3xl overflow-hidden py-1 animate-rise mask-[linear-gradient(to_right,transparent,black_8%,black_92%,transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]"
           style={{ animationDelay: "200ms" }}
         >
           <div className="marquee-belt flex w-max select-none">

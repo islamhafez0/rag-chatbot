@@ -1,0 +1,17 @@
+{
+  "name": "Islam Hafez — Portfolio",
+  "short_name": "Islam Hafez",
+  "description": "A RAG assistant grounded in my CV, projects, and code.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080D18",
+  "theme_color": "#080D18",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

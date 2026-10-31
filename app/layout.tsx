@@ -18,7 +18,11 @@ export const metadata: Metadata = {
   title: "Islam Hafez — Frontend Developer & Odoo Specialist",
   description:
     "Chat with Islam Hafez's portfolio: React & Next.js frontend work, Odoo ERP development, projects, experience and CVs.",
-  icons: { icon: "/favicon.png" },
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/apple-touch-icon.svg",
+  },
+  manifest: "/manifest.json",
   openGraph: {
     title: "Islam Hafez — Frontend Developer & Odoo Specialist",
     description: "Ask me about my projects, experience and how I build things.",
@@ -31,7 +35,7 @@ export const viewport: Viewport = {
   viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#FFFFFF" },
-    { media: "(prefers-color-scheme: dark)", color: "#0A0A0A" },
+    { media: "(prefers-color-scheme: dark)", color: "#080D18" },
   ],
 };
 
