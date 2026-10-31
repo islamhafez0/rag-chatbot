@@ -24,5 +24,8 @@ export const SUGGESTIONS = [
   { label: "Show your best projects", icon: "sparkles" },
   { label: "How is this chatbot built?", icon: "cpu" },
   { label: "Frontend or Odoo — what's your focus?", icon: "split" },
+  { label: "What is your tech stack?", icon: "cpu" },
+  { label: "Tell me about your Odoo modules", icon: "briefcase" },
+  { label: "What are your key achievements?", icon: "sparkles" },
   { label: "Download your CV", icon: "file" },
 ] as const;

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useChat } from "ai/react";
 import { AlertTriangle, ArrowDown, RotateCcw, SquarePen } from "lucide-react";
@@ -6,11 +6,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toRequestMessages } from "@/lib/rich-response";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { AssistantAvatar, AssistantMessage, UserMessage } from "@/components/chat/ChatMessage";
+import { AssistantMessage, UserMessage } from "@/components/chat/ChatMessage";
 import { Composer } from "@/components/chat/Composer";
 import { useStickToBottom } from "@/components/chat/useStickToBottom";
 import { Hero } from "@/components/portfolio/Hero";
-import { PROFILE } from "@/components/portfolio/profile";
+import { Logo } from "@/components/portfolio/Logo";
 
 function readableError(error: unknown): string {
   if (!(error instanceof Error)) return "Something went wrong with that request.";
@@ -62,7 +62,7 @@ export default function Home() {
   const send = useCallback(
     (text: string) => {
       const q = text.trim();
-      if (!q || isLoading) return; // double-submit guard (button, Enter, chips)
+      if (!q || isLoading) return;
       setDismissedError(null);
       setInput("");
       scrollToBottom();
@@ -87,7 +87,7 @@ export default function Home() {
 
   const stopNow = useCallback(() => {
     if (last?.role === "assistant") setStoppedIds((s) => new Set(s).add(last.id));
-    stop(); // aborts the fetch; the partial answer stays in `messages`
+    stop();
     inputRef.current?.focus();
   }, [last, stop]);
 
@@ -103,7 +103,7 @@ export default function Home() {
 
   useEffect(() => {
     // Warm the DB pool / embeddings on load so the first chat is faster.
-    fetch("/api/warmup", { cache: "no-store" }).catch(() => {});
+    fetch("/api/warmup", { cache: "no-store" }).catch(() => { });
   }, []);
 
   // Escape stops a running answer from anywhere on the page.
@@ -126,46 +126,44 @@ export default function Home() {
 
   return (
     <div className="relative flex h-dvh flex-col overflow-hidden bg-background text-foreground">
-      <div className="ambient" aria-hidden>
-        <div className="ambient-grid" />
-      </div>
-
+      {/* ── Header ─────────────────────────────────────────────────────── */}
       <header className="pt-safe relative z-20 border-b border-transparent">
-        <div className="mx-auto flex h-14 w-full max-w-4xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-6">
+        <div className="mx-auto flex h-12 w-full max-w-3xl items-center justify-between px-4 sm:h-14 sm:px-6">
+          {/* Home logo — visible only in chat state */}
           <button
             type="button"
             onClick={started ? newChat : undefined}
             tabIndex={started ? 0 : -1}
-            aria-label={started ? "Back to start (new chat)" : undefined}
+            aria-label={started ? "Back to home" : undefined}
             className={cn(
-              "flex min-w-0 items-center gap-2.5 rounded-full pr-2 text-left transition-opacity duration-500",
+              "transition-[opacity] duration-300 hover:opacity-70",
               started ? "opacity-100" : "pointer-events-none opacity-0",
             )}
           >
-            <AssistantAvatar />
-            <span className="min-w-0 leading-tight">
-              <span className="block truncate text-sm font-semibold">{PROFILE.name}</span>
-              <span className="block truncate text-[11px] text-muted-foreground">
-                Frontend &amp; Odoo developer
-              </span>
-            </span>
+            <Logo className="h-6 w-auto text-foreground" />
           </button>
-          <div className="flex shrink-0 items-center gap-1.5">
-            {started && (
-              <button
-                type="button"
-                onClick={newChat}
-                className="inline-flex h-9 animate-fade items-center gap-1.5 rounded-full border border-border bg-card/70 px-3 text-xs font-semibold text-foreground backdrop-blur transition-[background-color,scale] duration-200 hover:bg-accent active:scale-95"
-              >
-                <SquarePen className="h-3.5 w-3.5" aria-hidden />
-                New chat
-              </button>
-            )}
+
+          <div className="flex shrink-0 items-center gap-2">
+            {/* New chat button — visible only in chat state */}
+            <button
+              type="button"
+              onClick={newChat}
+              aria-label="Start a new chat"
+              title="New chat"
+              className={cn(
+                "inline-flex h-8 items-center gap-1.5 rounded-md border border-border px-2.5 text-xs font-medium text-muted-foreground transition-[opacity,background-color,color] duration-300 hover:bg-accent hover:text-foreground",
+                started ? "animate-fade opacity-100" : "pointer-events-none opacity-0",
+              )}
+            >
+              <SquarePen className="h-3.5 w-3.5" aria-hidden />
+              New chat
+            </button>
             <ThemeToggle />
           </div>
         </div>
       </header>
 
+      {/* ── Main scroll area ────────────────────────────────────────────── */}
       <main className="relative z-10 flex min-h-0 flex-1 flex-col">
         <div
           ref={scrollRef}
@@ -173,12 +171,18 @@ export default function Home() {
         >
           <div
             ref={contentRef}
-            className="mx-auto flex w-full max-w-3xl flex-col gap-7 px-4 pt-2 pb-8 sm:px-6"
+            className={cn(
+              "mx-auto flex w-full max-w-3xl flex-col px-4 sm:px-6",
+              // Home state: vertically center the hero within the available scroll area
+              !started && "min-h-[calc(100dvh-14rem)] justify-center pb-4 pt-8",
+              // Chat state: top-aligned messages with breathing room
+              started && "gap-8 pt-6 pb-8",
+            )}
           >
             {!started ? (
               <Hero onPick={send} disabled={isLoading} />
             ) : (
-              <div role="log" aria-label="Conversation" aria-busy={isLoading} className="flex flex-col gap-7 pt-4">
+              <div role="log" aria-label="Conversation" aria-busy={isLoading} className="flex flex-col gap-8">
                 {messages.map((m) =>
                   m.role === "user" ? (
                     <UserMessage key={m.id} content={m.content} />
@@ -209,11 +213,13 @@ export default function Home() {
                 {showError && (
                   <div
                     role="alert"
-                    className="flex animate-rise items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/8 p-4"
+                    className="flex animate-rise items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/8 p-4"
                   >
-                    <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" aria-hidden />
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" aria-hidden />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-foreground">That request didn&apos;t go through.</p>
+                      <p className="text-sm font-semibold text-foreground">
+                        That request didn&apos;t go through.
+                      </p>
                       <p className="mt-0.5 text-sm [overflow-wrap:anywhere] text-muted-foreground">
                         {readableError(error)}
                       </p>
@@ -221,14 +227,14 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={retry}
-                          className="inline-flex h-8 items-center gap-1.5 rounded-full bg-foreground px-3 text-xs font-semibold text-background transition-[scale] active:scale-95"
+                          className="inline-flex h-7 items-center gap-1.5 rounded-md border border-foreground bg-foreground px-3 text-xs font-semibold text-background transition-[scale] active:scale-95"
                         >
-                          <RotateCcw className="h-3.5 w-3.5" aria-hidden /> Try again
+                          <RotateCcw className="h-3 w-3" aria-hidden /> Try again
                         </button>
                         <button
                           type="button"
                           onClick={() => setDismissedError(error)}
-                          className="inline-flex h-8 items-center rounded-full px-3 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                          className="inline-flex h-7 items-center rounded-md px-3 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
                         >
                           Dismiss
                         </button>
@@ -241,20 +247,25 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="pb-safe relative px-3 sm:px-6">
+        {/* ── Composer area ─────────────────────────────────────────────── */}
+        <div className="pb-safe relative px-4 sm:px-6">
+          {/* Jump-to-bottom pill */}
           <button
             type="button"
             onClick={() => scrollToBottom("smooth")}
             aria-label="Jump to latest message"
             tabIndex={atBottom || !started ? -1 : 0}
             className={cn(
-              "absolute -top-14 left-1/2 inline-flex h-9 -translate-x-1/2 items-center gap-1.5 rounded-full border border-border bg-card/90 px-3.5 text-xs font-semibold text-foreground shadow-lift backdrop-blur transition-[opacity,translate] duration-300 ease-out-expo",
-              atBottom || !started ? "pointer-events-none translate-y-2 opacity-0" : "translate-y-0 opacity-100",
+              "absolute -top-11 left-1/2 inline-flex h-8 -translate-x-1/2 items-center gap-1.5 rounded-full border border-border bg-card px-3 text-xs font-medium text-muted-foreground transition-[opacity,translate] duration-300",
+              atBottom || !started
+                ? "pointer-events-none translate-y-2 opacity-0"
+                : "translate-y-0 opacity-100",
             )}
           >
-            <ArrowDown className="h-3.5 w-3.5" aria-hidden />
+            <ArrowDown className="h-3 w-3" aria-hidden />
             {isLoading ? "Follow answer" : "Jump to latest"}
           </button>
+
           <div className="mx-auto w-full max-w-3xl">
             <Composer
               ref={inputRef}
@@ -263,10 +274,11 @@ export default function Home() {
               onSend={() => send(input)}
               onStop={stopNow}
               loading={isLoading}
+              placeholder="Ask me anything..."
             />
             <p className="mt-2 text-center text-[11px] text-muted-foreground">
-              Answers come from my CV, projects and code
-              <span className="hidden sm:inline"> · Enter to send, Shift+Enter for a new line</span>
+              Answers based on my actual work
+              <span className="hidden sm:inline"> · Enter to send</span>
             </p>
           </div>
         </div>
