@@ -264,7 +264,10 @@
     scrollbar-width: thin;
     scrollbar-color: color-mix(in srgb, var(--muted-foreground) 35%, transparent) transparent;
   }
+
 }
+
+
 
 /* Prose overrides are unlayered on purpose: the typography plugin emits
  * `.prose` in the utilities layer, which would otherwise win over our
