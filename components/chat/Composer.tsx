@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef } from "react";
+import { forwardRef, useEffect } from "react";
 import { ArrowUp, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +24,12 @@ export const Composer = forwardRef<
 >(function Composer({ value, onChange, onSend, onStop, loading, placeholder }, ref) {
   const canSend = !loading && value.trim().length > 0;
   const nearLimit = value.length > MAX_INPUT_CHARS * 0.85;
+
+  useEffect(() => {
+    if (typeof ref === "object" && "current" in ref && ref.current) {
+      ref.current.focus();
+    }
+  }, [ref]);
 
   return (
     <form
