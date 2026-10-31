@@ -26,7 +26,7 @@ export const Composer = forwardRef<
   const nearLimit = value.length > MAX_INPUT_CHARS * 0.85;
 
   useEffect(() => {
-    if (typeof ref === "object" && "current" in ref && ref.current) {
+    if (ref && typeof ref === "object" && "current" in ref && ref.current) {
       ref.current.focus();
     }
   }, [ref]);
