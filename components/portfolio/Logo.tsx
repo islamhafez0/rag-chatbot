@@ -1,0 +1,21 @@
+/**
+ * "iH" monogram logo — vector SVG using currentColor to adapt
+ * seamlessly to light and dark themes with zero pixelation.
+ */
+export function Logo({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 514 571"
+      fill="currentColor"
+      aria-hidden="true"
+      className={className}
+    >
+      {/* "i" dot */}
+      <circle cx="57.1" cy="57.7" r="58.4" />
+      {/* "i" stem */}
+      <path d="M 110.0 129.0 L 4.0 193.0 L 5.0 570.0 L 78.0 569.0 L 90.0 564.0 L 102.0 553.0 L 107.0 545.0 L 110.0 535.0 Z" />
+      {/* "H" with signature speech notch */}
+      <path d="M 456.0 39.0 L 442.0 42.0 L 431.0 48.0 L 421.0 59.0 L 415.0 74.0 L 415.0 258.0 L 413.0 260.0 L 191.0 260.0 L 181.0 263.0 L 173.0 268.0 L 163.0 279.0 L 157.0 298.0 L 157.0 437.0 L 242.0 352.0 L 413.0 352.0 L 415.0 354.0 L 415.0 537.0 L 418.0 546.0 L 431.0 562.0 L 445.0 569.0 L 513.0 570.0 L 513.0 40.0 Z" />
+    </svg>
+  );
+}
